@@ -1,0 +1,445 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\StudentApplication;
+use App\Models\ApplicationStatusHistory;
+use App\Models\AdmissionYear;
+use App\Models\AdmissionProgram;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class PPDBApplicationController extends Controller
+{
+    public function dashboard()
+    {
+        $currentYear = AdmissionYear::where('is_current', true)->first();
+
+        $statuses = [
+            'baru_daftar' => 'Baru Daftar',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'data_kurang' => 'Data Kurang',
+            'terverifikasi' => 'Terverifikasi',
+            'wawancara' => 'Wawancara',
+            'lulus' => 'Lulus',
+            'cadangan' => 'Cadangan',
+            'tidak_lulus' => 'Tidak Lulus',
+            'diterima' => 'Diterima',
+            'mengundurkan_diri' => 'Mengundurkan Diri',
+        ];
+
+        $countByStatus = StudentApplication::when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id))
+            ->selectRaw("status, count(*) as total")
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $quota = $currentYear?->quota ?? 0;
+        $terisi = $countByStatus->get('diterima', 0);
+        $sisa = max(0, $quota - $terisi);
+
+        $recentApplications = StudentApplication::with(['admissionYear', 'admissionProgram'])
+            ->when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id))
+            ->orderByDesc('created_at')
+            ->take(5)
+            ->get();
+
+        $followUpCounts = StudentApplication::when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id))
+            ->selectRaw("follow_up_status, count(*) as total")
+            ->whereNotNull('follow_up_status')
+            ->groupBy('follow_up_status')
+            ->pluck('total', 'follow_up_status');
+
+        $followUpSummary = [
+            'belum_dihubungi' => $followUpCounts->get('belum_dihubungi', 0),
+            'sudah_dihubungi' => $followUpCounts->get('sudah_dihubungi', 0),
+            'perlu_dilengkapi' => $followUpCounts->get('perlu_dilengkapi', 0),
+            'siap_wawancara' => $followUpCounts->get('siap_wawancara', 0),
+        ];
+
+        return view('admin.ppdb.dashboard', compact(
+            'currentYear',
+            'statuses',
+            'countByStatus',
+            'quota',
+            'terisi',
+            'sisa',
+            'recentApplications',
+            'followUpSummary'
+        ));
+    }
+
+    public function index(Request $request)
+    {
+        $query = StudentApplication::with(['admissionYear', 'admissionProgram', 'verifier'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('admission_year_id')) {
+            $query->where('admission_year_id', $request->admission_year_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('registration_number', 'like', "%{$search}%")
+                    ->orWhere('student_name', 'like', "%{$search}%")
+                    ->orWhere('parent_whatsapp', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('follow_up_status')) {
+            $query->where('follow_up_status', $request->follow_up_status);
+        }
+
+        $applications = $query->paginate(20)->withQueryString();
+        $admissionYears = AdmissionYear::orderByDesc('academic_year')->get();
+
+        $statuses = [
+            'baru_daftar' => 'Baru Daftar',
+            'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'data_kurang' => 'Data Kurang',
+            'terverifikasi' => 'Terverifikasi',
+            'wawancara' => 'Wawancara',
+            'lulus' => 'Lulus',
+            'cadangan' => 'Cadangan',
+            'tidak_lulus' => 'Tidak Lulus',
+            'diterima' => 'Diterima',
+            'mengundurkan_diri' => 'Mengundurkan Diri',
+        ];
+
+        $followUpStatuses = [
+            'belum_dihubungi' => 'Belum Dihubungi', 'sudah_dihubungi' => 'Sudah Dihubungi',
+            'perlu_dilengkapi' => 'Perlu Dilengkapi', 'siap_wawancara' => 'Siap Wawancara',
+            'tidak_aktif' => 'Tidak Aktif', 'selesai' => 'Selesai',
+        ];
+
+        return view('admin.ppdb.applications.index', compact(
+            'applications',
+            'admissionYears',
+            'statuses',
+            'followUpStatuses'
+        ));
+    }
+
+    public function export(Request $request)
+    {
+        $query = StudentApplication::with(['admissionYear', 'admissionProgram', 'followUpBy'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('admission_year_id')) {
+            $query->where('admission_year_id', $request->admission_year_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('registration_number', 'like', "%{$search}%")
+                    ->orWhere('student_name', 'like', "%{$search}%")
+                    ->orWhere('parent_whatsapp', 'like', "%{$search}%");
+            });
+        }
+
+        $applications = $query->get();
+
+        $statusLabels = [
+            'baru_daftar' => 'Baru Daftar', 'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'data_kurang' => 'Data Kurang', 'terverifikasi' => 'Terverifikasi',
+            'wawancara' => 'Wawancara', 'lulus' => 'Lulus',
+            'cadangan' => 'Cadangan', 'tidak_lulus' => 'Tidak Lulus',
+            'diterima' => 'Diterima', 'mengundurkan_diri' => 'Mengundurkan Diri',
+        ];
+
+        $filename = 'pendaftar-ppdb-' . now()->format('Ymd-Hi') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ];
+
+        $followUpLabels = [
+            'belum_dihubungi' => 'Belum Dihubungi', 'sudah_dihubungi' => 'Sudah Dihubungi',
+            'perlu_dilengkapi' => 'Perlu Dilengkapi', 'siap_wawancara' => 'Siap Wawancara',
+            'tidak_aktif' => 'Tidak Aktif', 'selesai' => 'Selesai',
+        ];
+
+        $callback = function () use ($applications, $statusLabels, $followUpLabels) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM for Excel UTF-8 support
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            $headerRow = [
+                'No', 'Nomor Pendaftaran', 'Nama Siswa', 'Jenis Kelamin',
+                'Tempat Lahir', 'Tanggal Lahir', 'Asal Sekolah', 'Alamat',
+                'Nama Ayah', 'Nama Ibu', 'WhatsApp Orang Tua', 'Pekerjaan Orang Tua',
+                'Siap Asrama', 'Kemampuan Baca Al-Qur\'an', 'Riwayat Kesehatan',
+                'Motivasi', 'Tahun Ajaran', 'Program', 'Status', 'Tanggal Daftar',
+                'Status Follow-up', 'Catatan Follow-up', 'Tanggal Follow-up', 'Petugas Follow-up',
+            ];
+            fputcsv($handle, $headerRow);
+
+            foreach ($applications as $i => $app) {
+                $row = [
+                    $i + 1,
+                    $app->registration_number,
+                    $app->student_name,
+                    $app->gender === 'laki_laki' ? 'Laki-laki' : 'Perempuan',
+                    $app->birth_place,
+                    $app->birth_date?->format('d/m/Y'),
+                    $app->previous_school,
+                    $app->address,
+                    $app->father_name,
+                    $app->mother_name,
+                    $app->parent_whatsapp,
+                    $app->parent_job ?? '',
+                    $app->boarding_ready ? 'Ya' : 'Tidak',
+                    $app->quran_reading_ability,
+                    $app->health_notes ?? '',
+                    $app->motivation,
+                    $app->admissionYear?->academic_year ?? '',
+                    $app->admissionProgram?->name ?? '',
+                    $statusLabels[$app->status] ?? $app->status,
+                    $app->submitted_at?->format('d/m/Y H:i') ?? '',
+                    $followUpLabels[$app->follow_up_status] ?? $app->follow_up_status ?? '',
+                    $app->follow_up_notes ?? '',
+                    $app->follow_up_at?->format('d/m/Y H:i') ?? '',
+                    $app->followUpBy?->name ?? '',
+                ];
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $query = StudentApplication::with(['admissionYear', 'admissionProgram', 'followUpBy'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('admission_year_id')) {
+            $query->where('admission_year_id', $request->admission_year_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('registration_number', 'like', "%{$search}%")
+                    ->orWhere('student_name', 'like', "%{$search}%")
+                    ->orWhere('parent_whatsapp', 'like', "%{$search}%");
+            });
+        }
+
+        $applications = $query->get();
+
+        $currentYear = AdmissionYear::where('is_current', true)->first();
+
+        $statusLabels = [
+            'baru_daftar' => 'Baru Daftar', 'menunggu_verifikasi' => 'Menunggu Verifikasi',
+            'data_kurang' => 'Data Kurang', 'terverifikasi' => 'Terverifikasi',
+            'wawancara' => 'Wawancara', 'lulus' => 'Lulus',
+            'cadangan' => 'Cadangan', 'tidak_lulus' => 'Tidak Lulus',
+            'diterima' => 'Diterima', 'mengundurkan_diri' => 'Mengundurkan Diri',
+        ];
+
+        $filterInfo = [];
+        if ($request->filled('status')) {
+            $filterInfo[] = 'Status: ' . ($statusLabels[$request->status] ?? $request->status);
+        }
+        if ($request->filled('search')) {
+            $filterInfo[] = 'Carian: ' . $request->search;
+        }
+
+        $followUpLabels = [
+            'belum_dihubungi' => 'Belum Dihubungi', 'sudah_dihubungi' => 'Sudah Dihubungi',
+            'perlu_dilengkapi' => 'Perlu Dilengkapi', 'siap_wawancara' => 'Siap Wawancara',
+            'tidak_aktif' => 'Tidak Aktif', 'selesai' => 'Selesai',
+        ];
+
+        $pdf = Pdf::loadView('admin.ppdb.applications.pdf', compact(
+            'applications', 'currentYear', 'statusLabels', 'filterInfo', 'followUpLabels'
+        ));
+
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('daftar-pendaftar-ppdb-' . now()->format('Ymd-Hi') . '.pdf');
+    }
+
+    public function show(StudentApplication $studentApplication)
+    {
+        $studentApplication->load(['admissionYear', 'admissionProgram', 'verifier', 'statusHistories.changedBy', 'followUpBy']);
+
+        return view('admin.ppdb.applications.show', compact('studentApplication'));
+    }
+
+    public function updateStatus(Request $request, StudentApplication $studentApplication)
+    {
+        $validStatuses = [
+            'baru_daftar',
+            'menunggu_verifikasi',
+            'data_kurang',
+            'terverifikasi',
+            'wawancara',
+            'lulus',
+            'cadangan',
+            'tidak_lulus',
+            'diterima',
+            'mengundurkan_diri',
+        ];
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:' . implode(',', $validStatuses)],
+            'notes' => 'nullable|string',
+        ]);
+
+        $fromStatus = $studentApplication->status;
+        $toStatus = $validated['status'];
+
+        if ($fromStatus === $toStatus) {
+            return back()->with('error', 'Status sudah sama, tidak ada perubahan.');
+        }
+
+        DB::transaction(function () use ($studentApplication, $fromStatus, $toStatus, $validated) {
+            $updateData = ['status' => $toStatus, 'admin_notes' => $validated['notes'] ?? null];
+
+            if ($toStatus === 'terverifikasi' && !$studentApplication->verified_at) {
+                $updateData['verified_by'] = auth()->id();
+                $updateData['verified_at'] = now();
+            }
+
+            $studentApplication->update($updateData);
+
+            ApplicationStatusHistory::create([
+                'student_application_id' => $studentApplication->id,
+                'from_status' => $fromStatus,
+                'to_status' => $toStatus,
+                'changed_by' => auth()->id(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
+        });
+
+        return back()->with('success', 'Status berhasil diperbarui.');
+    }
+
+    public function updateFollowUp(Request $request, StudentApplication $studentApplication)
+    {
+        $validStatuses = ['belum_dihubungi', 'sudah_dihubungi', 'perlu_dilengkapi', 'siap_wawancara', 'tidak_aktif', 'selesai'];
+
+        $validated = $request->validate([
+            'follow_up_status' => ['required', 'string', 'in:' . implode(',', $validStatuses)],
+            'follow_up_notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $studentApplication->update([
+            'follow_up_status' => $validated['follow_up_status'],
+            'follow_up_notes' => $validated['follow_up_notes'] ?? null,
+            'follow_up_at' => now(),
+            'follow_up_by' => auth()->id(),
+        ]);
+
+        $labels = [
+            'belum_dihubungi' => 'Belum Dihubungi', 'sudah_dihubungi' => 'Sudah Dihubungi',
+            'perlu_dilengkapi' => 'Perlu Dilengkapi', 'siap_wawancara' => 'Siap Wawancara',
+            'tidak_aktif' => 'Tidak Aktif', 'selesai' => 'Selesai',
+        ];
+
+        return back()->with('success', 'Follow-up diperbarui: ' . ($labels[$validated['follow_up_status']] ?? $validated['follow_up_status']));
+    }
+
+    public function settingsEdit()
+    {
+        $currentYear = AdmissionYear::where('is_current', true)->with('programs')->first();
+        $currentProgram = $currentYear?->programs->first();
+
+        $yearStatuses = ['draft', 'open', 'almost_full', 'quota_full', 'closed', 'announcement', 'archived'];
+        $programStatuses = ['draft', 'open', 'full', 'closed'];
+        $programTypes = [
+            'first_batch_free' => 'Gratis Angkatan Pertama',
+            'regular_paid' => 'Reguler Berbayar',
+            'scholarship' => 'Beasiswa',
+            'subsidy' => 'Subsidi',
+        ];
+
+        return view('admin.ppdb.settings', compact(
+            'currentYear', 'currentProgram',
+            'yearStatuses', 'programStatuses', 'programTypes'
+        ));
+    }
+
+    public function settingsUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'academic_year' => 'required|string|max:50',
+            'quota' => 'required|integer|min:1',
+            'status' => 'required|in:draft,open,almost_full,quota_full,closed,announcement,archived',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'description' => 'nullable|string',
+
+            'program_name' => 'required|string|max:255',
+            'program_type' => 'required|in:first_batch_free,regular_paid,scholarship,subsidy',
+            'program_quota' => 'required|integer|min:1',
+            'program_status' => 'required|in:draft,open,full,closed',
+            'tuition_fee' => 'required|numeric|min:0',
+            'boarding_fee' => 'required|numeric|min:0',
+            'meal_fee' => 'required|numeric|min:0',
+            'registration_fee' => 'required|numeric|min:0',
+            'other_fee' => 'required|numeric|min:0',
+            'is_free_program' => 'nullable|boolean',
+            'program_description' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $currentYear = AdmissionYear::where('is_current', true)->first();
+
+            if ($currentYear) {
+                $currentYear->update([
+                    'name' => $validated['name'],
+                    'academic_year' => $validated['academic_year'],
+                    'quota' => $validated['quota'],
+                    'status' => $validated['status'],
+                    'start_date' => $validated['start_date'],
+                    'end_date' => $validated['end_date'],
+                    'description' => $validated['description'] ?? '',
+                ]);
+
+                $program = $currentYear->programs()->first();
+                if ($program) {
+                    $program->update([
+                        'name' => $validated['program_name'],
+                        'type' => $validated['program_type'],
+                        'quota' => $validated['program_quota'],
+                        'status' => $validated['program_status'],
+                        'tuition_fee' => $validated['tuition_fee'],
+                        'boarding_fee' => $validated['boarding_fee'],
+                        'meal_fee' => $validated['meal_fee'],
+                        'registration_fee' => $validated['registration_fee'],
+                        'other_fee' => $validated['other_fee'],
+                        'is_free_program' => $validated['is_free_program'] ?? false,
+                        'description' => $validated['program_description'] ?? '',
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('admin.ppdb.settings.edit')
+            ->with('success', 'Pengaturan SPMB berhasil diperbarui.');
+    }
+}

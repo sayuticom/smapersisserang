@@ -1,0 +1,193 @@
+<x-admin-layout>
+    <div class="space-y-6">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Pengaturan SPMB</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Kelola tahun ajaran dan program pendaftaran</p>
+        </div>
+
+        @if(session('success'))
+            <div class="p-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('admin.ppdb.settings.update') }}">
+            @csrf
+            @method('PUT')
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-gray-100 bg-emerald-50">
+                    <h3 class="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Tahun Ajaran</h3>
+                </div>
+                <div class="p-5 space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama</label>
+                            <input type="text" name="name" value="{{ old('name', $currentYear?->name ?? '') }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Tahun Ajaran</label>
+                            <input type="text" name="academic_year" value="{{ old('academic_year', $currentYear?->academic_year ?? '') }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required
+                                   placeholder="2026/2027">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Total</label>
+                            <input type="number" name="quota" value="{{ old('quota', $currentYear?->quota ?? 36) }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required min="1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                            <select name="status"
+                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                                @foreach($yearStatuses as $s)
+                                    <option value="{{ $s }}" {{ (old('status', $currentYear?->status ?? '') === $s) ? 'selected' : '' }}>
+                                        {{ ucfirst(str_replace('_', ' ', $s)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Mulai</label>
+                            <input type="date" name="start_date" value="{{ old('start_date', $currentYear?->start_date?->format('Y-m-d') ?? '') }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Selesai</label>
+                            <input type="date" name="end_date" value="{{ old('end_date', $currentYear?->end_date?->format('Y-m-d') ?? '') }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi</label>
+                        <textarea name="description" rows="3"
+                                  class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('description', $currentYear?->description ?? '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6">
+                <div class="px-5 py-3.5 border-b border-gray-100 bg-amber-50">
+                    <h3 class="text-sm font-semibold text-amber-800 uppercase tracking-wider">Program Pendaftaran</h3>
+                </div>
+                <div class="p-5 space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Program</label>
+                            <input type="text" name="program_name" value="{{ old('program_name', $currentProgram?->name ?? '') }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Tipe Program</label>
+                            <select name="program_type"
+                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                                @foreach($programTypes as $val => $label)
+                                    <option value="{{ $val }}" {{ (old('program_type', $currentProgram?->type ?? '') === $val) ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Program</label>
+                            <input type="number" name="program_quota" value="{{ old('program_quota', $currentProgram?->quota ?? 36) }}"
+                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required min="1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Status Program</label>
+                            <select name="program_status"
+                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                                @foreach($programStatuses as $s)
+                                    <option value="{{ $s }}" {{ (old('program_status', $currentProgram?->status ?? '') === $s) ? 'selected' : '' }}>
+                                        {{ ucfirst(str_replace('_', ' ', $s)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Biaya Pendaftaran</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+                                <input type="number" name="registration_fee" value="{{ old('registration_fee', $currentProgram?->registration_fee ?? 0) }}"
+                                       class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">SPP / Bulan</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+                                <input type="number" name="tuition_fee" value="{{ old('tuition_fee', $currentProgram?->tuition_fee ?? 0) }}"
+                                       class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Biaya Asrama</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+                                <input type="number" name="boarding_fee" value="{{ old('boarding_fee', $currentProgram?->boarding_fee ?? 0) }}"
+                                       class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Biaya Makan</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+                                <input type="number" name="meal_fee" value="{{ old('meal_fee', $currentProgram?->meal_fee ?? 0) }}"
+                                       class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Biaya Lainnya</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+                                <input type="number" name="other_fee" value="{{ old('other_fee', $currentProgram?->other_fee ?? 0) }}"
+                                       class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-3 mt-6">
+                                <input type="checkbox" name="is_free_program" value="1"
+                                        {{ old('is_free_program', $currentProgram?->is_free_program ?? false) ? 'checked' : '' }}
+                                       class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm font-semibold text-gray-700">Program Gratis</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Program</label>
+                        <textarea name="program_description" rows="3"
+                                  class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('program_description', $currentProgram?->description ?? '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-6">
+                <button type="submit"
+                        class="px-6 py-3 bg-emerald-700 text-white font-semibold rounded-lg hover:bg-emerald-800 transition-colors shadow-sm">
+                    Simpan Pengaturan
+                </button>
+                <a href="{{ route('admin.ppdb.dashboard') }}"
+                   class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors">
+                    Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</x-admin-layout>
