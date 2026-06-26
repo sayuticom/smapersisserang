@@ -60,13 +60,12 @@ class TeacherTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Guru Berdasarkan Mata Pelajaran');
-        $response->assertSee('Mata Pelajaran Nasional');
         $response->assertSee('Pendidikan Pancasila');
         $response->assertSee('Pembinaan wawasan kebangsaan, tanggung jawab, dan karakter warga negara.');
         $response->assertSee('Safitri, S.Pd.');
     }
 
-    public function test_teachers_page_shows_category_label_only_as_group_header(): void
+    public function test_teachers_page_does_not_show_category_badge_inside_teacher_cards(): void
     {
         $teacher = Teacher::create([
             'name' => 'Safitri, S.Pd.',
@@ -86,7 +85,38 @@ class TeacherTest extends TestCase
             ->assertStatus(200)
             ->getContent();
 
-        $this->assertSame(1, substr_count($content, 'Mata Pelajaran Nasional'));
+        $this->assertSame(0, substr_count($content, 'Mata Pelajaran Nasional'));
+    }
+
+    public function test_teachers_page_shows_headmaster_as_first_teacher_card(): void
+    {
+        Teacher::create([
+            'name' => 'Guru Urutan Pertama',
+            'position' => 'Guru Pengampu',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+        Teacher::create([
+            'name' => 'Kepala Sekolah Test',
+            'position' => 'Kepala Sekolah',
+            'is_active' => true,
+            'sort_order' => 99,
+        ]);
+
+        $content = $this->get(route('public.teachers'))
+            ->assertStatus(200)
+            ->assertSee('KEPALA SEKOLAH')
+            ->assertSee('GURU PENGAMPU')
+            ->getContent();
+
+        $this->assertLessThan(
+            strpos($content, 'Guru Urutan Pertama'),
+            strpos($content, 'Kepala Sekolah Test')
+        );
+        $this->assertLessThan(
+            strpos($content, 'GURU PENGAMPU'),
+            strpos($content, 'KEPALA SEKOLAH')
+        );
     }
 
     public function test_teachers_page_shows_teacher_photo_when_available(): void
@@ -136,7 +166,7 @@ class TeacherTest extends TestCase
         $response->assertDontSee('src="/storage/', false);
     }
 
-    public function test_teachers_page_shows_keislaman_category(): void
+    public function test_teachers_page_shows_keislaman_subject(): void
     {
         $teacher = Teacher::create([
             'name' => 'Rizky Jurnaliska, S.Sos., M.Si.',
@@ -154,7 +184,6 @@ class TeacherTest extends TestCase
 
         $response = $this->get(route('public.teachers'));
 
-        $response->assertSee('Keislaman &amp; Al-Qur', false);
         $response->assertSee('Maharotul Qiroah');
         $response->assertSee('Rizky Jurnaliska, S.Sos., M.Si.');
         $response->assertDontSee('Kepersisan');
@@ -180,7 +209,8 @@ class TeacherTest extends TestCase
 
         $response->assertDontSee('Mapel Nonaktif');
         $response->assertDontSee('Deskripsi nonaktif.');
-        $response->assertSee('Data mata pelajaran belum tersedia.');
+        $response->assertSee('Guru Aktif');
+        $response->assertSee('Mapel belum diatur');
     }
 
     public function test_teachers_page_hides_inactive_teachers_from_subject_teacher_list(): void
@@ -201,15 +231,15 @@ class TeacherTest extends TestCase
 
         $response = $this->get(route('public.teachers'));
 
-        $response->assertSee('Biologi');
         $response->assertDontSee('Guru Nonaktif');
-        $response->assertSee('Guru pengampu belum diatur.');
+        $response->assertDontSee('Biologi');
+        $response->assertSee('Data guru belum tersedia.');
     }
 
-    public function test_teachers_page_shows_subject_empty_state(): void
+    public function test_teachers_page_shows_teacher_empty_state(): void
     {
         $this->get(route('public.teachers'))
-            ->assertSee('Data mata pelajaran belum tersedia.');
+            ->assertSee('Data guru belum tersedia.');
     }
 
     public function test_guest_cannot_access_admin_teachers(): void

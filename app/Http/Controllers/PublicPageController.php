@@ -139,27 +139,45 @@ class PublicPageController extends Controller
         try {
             $schoolSetting = SchoolSetting::current();
 
-            $subjectsByCategory = SchoolSubject::with(['teachers' => function ($q) {
-                    $q->where('is_active', true)->orderBy('sort_order');
-                }])
-                ->where('is_active', true)
-                ->orderBy('category')
-                ->orderBy('sort_order')
-                ->get()
-                ->groupBy('category');
+            $subjectRelation = function ($query) {
+                $query->where('school_subjects.is_active', true)
+                    ->orderBy('school_subjects.sort_order');
+            };
 
-            $headmaster = Teacher::where('position', 'Kepala Sekolah')->first();
+            $headmaster = Teacher::with(['subjects' => $subjectRelation])
+                ->where('is_active', true)
+                ->where('position', 'Kepala Sekolah')
+                ->orderBy('sort_order')
+                ->first();
+
+            $teachers = Teacher::with(['subjects' => $subjectRelation])
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('position')
+                        ->orWhere('position', '!=', 'Kepala Sekolah');
+                })
+                ->orderBy('sort_order')
+                ->get();
+
+            if ($headmaster) {
+                $headmaster->setAttribute('is_kepala_sekolah', true);
+                $headmaster->setAttribute('label', 'KEPALA SEKOLAH');
+            }
+
+            $teachers->each(function ($teacher) {
+                $teacher->setAttribute('is_kepala_sekolah', false);
+                $teacher->setAttribute('label', 'GURU PENGAMPU');
+            });
+
+            $teacherCards = collect($headmaster ? [$headmaster] : [])->concat($teachers)->values();
 
             $websitePage = WebsitePage::key('teachers');
         } catch (\Exception $e) {
             $schoolSetting = null;
-            $subjectsByCategory = collect();
-            $headmaster = null;
+            $teacherCards = collect();
             $websitePage = null;
         }
 
-        $subjectCategories = SchoolSubject::CATEGORIES;
-
-        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'subjectsByCategory', 'subjectCategories', 'headmaster'));
+        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'teacherCards'));
     }
 }
