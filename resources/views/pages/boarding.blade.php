@@ -21,25 +21,22 @@
     $schoolName = $schoolSetting?->school_name ?? 'SMA Persis Serang';
 @endphp
 
-<section class="relative isolate min-h-[320px] overflow-hidden bg-[#052E1F] lg:min-h-[400px]">
-    <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/60 via-emerald-800/40 to-emerald-700/30"></div>
-    <div class="absolute inset-0 bg-gradient-to-t from-[#052E1F]/80 via-transparent to-transparent"></div>
-    <div class="absolute inset-0 opacity-[0.05]"
-         style="background-image: linear-gradient(135deg, rgba(255,255,255,.45) 1px, transparent 1px); background-size: 42px 42px;">
-    </div>
-    <div class="relative z-10 mx-auto flex min-h-[320px] max-w-7xl flex-col items-center justify-center px-4 pb-16 pt-28 text-center sm:px-6 lg:min-h-[400px] lg:pb-20 lg:pt-36">
-        <div class="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-950/50 px-5 py-2 text-sm font-semibold text-emerald-200 backdrop-blur-sm">
-            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+<section class="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800">
+    <div class="mx-auto flex min-h-[360px] max-w-7xl flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:min-h-[420px]">
+        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-6 py-2 text-sm font-semibold text-amber-300">
+            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
             BOARDING SCHOOL
         </div>
-        <h1 class="mt-6 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-            {{ $websitePage?->title ?? 'Program Boarding School' }}
+
+        <h1 class="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            {{ $websitePage?->title ?? 'Islamic Boarding School' }}
         </h1>
-        @if($websitePage?->subtitle)
-            <p class="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-emerald-100 lg:text-xl">
-                {{ $websitePage->subtitle }}
-            </p>
-        @endif
+
+        <div class="mx-auto mt-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"></div>
+
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl">
+            {{ $websitePage?->subtitle ?? 'Lingkungan pendidikan berasrama untuk membentuk akhlak, kemandirian, ibadah, dan kedisiplinan siswa.' }}
+        </p>
     </div>
 </section>
 
