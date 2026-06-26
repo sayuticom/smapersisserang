@@ -147,7 +147,7 @@
     $hasOrphanTeachers = $orphanTeachers->isNotEmpty();
 @endphp
 
-<section class="relative isolate min-h-[400px] overflow-hidden bg-[#052E1F] lg:min-h-[500px]">
+<section class="relative isolate overflow-hidden bg-[#052E1F]">
     @if($heroBgUrl)
         <div class="absolute inset-0 bg-cover bg-center"
              style="background-image: linear-gradient(rgba(6,78,59,.65), rgba(6,78,59,.65)), url('{{ $heroBgUrl }}')">
@@ -160,7 +160,7 @@
 
     <div class="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-emerald-950/75 via-emerald-950/30 to-transparent"></div>
 
-    <div class="relative z-10 mx-auto flex min-h-[400px] max-w-7xl flex-col items-center justify-center px-4 pb-16 pt-28 text-center sm:px-6 lg:min-h-[500px] lg:pb-20 lg:pt-[15rem]">
+    <div class="relative z-10 mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-12 text-center sm:px-6 lg:py-20">
         <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/70 px-5 py-2 text-sm font-semibold text-amber-300">
             <span class="h-2 w-2 rounded-full bg-amber-300"></span>
             TENAGA PENDIDIK

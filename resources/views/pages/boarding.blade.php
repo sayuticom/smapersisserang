@@ -22,7 +22,7 @@
 @endphp
 
 <section class="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800">
-    <div class="mx-auto flex min-h-[360px] max-w-7xl flex-col items-center justify-center px-4 py-20 text-center sm:px-6 lg:min-h-[420px]">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-12 text-center sm:px-6 lg:py-20">
         <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-6 py-2 text-sm font-semibold text-amber-300">
             <span class="h-2 w-2 rounded-full bg-amber-300"></span>
             BOARDING SCHOOL
