@@ -29,8 +29,8 @@
                             $primarySubject = $teacher->subjects->first();
                         @endphp
 
-                        <article class="bg-[#FFFBF2] rounded-2xl border border-amber-200/70 shadow-sm overflow-hidden flex flex-col">
-                            <div class="grid grid-cols-1 sm:grid-cols-[1fr_180px] min-h-[256px] flex-1">
+                        <article class="overflow-hidden rounded-2xl border border-yellow-200 bg-[#fffaf0] shadow-sm">
+                            <div class="grid min-h-[255px] grid-cols-[1fr_140px] md:grid-cols-[1fr_180px]">
                                 <div class="p-6 flex flex-col">
                                     <span class="inline-block w-fit bg-gradient-to-r from-amber-100 to-amber-300 text-emerald-950 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-wide">
                                         {{ $teacher->label }}
@@ -57,14 +57,14 @@
                                     @endif
                                 </div>
 
-                                <div class="bg-emerald-50/50 flex items-end justify-center border-t sm:border-t-0 sm:border-l border-amber-100">
+                                <div class="flex h-full items-end justify-center border-l border-yellow-100 bg-white/50">
                                     @if($teacher->photo_path)
                                         <img src="{{ asset('storage/' . $teacher->photo_path) }}"
                                              alt="{{ $teacher->name }}"
-                                             class="h-64 w-full object-cover object-top">
+                                             class="max-h-[220px] md:max-h-[255px] w-auto object-contain object-bottom">
                                     @else
-                                        <div class="h-64 w-full flex items-center justify-center">
-                                            <span class="flex h-28 w-28 items-center justify-center rounded-full border border-amber-200 bg-emerald-100 text-3xl font-bold text-emerald-800 shadow-sm">
+                                        <div class="flex h-full w-full items-center justify-center">
+                                            <span class="flex h-20 w-20 items-center justify-center rounded-full border border-amber-200 bg-emerald-100 text-xl font-bold text-emerald-800 shadow-sm">
                                                 {{ $initials ?: 'G' }}
                                             </span>
                                         </div>
@@ -73,10 +73,10 @@
                             </div>
 
                             @if(filled($teacher->teacher_quote))
-                                <div class="bg-gradient-to-br from-emerald-950 to-emerald-800 px-7 py-5">
+                                <div class="bg-[#00583f] px-7 py-5">
                                     <div class="flex gap-4">
                                         <span class="text-3xl text-amber-400 leading-none shrink-0 mt-1 select-none">&ldquo;</span>
-                                        <p class="font-serif text-base md:text-lg italic leading-relaxed text-white/90">
+                                        <p class="font-serif text-base md:text-lg italic leading-relaxed text-white">
                                             {{ $teacher->teacher_quote }}
                                         </p>
                                     </div>
