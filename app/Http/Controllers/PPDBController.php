@@ -36,6 +36,29 @@ class PPDBController extends Controller
         'diterima' => 'Selamat, calon siswa diterima sebagai siswa SMA Persis Serang.',
         'mengundurkan_diri' => 'Status pendaftaran tercatat mengundurkan diri.',
     ];
+    public function info()
+    {
+        $admissionYear = AdmissionYear::where('is_current', true)->first();
+        $programs = collect();
+        $admissionStats = null;
+
+        if ($admissionYear) {
+            $programs = AdmissionProgram::where('admission_year_id', $admissionYear->id)
+                ->where('status', 'open')
+                ->orderBy('sort_order')
+                ->get();
+
+            $totalApplicants = StudentApplication::where('admission_year_id', $admissionYear->id)->count();
+            $totalAccepted = StudentApplication::where('admission_year_id', $admissionYear->id)
+                ->where('status', 'diterima')
+                ->count();
+            $remainingQuota = max(0, $admissionYear->quota - $totalAccepted);
+            $admissionStats = compact('totalApplicants', 'totalAccepted', 'remainingQuota');
+        }
+
+        return view('ppdb.info', compact('admissionYear', 'programs', 'admissionStats'));
+    }
+
     public function create()
     {
         $admissionYear = AdmissionYear::where('is_current', true)->first();

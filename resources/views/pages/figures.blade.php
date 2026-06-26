@@ -60,11 +60,11 @@
         <h2 class="text-3xl lg:text-4xl font-bold text-gray-900">Ingin mengenal lebih dekat?</h2>
         <p class="text-gray-500 mt-4 text-lg max-w-xl mx-auto">Daftarkan putra-putri Anda dan jadilah bagian dari keluarga besar {{ $schoolSetting->school_name ?? 'SMA Persis Serang' }}.</p>
         <div class="flex flex-wrap justify-center gap-4 mt-8">
-            <a href="{{ route('ppdb.create') }}"
-               class="px-8 py-4 bg-[#0F6B3A] text-white font-semibold rounded-xl hover:bg-[#0A4F2B] transition-colors shadow-lg shadow-[#0F6B3A]/20">
+            <a href="{{ route('spmb.create') }}"
+               class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                 Daftar SPMB
             </a>
-            <a href="{{ route('ppdb.status.form') }}"
+            <a href="{{ route('spmb.status.form') }}"
                class="px-8 py-4 border-2 border-[#0F6B3A] text-[#0F6B3A] font-semibold rounded-xl hover:bg-[#EAF6EE] transition-colors">
                 Cek Status
             </a>

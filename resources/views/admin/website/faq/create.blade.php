@@ -19,7 +19,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                    <input type="text" name="category" id="category" value="{{ old('category', 'ppdb') }}" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                    <input type="text" name="category" id="category" value="{{ old('category', 'spmb') }}" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
                 </div>
                 <div>
                     <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">Urutan</label>

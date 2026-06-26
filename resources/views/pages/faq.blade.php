@@ -43,11 +43,11 @@
             <h3 class="text-lg font-bold text-emerald-800 mb-2">Masih punya pertanyaan?</h3>
             <p class="text-sm text-emerald-600 mb-6">Hubungi tim SPMB kami untuk informasi lebih lanjut</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a href="{{ route('ppdb.create') }}"
+                <a href="{{ route('spmb.create') }}"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                     Daftar SPMB
                 </a>
-                <a href="{{ route('ppdb.status.form') }}"
+                <a href="{{ route('spmb.status.form') }}"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-white text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-colors border border-emerald-200">
                     Cek Status
                 </a>

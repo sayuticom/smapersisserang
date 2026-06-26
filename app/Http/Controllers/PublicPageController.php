@@ -150,6 +150,20 @@ class PublicPageController extends Controller
         try {
             $schoolSetting = SchoolSetting::current();
 
+            $heroImages = SchoolImage::where('is_active', true)
+                ->whereHas('categories', fn($q) => $q->where('slug', 'guru'))
+                ->orderBy('sort_order')
+                ->latest()
+                ->get();
+
+            if ($heroImages->isEmpty()) {
+                $heroImages = SchoolImage::where('is_active', true)
+                    ->whereHas('categories', fn($q) => $q->where('slug', 'fasilitas'))
+                    ->orderBy('sort_order')
+                    ->latest()
+                    ->get();
+            }
+
             $headmaster = Teacher::with(['subjects' => function ($query) {
                     $query->where('school_subjects.is_active', true)
                         ->orderBy('school_subjects.sort_order');
@@ -213,8 +227,9 @@ class PublicPageController extends Controller
             $groupedByCategory = collect();
             $orphanTeachers = collect();
             $websitePage = null;
+            $heroImages = collect();
         }
 
-        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'headmaster', 'groupedByCategory', 'orphanTeachers'));
+        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'headmaster', 'groupedByCategory', 'orphanTeachers', 'heroImages'));
     }
 }

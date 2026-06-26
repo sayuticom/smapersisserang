@@ -87,7 +87,19 @@ Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.tea
 Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
 Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 
+Route::get('/ppdb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('ppdb.info');
+
 Route::name('ppdb.')->prefix('ppdb')->group(function () {
+    Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
+    Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
+    Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
+    Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
+    Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
+});
+
+Route::get('/spmb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('spmb.info');
+
+Route::name('spmb.')->prefix('spmb')->group(function () {
     Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
     Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
     Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');

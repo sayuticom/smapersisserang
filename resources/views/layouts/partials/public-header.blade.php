@@ -86,7 +86,7 @@
                 <span class="truncate text-base font-bold">{{ $schoolSetting->school_name ?? 'SMA Persis Serang' }}</span>
             </a>
 
-            <a href="{{ route('ppdb.create') }}" class="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold text-emerald-950 shadow-sm">
+            <a href="{{ route('spmb.create') }}" class="rounded-lg bg-amber-400 px-3 py-2 text-xs font-bold text-emerald-950 shadow-sm">
                 Daftar
             </a>
         </div>

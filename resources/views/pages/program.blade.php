@@ -225,11 +225,11 @@
         <h2 class="text-3xl font-bold text-gray-900 lg:text-4xl">Siap bergabung bersama {{ $schoolSetting->school_name ?? 'SMA Persis Serang' }}?</h2>
         <p class="mx-auto mt-4 max-w-xl text-lg text-gray-500">Daftarkan putra-putri Anda dan jadilah bagian dari generasi berilmu dan beradab.</p>
         <div class="mt-8 flex flex-wrap justify-center gap-4">
-            <a href="{{ route('ppdb.create') }}"
-               class="rounded-xl bg-[#0F6B3A] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-[#0F6B3A]/20 transition hover:bg-[#0A4F2B]">
+            <a href="{{ route('spmb.create') }}"
+               class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                 Daftar SPMB
             </a>
-            <a href="{{ route('ppdb.status.form') }}"
+            <a href="{{ route('spmb.status.form') }}"
                class="rounded-xl border-2 border-[#0F6B3A] px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE]">
                 Cek Status Pendaftaran
             </a>

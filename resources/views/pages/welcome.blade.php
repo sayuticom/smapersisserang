@@ -31,8 +31,8 @@
     }
 
     $primaryActionRoute = ($currentAdmissionYear && in_array($currentAdmissionYear->status, ['open', 'almost_full']))
-        ? route('ppdb.create')
-        : route('ppdb.status.form');
+        ? route('spmb.create')
+        : route('spmb.status.form');
     $primaryActionLabel = ($currentAdmissionYear && in_array($currentAdmissionYear->status, ['open', 'almost_full']))
         ? 'Daftar SPMB'
         : 'Cek Status';

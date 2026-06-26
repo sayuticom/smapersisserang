@@ -30,12 +30,13 @@ class TeacherTest extends TestCase
             ->assertSee('Data guru belum tersedia.');
     }
 
-    public function test_teachers_page_no_longer_shows_large_hero_copy(): void
+    public function test_teachers_page_shows_hero_section(): void
     {
         $this->get(route('public.teachers'))
             ->assertStatus(200)
-            ->assertDontSee('Profil Guru')
-            ->assertDontSee('Tenaga pendidik profesional yang berdedikasi tinggi');
+            ->assertSee('TENAGA PENDIDIK')
+            ->assertSee('Profil Guru')
+            ->assertSee('Tenaga pendidik profesional yang berdedikasi tinggi');
     }
 
     public function test_teachers_page_shows_subject_teacher_and_description(): void

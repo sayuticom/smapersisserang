@@ -254,7 +254,7 @@ class PublicWebsiteTest extends TestCase
     public function test_program_page_shows_daftar_ppdb_button(): void
     {
         $response = $this->get(route('public.program'));
-        $response->assertSee(route('ppdb.create'));
+        $response->assertSee(route('spmb.create'));
     }
 
     public function test_program_page_works_without_school_settings(): void
@@ -312,7 +312,7 @@ class PublicWebsiteTest extends TestCase
     public function test_boarding_page_shows_daftar_ppdb_button(): void
     {
         $response = $this->get(route('public.boarding'));
-        $response->assertSee(route('ppdb.create'));
+        $response->assertSee(route('spmb.create'));
     }
 
     public function test_header_has_boarding_link(): void

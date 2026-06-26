@@ -139,14 +139,49 @@
     }
 }
 </style>
+@php
+    $hasHeroBg = isset($heroImages) && $heroImages->isNotEmpty();
+    $heroBgUrl = $hasHeroBg ? asset('storage/' . $heroImages->first()->image_path) : null;
+    $hasHeadmaster = $headmaster && $headmaster->exists;
+    $hasCategoryTeachers = $groupedByCategory->isNotEmpty();
+    $hasOrphanTeachers = $orphanTeachers->isNotEmpty();
+@endphp
+
+<section class="relative isolate min-h-[400px] overflow-hidden bg-[#052E1F] lg:min-h-[500px]">
+    @if($heroBgUrl)
+        <div class="absolute inset-0 bg-cover bg-center"
+             style="background-image: linear-gradient(rgba(6,78,59,.65), rgba(6,78,59,.65)), url('{{ $heroBgUrl }}')">
+        </div>
+    @else
+        <div class="absolute inset-0 bg-gradient-to-br from-[#052E1F] via-[#063f2a] to-[#0F6B3A]"></div>
+        <div class="absolute inset-0 opacity-[0.08]"
+             style="background-image: linear-gradient(135deg, rgba(255,255,255,.45) 1px, transparent 1px); background-size: 42px 42px;"></div>
+    @endif
+
+    <div class="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-emerald-950/75 via-emerald-950/30 to-transparent"></div>
+
+    <div class="relative z-10 mx-auto flex min-h-[400px] max-w-7xl flex-col items-center justify-center px-4 pb-16 pt-28 text-center sm:px-6 lg:min-h-[500px] lg:pb-20 lg:pt-[15rem]">
+        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/70 px-5 py-2 text-sm font-semibold text-amber-300">
+            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+            TENAGA PENDIDIK
+        </div>
+        <h1 class="mt-6 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+            {{ $websitePage?->title ?? 'Profil Guru' }}
+        </h1>
+        <div class="mx-auto mt-4 h-1.5 w-32 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"></div>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white lg:text-xl">
+            {{ $websitePage?->subtitle ?? 'Tenaga pendidik profesional yang berdedikasi tinggi' }}
+        </p>
+    </div>
+</section>
+
 <div class="bg-[#FBF7EF]">
-    <div class="border-t border-amber-100">
-        <div class="max-w-7xl mx-auto px-4 pt-14 pb-20 sm:pt-16">
-            @php
-                $hasHeadmaster = $headmaster && $headmaster->exists;
-                $hasCategoryTeachers = $groupedByCategory->isNotEmpty();
-                $hasOrphanTeachers = $orphanTeachers->isNotEmpty();
-            @endphp
+    <div class="max-w-7xl mx-auto px-4 pb-20" style="padding-top: 2rem;">
+        @php
+            $hasHeadmaster = $headmaster && $headmaster->exists;
+            $hasCategoryTeachers = $groupedByCategory->isNotEmpty();
+            $hasOrphanTeachers = $orphanTeachers->isNotEmpty();
+        @endphp
 
             @if(!$hasHeadmaster && !$hasCategoryTeachers && !$hasOrphanTeachers)
                 <div class="bg-white rounded-2xl border border-amber-100 p-8 text-center shadow-sm">
@@ -160,9 +195,9 @@
                             $primarySubject = $teacher->subjects->first();
                         @endphp
                         <article class="teacher-card">
-                            <div class="teacher-card-main">
+                            <div class="teacher-card-main gap-6" style="padding-top: 2rem;">
                                 <div class="teacher-card-content">
-                                    <span class="inline-block w-fit bg-gradient-to-r from-amber-100 to-amber-300 text-emerald-950 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-wide">
+                                    <span class="inline-block w-fit bg-gradient-to-r from-amber-100 to-amber-300 text-emerald-950 rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-wide mb-3">
                                         {{ $teacher->label }}
                                     </span>
                                     <p class="text-xl font-bold text-emerald-950 mt-2 leading-tight">{{ $teacher->name }}</p>
@@ -333,5 +368,4 @@
             @endif
         </div>
     </div>
-</div>
 @endsection

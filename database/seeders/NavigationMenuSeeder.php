@@ -93,7 +93,7 @@ class NavigationMenuSeeder extends Seeder
             [
                 'menu_key' => 'ppdb_info',
                 'label' => 'Informasi SPMB',
-                'route_name' => 'ppdb.create',
+                'route_name' => 'ppdb.info',
                 'url' => null,
                 'parent_key' => 'ppdb',
                 'sort_order' => 1,

@@ -57,7 +57,7 @@
                     @unless($schoolSetting?->whatsapp_number || $schoolSetting?->email)
                         <p>Email: info@smapersisserang.sch.id</p>
                     @endunless
-                    <a href="{{ route('ppdb.status.form') }}" class="inline-block pt-2 text-amber-300 transition hover:text-amber-200">Cek Status SPMB</a>
+                    <a href="{{ route('spmb.status.form') }}" class="inline-block pt-2 text-amber-300 transition hover:text-amber-200">Cek Status SPMB</a>
                 </div>
             </div>
 
