@@ -79,7 +79,10 @@
         </div>
 
         <div class="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-emerald-100/60 md:flex-row md:items-center md:justify-between">
-            <p>&copy; {{ date('Y') }} {{ $schoolSetting->school_name ?? config('school.name', 'SMA Persis Serang') }}. All rights reserved.</p>
+            <p>
+                &copy; 2026 SMA Persis Serang. All rights reserved.
+                <br>Developed by <span class="font-semibold">Tim IT SMA Persis Serang</span>
+            </p>
             <div class="flex gap-4">
                 @foreach($footerMenuItems->take(3) as $menu)
                     <a href="{{ $menu->url() }}" class="transition hover:text-amber-300">{{ $menu->label }}</a>

@@ -14,16 +14,36 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
+    <body class="font-sans antialiased bg-emerald-50 text-gray-900">
+        <div class="flex min-h-screen flex-col items-center justify-center px-4 py-8">
+            <div class="w-full max-w-sm">
+                <!-- Logo & School Name -->
+                <div class="text-center">
+                    <a href="{{ url('/') }}" class="inline-block">
+                        @php $schoolSetting = \App\Models\SchoolSetting::current(); @endphp
+                        @if($schoolSetting?->logo_path)
+                            <img src="{{ asset('storage/' . $schoolSetting->logo_path) }}"
+                                 alt="{{ $schoolSetting->school_name }}"
+                                 class="mx-auto h-20 w-20 rounded-xl border border-emerald-200 bg-white object-contain p-2 shadow-sm">
+                        @else
+                            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-emerald-200 bg-white text-lg font-bold text-emerald-700 shadow-sm">
+                                {{ substr($schoolSetting->short_name ?? $schoolSetting->school_name ?? 'SP', 0, 2) }}
+                            </div>
+                        @endif
+                        <h1 class="mt-3 text-xl font-bold text-emerald-900">{{ strtoupper($schoolSetting->school_name ?? 'SMA PERSIS SERANG') }}</h1>
+                        <p class="text-xs text-emerald-600">{{ $schoolSetting->tagline ?? 'Islamic Boarding School' }}</p>
+                    </a>
+                </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+                <!-- Card -->
+                <div class="mt-6 rounded-xl border border-emerald-200 bg-white px-6 py-6 shadow-lg shadow-emerald-950/5">
+                    {{ $slot }}
+                </div>
+
+                <p class="mt-6 text-center text-xs text-emerald-600/60">
+                    &copy; {{ date('Y') }} {{ $schoolSetting->school_name ?? 'SMA PERSIS Serang' }}. All rights reserved.
+                    <br>Developed by <span class="font-semibold">Tim IT {{ $schoolSetting->school_name ?? 'SMA PERSIS Serang' }}</span>
+                </p>
             </div>
         </div>
     </body>
