@@ -18,4 +18,14 @@ class SchoolImage extends Model
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function categories()
+    {
+        return $this->belongsToMany(GalleryCategory::class, 'gallery_image_category');
+    }
+
+    public function scopeWhereCategory($query, string $slug)
+    {
+        return $query->whereHas('categories', fn($q) => $q->where('slug', $slug));
+    }
 }

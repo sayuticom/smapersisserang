@@ -40,10 +40,10 @@
                                 @if($image->title)
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ $image->title }}</p>
                                 @else
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $categories[$image->category] ?? $image->category }}</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">Galeri</p>
                                 @endif
                                 <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#EAF6EE] text-[#0F6B3A] flex-shrink-0 ml-2">
-                                    {{ $categories[$image->category] ?? $image->category }}
+                                    {{ $image->categories->first()?->name ?? 'Galeri' }}
                                 </span>
                             </div>
                         </div>

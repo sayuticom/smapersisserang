@@ -422,7 +422,8 @@ class PPDBApplicationTest extends TestCase
         $html = $response->getContent();
 
         $this->assertStringContainsString('Pengaturan Website', $html);
-        $this->assertStringContainsString('Media Website', $html);
+        $this->assertStringContainsString('Galeri Sekolah', $html);
+        $this->assertStringContainsString('Kategori Galeri', $html);
         $this->assertStringContainsString('Tokoh &amp; Pembina', $html);
         $this->assertStringContainsString('Profil Guru', $html);
     }

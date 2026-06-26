@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\GalleryCategoryController;
 use App\Http\Controllers\Admin\NavigationMenuController;
 use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
@@ -20,8 +21,8 @@ Route::get('/', function () {
     $heroImages = collect();
     try {
         $schoolSetting = SchoolSetting::current();
-        $heroImages = SchoolImage::where('category', 'hero')
-            ->where('is_active', true)
+        $heroImages = SchoolImage::where('is_active', true)
+            ->whereHas('categories', fn($q) => $q->where('slug', 'hero'))
             ->orderBy('sort_order')
             ->latest()
             ->get();
@@ -44,6 +45,11 @@ Route::get('/', function () {
         $schoolValues = \App\Models\SchoolValue::where('is_active', true)
             ->orderBy('sort_order')
             ->get();
+
+        $buildingImages = \App\Models\SchoolImage::where('is_active', true)
+            ->whereHas('categories', fn($q) => $q->where('slug', 'fasilitas'))
+            ->orderBy('sort_order')
+            ->get();
     } catch (\Exception $e) {
         $schoolSetting = null;
         $currentAdmissionYear = null;
@@ -51,10 +57,11 @@ Route::get('/', function () {
         $admissionStats = null;
         $homePage = null;
         $schoolValues = collect();
+        $buildingImages = collect();
     }
 
     return view('pages.welcome', compact(
-        'schoolSetting', 'heroImages', 'currentAdmissionYear', 'currentAdmissionProgram', 'admissionStats', 'homePage', 'schoolValues'
+        'schoolSetting', 'heroImages', 'currentAdmissionYear', 'currentAdmissionProgram', 'admissionStats', 'homePage', 'schoolValues', 'buildingImages'
     ));
 });
 
@@ -126,6 +133,16 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'galleryStore'])->name('store');
         Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
         Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('website.categories.')->prefix('website/kategori-galeri')->group(function () {
+        Route::get('/', [GalleryCategoryController::class, 'index'])->name('index');
+        Route::get('/create', [GalleryCategoryController::class, 'create'])->name('create');
+        Route::post('/', [GalleryCategoryController::class, 'store'])->name('store');
+        Route::get('/{galleryCategory}/edit', [GalleryCategoryController::class, 'edit'])->name('edit');
+        Route::put('/{galleryCategory}', [GalleryCategoryController::class, 'update'])->name('update');
+        Route::patch('/{galleryCategory}/toggle', [GalleryCategoryController::class, 'toggle'])->name('toggle');
+        Route::delete('/{galleryCategory}', [GalleryCategoryController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('website.figures.')->prefix('website/tokoh')->group(function () {

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
+use App\Models\GalleryCategory;
 use App\Models\NavigationMenu;
 use App\Models\SchoolFigure;
 use App\Models\SchoolImage;
@@ -165,25 +166,29 @@ class PublicWebsiteTest extends TestCase
     {
         Storage::fake('public');
 
+        $heroCat = GalleryCategory::where('slug', 'hero')->first();
+
         $file1 = UploadedFile::fake()->image('slide1.jpg', 800, 600);
         $path1 = $file1->store('school/hero', 'public');
 
         $file2 = UploadedFile::fake()->image('slide2.jpg', 800, 600);
         $path2 = $file2->store('school/hero', 'public');
 
-        SchoolImage::create([
+        $img1 = SchoolImage::create([
             'image_path' => $path1,
             'category' => 'hero',
             'sort_order' => 1,
             'is_active' => true,
         ]);
+        $img1->categories()->attach($heroCat);
 
-        SchoolImage::create([
+        $img2 = SchoolImage::create([
             'image_path' => $path2,
             'category' => 'hero',
             'sort_order' => 2,
             'is_active' => true,
         ]);
+        $img2->categories()->attach($heroCat);
 
         $response = $this->get('/');
         $response->assertStatus(200);
@@ -335,15 +340,18 @@ class PublicWebsiteTest extends TestCase
     {
         Storage::fake('public');
 
+        $kegiatanCat = GalleryCategory::where('slug', 'kegiatan')->first();
+
         $file = UploadedFile::fake()->image('gallery.jpg', 800, 600);
         $path = $file->store('school/gallery', 'public');
 
-        SchoolImage::create([
+        $img = SchoolImage::create([
             'title' => 'Foto Kegiatan',
             'image_path' => $path,
             'category' => 'kegiatan',
             'is_active' => true,
         ]);
+        $img->categories()->attach($kegiatanCat);
 
         $response = $this->get(route('public.gallery'));
         $response->assertSee('Foto Kegiatan');
@@ -371,26 +379,31 @@ class PublicWebsiteTest extends TestCase
     {
         Storage::fake('public');
 
-        $file1 = UploadedFile::fake()->image('gedung.jpg', 800, 600);
+        $fasilitasCat = GalleryCategory::where('slug', 'fasilitas')->first();
+        $kelasCat = GalleryCategory::where('slug', 'kelas')->first();
+
+        $file1 = UploadedFile::fake()->image('fasilitas.jpg', 800, 600);
         $path1 = $file1->store('school/gallery', 'public');
-        SchoolImage::create([
-            'title' => 'Foto Gedung',
+        $img1 = SchoolImage::create([
+            'title' => 'Foto Fasilitas',
             'image_path' => $path1,
-            'category' => 'gedung',
+            'category' => 'fasilitas',
             'is_active' => true,
         ]);
+        $img1->categories()->attach($fasilitasCat);
 
         $file2 = UploadedFile::fake()->image('kelas.jpg', 800, 600);
         $path2 = $file2->store('school/gallery', 'public');
-        SchoolImage::create([
+        $img2 = SchoolImage::create([
             'title' => 'Foto Kelas',
             'image_path' => $path2,
             'category' => 'kelas',
             'is_active' => true,
         ]);
+        $img2->categories()->attach($kelasCat);
 
-        $response = $this->get(route('public.gallery', ['category' => 'gedung']));
-        $response->assertSee('Foto Gedung');
+        $response = $this->get(route('public.gallery', ['category' => 'fasilitas']));
+        $response->assertSee('Foto Fasilitas');
         $response->assertDontSee('Foto Kelas');
     }
 
@@ -429,21 +442,22 @@ class PublicWebsiteTest extends TestCase
     {
         Storage::fake('public');
 
+        $kegiatanCat = GalleryCategory::where('slug', 'kegiatan')->first();
+
         $admin = User::factory()->create();
         $file = UploadedFile::fake()->image('gallery.jpg', 800, 600);
 
         $this->actingAs($admin)
             ->post(route('admin.website.gallery-images.store'), [
                 'title' => 'Galeri Test',
-                'category' => 'kegiatan',
+                'category_ids' => [$kegiatanCat->id],
                 'sort_order' => 1,
                 'image' => $file,
             ]);
 
-        $image = SchoolImage::where('category', 'kegiatan')->first();
+        $image = SchoolImage::whereHas('categories', fn($q) => $q->where('slug', 'kegiatan'))->first();
         $this->assertNotNull($image);
         $this->assertEquals('Galeri Test', $image->title);
-        $this->assertEquals('kegiatan', $image->category);
         $this->assertTrue($image->is_active);
         $this->assertStringStartsWith('school/gallery/', $image->image_path);
         Storage::disk('public')->assertExists($image->image_path);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Faq;
+use App\Models\GalleryCategory;
 use App\Models\SchoolFigure;
 use App\Models\SchoolImage;
 use App\Models\SchoolSetting;
@@ -19,12 +20,18 @@ class PublicPageController extends Controller
         try {
             $schoolSetting = SchoolSetting::current();
             $websitePage = WebsitePage::key('profile');
+
+            $buildingImages = SchoolImage::where('is_active', true)
+                ->whereHas('categories', fn($q) => $q->where('slug', 'fasilitas'))
+                ->orderBy('sort_order')
+                ->get();
         } catch (\Exception $e) {
             $schoolSetting = null;
             $websitePage = null;
+            $buildingImages = collect();
         }
 
-        return view('pages.profile', compact('schoolSetting', 'websitePage'));
+        return view('pages.profile', compact('schoolSetting', 'websitePage', 'buildingImages'));
     }
 
     public function program()
@@ -74,32 +81,30 @@ class PublicPageController extends Controller
         try {
             $schoolSetting = SchoolSetting::current();
             $websitePage = WebsitePage::key('gallery');
+            $galleryCategories = GalleryCategory::where('slug', '!=', 'hero')
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
         } catch (\Exception $e) {
             $schoolSetting = null;
             $websitePage = null;
+            $galleryCategories = collect();
         }
 
         $category = $request->get('category');
 
-        $query = SchoolImage::where('category', '!=', 'hero')
-            ->where('is_active', true)
+        $query = SchoolImage::where('is_active', true)
+            ->whereHas('categories', fn($q) => $q->where('slug', '!=', 'hero'))
             ->orderBy('sort_order')
             ->latest();
 
-        if ($category && in_array($category, ['gedung', 'kegiatan', 'kelas', 'santri', 'kajian', 'teknologi'])) {
-            $query->where('category', $category);
+        if ($category && $galleryCategories->firstWhere('slug', $category)) {
+            $query->whereHas('categories', fn($q) => $q->where('slug', $category));
         }
 
-        $galleryImages = $query->get();
+        $galleryImages = $query->with('categories')->get();
 
-        $categories = [
-            'gedung' => 'Gedung',
-            'kegiatan' => 'Kegiatan',
-            'kelas' => 'Kelas',
-            'santri' => 'Santri',
-            'kajian' => 'Kajian',
-            'teknologi' => 'Teknologi',
-        ];
+        $categories = $galleryCategories->pluck('name', 'slug');
 
         return view('pages.gallery', compact('schoolSetting', 'galleryImages', 'categories', 'category', 'websitePage'));
     }

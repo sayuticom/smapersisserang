@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Media Website</h2>
-                <p class="text-sm text-gray-500 mt-1">Kelola gambar hero slider, gedung, kegiatan, kelas, santri, kajian, dan teknologi.</p>
+                <p class="text-sm text-gray-500 mt-1">Kelola gambar hero slider, fasilitas, kegiatan, kelas, santri, kajian, dan teknologi.</p>
             </div>
         </div>
 
@@ -35,15 +35,18 @@
                                    class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
                         </div>
                         <div>
-                            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
-                            <select name="category" id="category" required
-                                    class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                                <option value="">Pilih kategori</option>
-                                @foreach($categories as $key => $label)
-                                    <option value="{{ $key }}" {{ old('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                            <div class="flex flex-wrap gap-3">
+                                @foreach($categories as $cat)
+                                    <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+                                        <input type="checkbox" name="category_ids[]" value="{{ $cat->id }}"
+                                               {{ in_array($cat->id, old('category_ids', [])) ? 'checked' : '' }}
+                                               class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                        {{ $cat->name }}
+                                    </label>
                                 @endforeach
-                            </select>
-                            @error('category')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            </div>
+                            @error('category_ids')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
                         <div>
                             <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">Urutan (opsional)</label>
@@ -76,10 +79,10 @@
                        class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors {{ !$category ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                         Semua
                     </a>
-                    @foreach($categories as $key => $label)
-                        <a href="{{ route('admin.website.media.index', ['category' => $key]) }}"
-                           class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors {{ $category === $key ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                            {{ $label }}
+                    @foreach($categories as $cat)
+                        <a href="{{ route('admin.website.media.index', ['category' => $cat->slug]) }}"
+                           class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors {{ $category === $cat->slug ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                            {{ $cat->name }}
                         </a>
                     @endforeach
                 </div>
@@ -97,7 +100,9 @@
                                 <div class="p-3">
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ $image->title ?? '(tanpa judul)' }}</p>
                                     <div class="flex items-center gap-2 mt-1.5">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-emerald-100 text-emerald-700">{{ $categories[$image->category] ?? $image->category }}</span>
+                                        @foreach($image->categories as $imgCat)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-emerald-100 text-emerald-700">{{ $imgCat->name }}</span>
+                                        @endforeach
                                         <span class="text-[10px] text-gray-400">Urutan: {{ $image->sort_order }}</span>
                                     </div>
                                     <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">

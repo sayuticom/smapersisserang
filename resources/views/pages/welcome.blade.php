@@ -198,7 +198,115 @@
             </a>
         </div>
         <div class="relative">
-            @if($schoolSetting?->building_image_path)
+            @if($buildingImages?->isNotEmpty())
+                @php($welcomeImages = $buildingImages->map(fn($img) => [
+                    'src' => asset('storage/' . $img->image_path),
+                    'title' => $img->title ?? '',
+                ])->values())
+                <div class="welcome-carousel relative aspect-[4/3] overflow-hidden rounded-2xl border border-amber-100 shadow-xl shadow-emerald-950/10 bg-[#052E1F]">
+                    <div class="relative h-full w-full">
+                        @foreach($welcomeImages as $i => $img)
+                            <div class="welcome-slide absolute inset-0 {{ $i === 0 ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-500">
+                                <img src="{{ $img['src'] }}"
+                                     alt="{{ $img['title'] ?: 'Foto ' . $displayName }}"
+                                     class="h-full w-full object-cover">
+                                @if($img['title'])
+                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                        <p class="text-sm font-semibold text-white">{{ $img['title'] }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+
+                    @if($welcomeImages->count() > 1)
+                        <button onclick="welcomeCarouselPrev()"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow-md backdrop-blur-sm transition hover:bg-white hover:scale-105">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <button onclick="welcomeCarouselNext()"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-gray-800 shadow-md backdrop-blur-sm transition hover:bg-white hover:scale-105">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+
+                        <div class="welcome-dots absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                            @foreach($welcomeImages as $i => $img)
+                                <button onclick="welcomeCarouselGoTo({{ $i }})"
+                                        class="welcome-dot h-2 rounded-full transition-all duration-300 {{ $i === 0 ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/70' }}">
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+                <script>
+                    (function() {
+                        var el = document.querySelector('.welcome-carousel');
+                        if (!el) return;
+                        var slides = el.querySelectorAll('.welcome-slide');
+                        var dots = el.querySelectorAll('.welcome-dot');
+                        if (!slides.length) return;
+                        var current = 0;
+                        var total = slides.length;
+                        var timer = null;
+
+                        function show(idx) {
+                            slides.forEach(function(s, i) {
+                                s.classList.toggle('opacity-100', i === idx);
+                                s.classList.toggle('opacity-0', i !== idx);
+                            });
+                            if (dots.length) {
+                                dots.forEach(function(d, i) {
+                                    if (i === idx) {
+                                        d.className = 'welcome-dot h-2 rounded-full transition-all duration-300 w-6 bg-white';
+                                    } else {
+                                        d.className = 'welcome-dot h-2 rounded-full transition-all duration-300 w-2 bg-white/50 hover:bg-white/70';
+                                    }
+                                });
+                            }
+                            current = idx;
+                        }
+
+                        function next() {
+                            show((current + 1) % total);
+                            resetTimer();
+                        }
+
+                        function prev() {
+                            show((current - 1 + total) % total);
+                            resetTimer();
+                        }
+
+                        function goTo(idx) {
+                            show(idx);
+                            resetTimer();
+                        }
+
+                        function resetTimer() {
+                            if (timer) clearInterval(timer);
+                            if (total > 1) {
+                                timer = setInterval(next, 4500);
+                            }
+                        }
+
+                        el.addEventListener('mouseenter', function() {
+                            if (timer) clearInterval(timer);
+                        });
+                        el.addEventListener('mouseleave', function() {
+                            resetTimer();
+                        });
+
+                        window.welcomeCarouselNext = next;
+                        window.welcomeCarouselPrev = prev;
+                        window.welcomeCarouselGoTo = goTo;
+
+                        resetTimer();
+                    })();
+                </script>
+            @elseif($schoolSetting?->building_image_path)
                 <div class="aspect-[4/3] overflow-hidden rounded-2xl border border-amber-100 shadow-xl shadow-emerald-950/10">
                     <img src="{{ asset('storage/' . $schoolSetting->building_image_path) }}"
                          alt="Foto {{ $displayName }}"
