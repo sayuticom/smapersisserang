@@ -27,8 +27,7 @@ class TeacherTest extends TestCase
     {
         $this->get(route('public.teachers'))
             ->assertStatus(200)
-            ->assertSee('STRUKTUR PENGAJAR')
-            ->assertSee('Guru Berdasarkan Mata Pelajaran');
+            ->assertSee('Data guru belum tersedia.');
     }
 
     public function test_teachers_page_no_longer_shows_large_hero_copy(): void
@@ -65,7 +64,7 @@ class TeacherTest extends TestCase
         $response->assertSee('Safitri, S.Pd.');
     }
 
-    public function test_teachers_page_does_not_show_category_badge_inside_teacher_cards(): void
+    public function test_teachers_page_shows_category_as_section_heading_not_inside_card(): void
     {
         $teacher = Teacher::create([
             'name' => 'Safitri, S.Pd.',
@@ -85,7 +84,8 @@ class TeacherTest extends TestCase
             ->assertStatus(200)
             ->getContent();
 
-        $this->assertSame(0, substr_count($content, 'Mata Pelajaran Nasional'));
+        $this->assertSame(1, substr_count($content, 'Mata Pelajaran Nasional'));
+        $this->assertStringContainsString('Mata Pelajaran Nasional', $content);
     }
 
     public function test_teachers_page_shows_headmaster_as_first_teacher_card(): void

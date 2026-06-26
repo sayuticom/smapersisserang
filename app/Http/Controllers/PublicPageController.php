@@ -7,6 +7,7 @@ use App\Models\SchoolFigure;
 use App\Models\SchoolImage;
 use App\Models\SchoolSetting;
 use App\Models\SchoolSubject;
+use App\Models\SchoolValue;
 use App\Models\Teacher;
 use App\Models\WebsitePage;
 use Illuminate\Http\Request;
@@ -39,15 +40,20 @@ class PublicPageController extends Controller
                 ->orderBy('sort_order')
                 ->get()
                 ->groupBy('category');
+
+            $schoolValues = SchoolValue::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
         } catch (\Exception $e) {
             $schoolSetting = null;
             $websitePage = null;
             $subjectsByCategory = collect();
+            $schoolValues = collect();
         }
 
         $subjectCategories = SchoolSubject::CATEGORIES;
 
-        return view('pages.program', compact('schoolSetting', 'websitePage', 'subjectCategories', 'subjectsByCategory'));
+        return view('pages.program', compact('schoolSetting', 'websitePage', 'subjectCategories', 'subjectsByCategory', 'schoolValues'));
     }
 
     public function boarding()
@@ -139,45 +145,71 @@ class PublicPageController extends Controller
         try {
             $schoolSetting = SchoolSetting::current();
 
-            $subjectRelation = function ($query) {
-                $query->where('school_subjects.is_active', true)
-                    ->orderBy('school_subjects.sort_order');
-            };
-
-            $headmaster = Teacher::with(['subjects' => $subjectRelation])
+            $headmaster = Teacher::with(['subjects' => function ($query) {
+                    $query->where('school_subjects.is_active', true)
+                        ->orderBy('school_subjects.sort_order');
+                }])
                 ->where('is_active', true)
                 ->where('position', 'Kepala Sekolah')
                 ->orderBy('sort_order')
                 ->first();
 
-            $teachers = Teacher::with(['subjects' => $subjectRelation])
+            if ($headmaster) {
+                $headmaster->setAttribute('label', 'KEPALA SEKOLAH');
+            }
+
+            $teachers = Teacher::with(['subjects' => function ($query) {
+                    $query->where('school_subjects.is_active', true)
+                        ->orderBy('school_subjects.sort_order');
+                }])
                 ->where('is_active', true)
-                ->where(function ($query) {
-                    $query->whereNull('position')
+                ->where(function ($q) {
+                    $q->whereNull('position')
                         ->orWhere('position', '!=', 'Kepala Sekolah');
                 })
                 ->orderBy('sort_order')
                 ->get();
 
-            if ($headmaster) {
-                $headmaster->setAttribute('is_kepala_sekolah', true);
-                $headmaster->setAttribute('label', 'KEPALA SEKOLAH');
+            $groupedByCategory = collect();
+            $orphanTeachers = collect();
+
+            foreach ($teachers as $teacher) {
+                $teacher->setAttribute('label', 'GURU PENGAMPU');
+                $activeSubjects = $teacher->subjects;
+
+                if ($activeSubjects->isEmpty()) {
+                    $orphanTeachers->push($teacher);
+                    continue;
+                }
+
+                $primarySubject = $activeSubjects->first();
+                $category = $primarySubject->category;
+
+                if (!$groupedByCategory->has($category)) {
+                    $groupedByCategory->put($category, collect([
+                        'category_label' => $primarySubject->category_label,
+                        'teachers' => collect(),
+                    ]));
+                }
+
+                $categoryGroup = $groupedByCategory->get($category);
+                $alreadyAdded = $categoryGroup['teachers']->first(fn($t) => $t->id === $teacher->id);
+                if (!$alreadyAdded) {
+                    $categoryGroup['teachers']->push($teacher);
+                }
             }
 
-            $teachers->each(function ($teacher) {
-                $teacher->setAttribute('is_kepala_sekolah', false);
-                $teacher->setAttribute('label', 'GURU PENGAMPU');
-            });
-
-            $teacherCards = collect($headmaster ? [$headmaster] : [])->concat($teachers)->values();
+            $groupedByCategory = $groupedByCategory->sortKeys();
 
             $websitePage = WebsitePage::key('teachers');
         } catch (\Exception $e) {
             $schoolSetting = null;
-            $teacherCards = collect();
+            $headmaster = null;
+            $groupedByCategory = collect();
+            $orphanTeachers = collect();
             $websitePage = null;
         }
 
-        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'teacherCards'));
+        return view('pages.teachers', compact('schoolSetting', 'websitePage', 'headmaster', 'groupedByCategory', 'orphanTeachers'));
     }
 }

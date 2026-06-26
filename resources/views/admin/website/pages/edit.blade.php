@@ -1,3 +1,16 @@
+@php
+    $sectionContent = null;
+    if ($websitePage->content) {
+        $decoded = json_decode($websitePage->content, true);
+        if (is_array($decoded)) {
+            $sectionContent = $decoded;
+        }
+    }
+    $oldSectionLabel = old('section_label', $sectionContent['section_label'] ?? '');
+    $oldSectionHeading = old('section_heading', $sectionContent['section_heading'] ?? '');
+    $oldSectionSubtitle = old('section_subtitle', $sectionContent['section_subtitle'] ?? '');
+@endphp
+
 <x-admin-layout>
     <div class="max-w-3xl mx-auto">
         <div class="mb-6">
@@ -29,10 +42,41 @@
                 @error('subtitle') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <hr class="border-gray-200">
+
+            <p class="text-sm font-semibold text-gray-700">Konten Section Nilai Utama</p>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Konten</label>
-                <textarea name="content" rows="5"
-                          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">{{ old('content', $websitePage->content) }}</textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Label Section</label>
+                <input type="text" name="section_label" value="{{ $oldSectionLabel }}"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]"
+                       placeholder="contoh: NILAI UTAMA">
+                <p class="text-xs text-gray-400 mt-1">Teks badge di atas judul section</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Judul Section</label>
+                <input type="text" name="section_heading" value="{{ $oldSectionHeading }}"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]"
+                       placeholder="contoh: Nilai Utama">
+                <p class="text-xs text-gray-400 mt-1">Judul utama section</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle Section</label>
+                <input type="text" name="section_subtitle" value="{{ $oldSectionSubtitle }}"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]"
+                       placeholder="contoh: Membentuk karakter dan kompetensi siswa secara holistik">
+                <p class="text-xs text-gray-400 mt-1">Deskripsi di bawah judul section</p>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Konten (JSON)</label>
+                <textarea name="content" rows="3"
+                          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">{{ old('content', $websitePage->content) }}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Konten JSON tambahan jika diperlukan. Data section label/judul/subtitle sudah diisi lewat form di atas.</p>
                 @error('content') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 

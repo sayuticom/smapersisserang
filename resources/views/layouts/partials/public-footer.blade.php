@@ -62,20 +62,17 @@
             </div>
 
             <div>
-                <h4 class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-amber-300">Ikuti Kami</h4>
+                <h4 class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-amber-300">Menu</h4>
                 <div class="space-y-2 text-sm">
-                    @if($schoolSetting?->instagram_url)
-                        <a href="{{ $schoolSetting->instagram_url }}" target="_blank" rel="noopener" class="block text-emerald-100/75 transition hover:text-amber-300">Instagram</a>
-                    @endif
-                    @if($schoolSetting?->facebook_url)
-                        <a href="{{ $schoolSetting->facebook_url }}" target="_blank" rel="noopener" class="block text-emerald-100/75 transition hover:text-amber-300">Facebook</a>
-                    @endif
-                    @if($schoolSetting?->youtube_url)
-                        <a href="{{ $schoolSetting->youtube_url }}" target="_blank" rel="noopener" class="block text-emerald-100/75 transition hover:text-amber-300">YouTube</a>
-                    @endif
-                    @unless($schoolSetting?->instagram_url || $schoolSetting?->facebook_url || $schoolSetting?->youtube_url)
-                        <a href="{{ route('public.gallery') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Galeri Sekolah</a>
-                    @endunless
+                    @forelse($footerMenuItems as $menu)
+                        <a href="{{ $menu->url() }}"
+                           class="block text-emerald-100/75 transition hover:text-amber-300">
+                            {{ $menu->label }}
+                        </a>
+                    @empty
+                        <a href="{{ route('public.profile') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Profil</a>
+                        <a href="{{ route('public.teachers') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Guru</a>
+                    @endforelse
                     <a href="{{ route('login') }}" class="block pt-2 text-emerald-100/75 transition hover:text-amber-300">Login Admin</a>
                 </div>
             </div>
@@ -84,8 +81,9 @@
         <div class="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-emerald-100/60 md:flex-row md:items-center md:justify-between">
             <p>&copy; {{ date('Y') }} {{ $schoolSetting->school_name ?? config('school.name', 'SMA Persis Serang') }}. All rights reserved.</p>
             <div class="flex gap-4">
-                <a href="{{ route('public.profile') }}" class="transition hover:text-amber-300">Profil</a>
-                <a href="{{ route('ppdb.create') }}" class="transition hover:text-amber-300">SPMB</a>
+                @foreach($footerMenuItems->take(3) as $menu)
+                    <a href="{{ $menu->url() }}" class="transition hover:text-amber-300">{{ $menu->label }}</a>
+                @endforeach
             </div>
         </div>
     </div>

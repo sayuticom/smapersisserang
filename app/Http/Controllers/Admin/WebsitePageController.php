@@ -26,6 +26,9 @@ class WebsitePageController extends Controller
             'title' => 'nullable|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'content' => 'nullable|string',
+            'section_label' => 'nullable|string|max:255',
+            'section_heading' => 'nullable|string|max:255',
+            'section_subtitle' => 'nullable|string|max:255',
             'button_primary_text' => 'nullable|string|max:100',
             'button_primary_url' => 'nullable|string|max:255',
             'button_secondary_text' => 'nullable|string|max:100',
@@ -35,6 +38,22 @@ class WebsitePageController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+
+        $existingContent = [];
+        if ($websitePage->content) {
+            $decoded = json_decode($websitePage->content, true);
+            if (is_array($decoded)) {
+                $existingContent = $decoded;
+            }
+        }
+
+        $existingContent['section_label'] = $data['section_label'] ?? '';
+        $existingContent['section_heading'] = $data['section_heading'] ?? '';
+        $existingContent['section_subtitle'] = $data['section_subtitle'] ?? '';
+
+        $data['content'] = json_encode($existingContent, JSON_UNESCAPED_UNICODE);
+
+        unset($data['section_label'], $data['section_heading'], $data['section_subtitle']);
 
         $websitePage->update($data);
 

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\NavigationMenu;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,5 +54,24 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         }
+
+        View::composer('layouts.partials.public-header', function ($view) {
+            $items = NavigationMenu::active()
+                ->location('public_header')
+                ->whereNull('parent_key')
+                ->orderBy('sort_order')
+                ->get();
+
+            $view->with('publicMenuItems', $items);
+        });
+
+        View::composer('layouts.partials.public-footer', function ($view) {
+            $items = NavigationMenu::active()
+                ->whereNull('parent_key')
+                ->orderBy('sort_order')
+                ->get();
+
+            $view->with('footerMenuItems', $items);
+        });
     }
 }

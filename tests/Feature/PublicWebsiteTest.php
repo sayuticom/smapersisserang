@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
+use App\Models\NavigationMenu;
 use App\Models\SchoolFigure;
 use App\Models\SchoolImage;
 use App\Models\SchoolSetting;
@@ -109,10 +110,10 @@ class PublicWebsiteTest extends TestCase
 
         $response = $this->get(route('public.profile'));
 
-        $response->assertSee('Daftar SPMB');
-        $response->assertSee('Cek Status');
         $response->assertSee('6281234567890');
         $response->assertSee('info@test.sch.id');
+        $response->assertSee('Lihat Program');
+        $response->assertSee('Hubungi Kami');
     }
 
     public function test_profile_page_works_without_school_settings(): void
@@ -260,6 +261,14 @@ class PublicWebsiteTest extends TestCase
 
     public function test_header_has_program_link(): void
     {
+        NavigationMenu::create([
+            'menu_key' => 'program',
+            'label' => 'Program',
+            'route_name' => 'public.program',
+            'sort_order' => 3,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee(route('public.program'));
@@ -303,6 +312,14 @@ class PublicWebsiteTest extends TestCase
 
     public function test_header_has_boarding_link(): void
     {
+        NavigationMenu::create([
+            'menu_key' => 'boarding',
+            'label' => 'Boarding',
+            'route_name' => 'public.boarding',
+            'sort_order' => 4,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee(route('public.boarding'));
@@ -385,6 +402,14 @@ class PublicWebsiteTest extends TestCase
 
     public function test_header_has_gallery_link(): void
     {
+        NavigationMenu::create([
+            'menu_key' => 'gallery',
+            'label' => 'Galeri',
+            'route_name' => 'public.gallery',
+            'sort_order' => 5,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee(route('public.gallery'));
@@ -499,6 +524,14 @@ class PublicWebsiteTest extends TestCase
 
     public function test_header_has_figures_link(): void
     {
+        NavigationMenu::create([
+            'menu_key' => 'figures',
+            'label' => 'Tokoh',
+            'route_name' => 'public.figures',
+            'sort_order' => 6,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee(route('public.figures'));
@@ -527,6 +560,23 @@ class PublicWebsiteTest extends TestCase
 
     public function test_header_shows_daftar_ppdb_link_in_dropdown(): void
     {
+        NavigationMenu::create([
+            'menu_key' => 'ppdb',
+            'label' => 'SPMB',
+            'url' => '#',
+            'sort_order' => 8,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
+        NavigationMenu::create([
+            'menu_key' => 'ppdb_register',
+            'label' => 'Daftar SPMB',
+            'route_name' => 'ppdb.create',
+            'parent_key' => 'ppdb',
+            'sort_order' => 2,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee('Daftar SPMB');
