@@ -11,9 +11,15 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.website.menus.update', $navigationMenu) }}" method="POST" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+        <form action="{{ route('admin.website.menus.update', $navigationMenu) }}" method="POST"
+              class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5"
+              x-data="{ isExternal: {{ old('is_external', $navigationMenu->is_external) ? 'true' : 'false' }}, linkType: '{{ old('link_type', $linkType) }}' }">
             @csrf
             @method('PUT')
+
+            <style>
+                [x-cloak] { display: none !important; }
+            </style>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Label <span class="text-red-500">*</span></label>
@@ -61,10 +67,59 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" name="is_external" id="is_external" value="1"
+                           x-model="isExternal"
                            {{ old('is_external', $navigationMenu->is_external) ? 'checked' : '' }}
                            class="rounded border-gray-300 text-[#0F6B3A] focus:ring-[#0F6B3A]">
                     <label for="is_external" class="text-sm font-medium text-gray-700">Link Eksternal</label>
                 </div>
+            </div>
+
+            <div x-show="!isExternal" x-cloak x-transition>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Link</label>
+                <div class="flex items-center gap-4">
+                    <label class="inline-flex items-center gap-2">
+                        <input type="radio" name="link_type" value="route" x-model="linkType"
+                               {{ old('link_type', $linkType) === 'route' ? 'checked' : '' }}
+                               class="text-[#0F6B3A] focus:ring-[#0F6B3A]">
+                        Route Internal
+                    </label>
+                    <label class="inline-flex items-center gap-2">
+                        <input type="radio" name="link_type" value="manual" x-model="linkType"
+                               {{ old('link_type', $linkType) === 'manual' ? 'checked' : '' }}
+                               class="text-[#0F6B3A] focus:ring-[#0F6B3A]">
+                        URL Manual
+                    </label>
+                </div>
+            </div>
+
+            <div x-show="!isExternal && linkType === 'route'" x-cloak x-transition>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Route Internal</label>
+                <select name="route_name"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
+                    <option value="">Pilih halaman...</option>
+                    <option value="home" {{ old('route_name', $selectedRoute) === 'home' ? 'selected' : '' }}>Beranda (/)</option>
+                    <option value="public.profile" {{ old('route_name', $selectedRoute) === 'public.profile' ? 'selected' : '' }}>Profil (/profil)</option>
+                    <option value="public.program" {{ old('route_name', $selectedRoute) === 'public.program' ? 'selected' : '' }}>Program (/program)</option>
+                    <option value="public.boarding" {{ old('route_name', $selectedRoute) === 'public.boarding' ? 'selected' : '' }}>Boarding (/boarding-school)</option>
+                    <option value="public.teachers" {{ old('route_name', $selectedRoute) === 'public.teachers' ? 'selected' : '' }}>Guru (/guru)</option>
+                    <option value="ppdb.info" {{ old('route_name', $selectedRoute) === 'ppdb.info' ? 'selected' : '' }}>SPMB (/ppdb)</option>
+                    <option value="contact" {{ old('route_name', $selectedRoute) === 'contact' ? 'selected' : '' }}>Kontak (/#kontak)</option>
+                    <option value="public.gallery" {{ old('route_name', $selectedRoute) === 'public.gallery' ? 'selected' : '' }}>Galeri (/galeri)</option>
+                    <option value="public.figures" {{ old('route_name', $selectedRoute) === 'public.figures' ? 'selected' : '' }}>Tokoh (/tokoh-pembina)</option>
+                    <option value="public.faq" {{ old('route_name', $selectedRoute) === 'public.faq' ? 'selected' : '' }}>FAQ (/faq)</option>
+                </select>
+                @error('route_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <div x-show="isExternal || linkType === 'manual'" x-cloak x-transition>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    URL Manual
+                    <span x-show="isExternal" class="text-red-500">*</span>
+                </label>
+                <input type="text" name="url" value="{{ old('url', $navigationMenu->url) }}"
+                       placeholder="https://contoh.com atau /halaman-khusus"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
+                @error('url') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
             <div class="flex items-center gap-3 pt-2">

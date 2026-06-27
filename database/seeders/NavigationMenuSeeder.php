@@ -83,8 +83,8 @@ class NavigationMenuSeeder extends Seeder
             [
                 'menu_key' => 'ppdb',
                 'label' => 'SPMB',
-                'route_name' => null,
-                'url' => '#',
+                'route_name' => 'ppdb.info',
+                'url' => null,
                 'parent_key' => null,
                 'sort_order' => 8,
                 'location' => 'public_header',

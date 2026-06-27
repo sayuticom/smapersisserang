@@ -22,7 +22,20 @@ class NavigationMenuController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('admin.website.menus.edit', compact('navigationMenu', 'parentOptions'));
+        $selectedRoute = $navigationMenu->route_name;
+        if (!$selectedRoute) {
+            if ($navigationMenu->url === '/') {
+                $selectedRoute = 'home';
+            } elseif ($navigationMenu->url === '/#kontak') {
+                $selectedRoute = 'contact';
+            }
+        }
+
+        $linkType = $selectedRoute ? 'route' : 'manual';
+
+        return view('admin.website.menus.edit', compact(
+            'navigationMenu', 'parentOptions', 'selectedRoute', 'linkType'
+        ));
     }
 
     public function update(Request $request, NavigationMenu $navigationMenu)
@@ -34,10 +47,38 @@ class NavigationMenuController extends Controller
             'location' => 'required|string|max:100',
             'is_active' => 'nullable|boolean',
             'is_external' => 'nullable|boolean',
+            'link_type' => 'nullable|string|in:route,manual',
+            'route_name' => 'nullable|string|max:100',
+            'url' => 'nullable|string|max:500',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
         $data['is_external'] = $request->boolean('is_external');
+
+        $linkType = $request->input('link_type', 'manual');
+        $isExternal = $request->boolean('is_external');
+
+        if ($isExternal) {
+            $data['route_name'] = null;
+            $data['url'] = $request->input('url');
+        } elseif ($linkType === 'route') {
+            $routeName = $request->input('route_name');
+            if ($routeName === 'home') {
+                $data['route_name'] = null;
+                $data['url'] = '/';
+            } elseif ($routeName === 'contact') {
+                $data['route_name'] = null;
+                $data['url'] = '/#kontak';
+            } else {
+                $data['route_name'] = $routeName ?: null;
+                if ($routeName) {
+                    $data['url'] = null;
+                }
+            }
+        } else {
+            $data['route_name'] = null;
+            $data['url'] = $request->input('url');
+        }
 
         $navigationMenu->update($data);
 

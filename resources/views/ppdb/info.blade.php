@@ -1,142 +1,183 @@
 @extends('layouts.public')
 
 @section('content')
+@php
+    $academicYear = $admissionYear?->academic_year ?? '2026/2027';
+    $programQuota = 36;
+    $registrationFee = 0;
+    $programName = 'Program Gratis Angkatan Pertama';
+    $whatsappUrl = $schoolSetting?->whatsappLink('Assalamu\'alaikum, saya ingin konsultasi tentang SPMB SMA Persis Serang.') ?? '#kontak';
+@endphp
+
 <div class="bg-white">
-    <div class="relative bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800">
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
-        <div class="relative max-w-7xl mx-auto px-4 py-16 sm:py-24 text-center">
-            @if($admissionYear)
-                @php
-                    $badgeLabels = [
-                        'open' => 'SPMB ' . $admissionYear->academic_year . ' Dibuka',
-                        'almost_full' => 'Kuota Hampir Penuh',
-                        'quota_full' => 'Kuota Penuh',
-                        'closed' => 'Pendaftaran Ditutup',
-                        'draft' => 'SPMB Belum Dibuka',
-                        'announcement' => 'Masa Pengumuman',
-                        'archived' => 'SPMB Tidak Aktif',
-                    ];
-                    $badgeLabel = $badgeLabels[$admissionYear->status] ?? 'SPMB';
-                @endphp
-                <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur mb-6">
-                    <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-                    {{ $badgeLabel }}
-                </div>
-            @endif
-            <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3">Informasi SPMB</h1>
-            <p class="text-emerald-100 text-sm sm:text-base max-w-xl mx-auto">
-                @if($admissionYear)
-                    {{ $admissionYear->name ?? 'Seleksi Penerimaan Murid Baru ' . $admissionYear->academic_year }}
-                @else
-                    Sistem Penerimaan Murid Baru SMA Persis Serang
-                @endif
+    <section class="relative isolate overflow-hidden bg-gradient-to-br from-[#052E1F] via-[#0A4F2B] to-[#0F6B3A]">
+        <div class="absolute inset-0 opacity-[0.06]"
+             style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
+        <div class="relative z-10 mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 lg:py-20">
+            <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
+                <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                SPMB Tahun Ajaran {{ $academicYear }}
+            </div>
+
+            <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+                Penerimaan Murid Baru SMA Persis Serang
+            </h1>
+            <div class="mx-auto mt-4 h-1.5 w-32 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"></div>
+            <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl">
+                Islamic Boarding School berbasis Akhlak dan Teknologi
             </p>
+            <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed text-amber-100 shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base">
+                Gratis biaya sekolah dan asrama khusus angkatan pertama 36 murid
+            </p>
+            <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <a href="{{ route('spmb.create') }}"
+                   class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
+                    Daftar SPMB
+                </a>
+                <a href="{{ $whatsappUrl }}"
+                   target="_blank"
+                   class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
+                    Konsultasi WhatsApp
+                </a>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="max-w-5xl mx-auto px-4 py-12 sm:py-16 space-y-10">
-        @if($admissionYear && $admissionStats)
-            <div class="grid gap-5 sm:grid-cols-3">
-                <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 text-center shadow-sm">
-                    <div class="text-3xl font-bold text-emerald-700">{{ $admissionStats['totalApplicants'] }}</div>
-                    <p class="mt-1 text-sm font-medium text-gray-600">Total Pendaftar</p>
-                </div>
-                <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 text-center shadow-sm">
-                    <div class="text-3xl font-bold text-emerald-700">{{ $admissionStats['totalAccepted'] }}</div>
-                    <p class="mt-1 text-sm font-medium text-gray-600">Diterima</p>
-                </div>
-                <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 text-center shadow-sm">
-                    <div class="text-3xl font-bold text-emerald-700">{{ $admissionStats['remainingQuota'] }}</div>
-                    <p class="mt-1 text-sm font-medium text-gray-600">Sisa Kuota</p>
-                </div>
-            </div>
-        @endif
-
-        @if($programs->isNotEmpty())
-            <div>
-                <h2 class="text-xl font-bold text-gray-900 mb-5">Program Pendaftaran</h2>
-                <div class="grid gap-5 sm:grid-cols-2">
-                    @foreach($programs as $program)
-                        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <h3 class="text-lg font-bold text-gray-900">{{ $program->name }}</h3>
-                                    <span class="inline-flex items-center mt-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-0.5 text-xs font-medium text-emerald-700">
-                                        @if($program->is_free_program)
-                                            Program Khusus
-                                        @else
-                                            SPMB Reguler
-                                        @endif
-                                    </span>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-2xl font-bold text-emerald-700">{{ $program->quota }}</div>
-                                    <p class="text-xs text-gray-500">Kuota</p>
-                                </div>
-                            </div>
-                            <div class="mt-4 space-y-1 text-sm text-gray-600">
-                                @if($program->tuition_fee)
-                                    <p>Biaya Pendidikan: Rp{{ number_format($program->tuition_fee, 0, ',', '.') }}</p>
-                                @endif
-                                @if($program->boarding_fee)
-                                    <p>Biaya Asrama: Rp{{ number_format($program->boarding_fee, 0, ',', '.') }}</p>
-                                @endif
-                                @if($program->meal_fee)
-                                    <p>Biaya Makan: Rp{{ number_format($program->meal_fee, 0, ',', '.') }}</p>
-                                @endif
-                                @if($program->registration_fee)
-                                    <p>Biaya Pendaftaran: Rp{{ number_format($program->registration_fee, 0, ',', '.') }}</p>
-                                @endif
-                                @if($program->is_free_program)
-                                    <p class="text-emerald-600 font-medium">Gratis biaya pendidikan, asrama, dan makan</p>
-                                @endif
-                            </div>
+    <main class="bg-[#FBF7EF]">
+        <section class="py-12 lg:py-16">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                @if($admissionYear && $admissionStats)
+                    <div class="grid gap-5 md:grid-cols-3">
+                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
+                            <p class="text-sm font-semibold text-emerald-800">Total Pendaftar</p>
+                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['totalApplicants'] }}</div>
                         </div>
-                    @endforeach
-                </div>
+                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
+                            <p class="text-sm font-semibold text-emerald-800">Diterima</p>
+                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['totalAccepted'] }}</div>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
+                            <p class="text-sm font-semibold text-emerald-800">Sisa Kuota</p>
+                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['remainingQuota'] }}</div>
+                        </div>
+                    </div>
+                @endif
             </div>
-        @else
-            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-10 text-center">
-                <p class="text-gray-500 font-medium">Belum ada program pendaftaran yang tersedia.</p>
-                <p class="text-gray-400 text-sm mt-1">Silakan hubungi panitia SPMB untuk informasi lebih lanjut.</p>
-            </div>
-        @endif
+        </section>
 
-        @if($admissionYear)
-            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-8 text-center border border-emerald-200">
-                <h3 class="text-lg font-bold text-emerald-800 mb-2">Siap Bergabung?</h3>
-                <p class="text-sm text-emerald-600 mb-6">
-                    @if(in_array($admissionYear->status, ['open', 'almost_full']))
-                        Daftarkan diri Anda sekarang juga melalui form pendaftaran online.
-                    @else
-                        Silakan hubungi tim SPMB kami untuk informasi lebih lanjut.
-                    @endif
-                </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    @if(in_array($admissionYear->status, ['open', 'almost_full']))
-                        <a href="{{ route('spmb.create') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                            Daftar SPMB
+        <section class="pb-12 lg:pb-16">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-2xl text-center">
+                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">SPMB SMA Persis Serang</p>
+                    <h2 class="mt-3 text-3xl font-bold text-gray-900 lg:text-4xl">Program Pendaftaran</h2>
+                    <p class="mt-4 text-lg leading-relaxed text-gray-600">
+                        Kesempatan bergabung di angkatan pertama dengan dukungan pendidikan berasrama yang terarah.
+                    </p>
+                </div>
+
+                @if($programs->isNotEmpty())
+                    <div class="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
+                        <article class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 lg:p-8">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
+                                        Program Khusus
+                                    </span>
+                                    <h3 class="mt-4 text-2xl font-bold text-gray-900">{{ $programName }}</h3>
+                                    <p class="mt-3 text-sm leading-relaxed text-gray-600">
+                                        Gratis pendidikan, asrama, dan makan untuk murid angkatan pertama yang mengikuti proses SPMB.
+                                    </p>
+                                </div>
+                                <div class="w-full rounded-2xl bg-[#EAF6EE] p-4 text-center sm:w-32">
+                                    <div class="text-3xl font-bold text-[#0F6B3A]">{{ $programQuota }}</div>
+                                    <p class="text-xs font-semibold text-emerald-800">Kuota Murid</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Biaya</p>
+                                    <p class="mt-1 text-2xl font-bold text-gray-900">Rp{{ number_format($registrationFee, 0, ',', '.') }}</p>
+                                </div>
+                                <div class="rounded-2xl border border-emerald-100 bg-white p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tahun Ajaran</p>
+                                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ $academicYear }}</p>
+                                </div>
+                            </div>
+                        </article>
+
+                        <aside class="rounded-2xl border border-amber-100 bg-white p-6 shadow-md shadow-emerald-950/5 lg:p-8">
+                            <h3 class="text-xl font-bold text-gray-900">Benefit Angkatan Pertama</h3>
+                            <div class="mt-6 space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </span>
+                                    <p class="text-sm leading-relaxed text-gray-600">Gratis biaya pendidikan selama program berjalan.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </span>
+                                    <p class="text-sm leading-relaxed text-gray-600">Gratis fasilitas asrama dalam lingkungan Islamic Boarding School.</p>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </span>
+                                    <p class="text-sm leading-relaxed text-gray-600">Gratis makan untuk mendukung kegiatan belajar dan pembinaan harian.</p>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                @else
+                    <div class="mt-10 rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
+                        <p class="font-semibold text-gray-700">Belum ada program SPMB yang tersedia.</p>
+                        <p class="mt-2 text-sm text-gray-500">Silakan hubungi panitia SPMB untuk informasi lebih lanjut.</p>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <section class="bg-white py-12 lg:py-16">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50 p-6 text-center shadow-md shadow-emerald-950/5 sm:p-8 lg:p-12">
+                    <p class="text-sm font-bold uppercase tracking-[0.2em] text-[#D4A017]">SPMB {{ $academicYear }}</p>
+                    <h2 class="mt-3 text-3xl font-bold text-gray-900 lg:text-4xl">Siap Bergabung?</h2>
+                    <p class="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-gray-600">
+                        @if($admissionYear && in_array($admissionYear->status, ['open', 'almost_full']))
+                            Daftarkan putra-putri Anda sekarang dan lengkapi data melalui form SPMB online.
+                        @else
+                            Hubungi tim SPMB kami untuk informasi jadwal, kuota, dan proses seleksi berikutnya.
+                        @endif
+                    </p>
+                    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                        @if(!$admissionYear || in_array($admissionYear->status, ['open', 'almost_full']))
+                            <a href="{{ route('spmb.create') }}"
+                               class="inline-flex w-full items-center justify-center rounded-xl bg-[#0F6B3A] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-[#0A4F2B] sm:w-auto">
+                                Daftar SPMB
+                            </a>
+                        @endif
+                        <a href="{{ route('spmb.status.form') }}"
+                           class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#0F6B3A] bg-white px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE] sm:w-auto">
+                            Cek Status
                         </a>
-                    @endif
-                    <a href="{{ route('spmb.status.form') }}"
-                       class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-white text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-colors border border-emerald-200">
-                        Cek Status
-                    </a>
-                    <a href="https://wa.me/62{{ preg_replace('/^0/', '', $schoolSetting->phone ?? '') }}"
-                       target="_blank"
-                       class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-200 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        Konsultasi
-                    </a>
+                        <a href="{{ $whatsappUrl }}"
+                           target="_blank"
+                           class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#D4A017] bg-white px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5 sm:w-auto">
+                            Konsultasi WhatsApp
+                        </a>
+                    </div>
                 </div>
             </div>
-        @else
-            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-8 text-center border border-emerald-200">
-                <h3 class="text-lg font-bold text-emerald-800 mb-2">Informasi SPMB Belum Tersedia</h3>
-                <p class="text-sm text-emerald-600">Saat ini belum ada informasi mengenai SPMB. Silakan hubungi sekolah untuk informasi lebih lanjut.</p>
-            </div>
-        @endif
-    </div>
+        </section>
+    </main>
 </div>
 @endsection
