@@ -5,6 +5,10 @@
             <p class="text-sm text-gray-500 mt-0.5">Kelola tahun ajaran dan program pendaftaran</p>
         </div>
 
+        <div class="p-4 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg">
+            <strong>Informasi:</strong> Tahun Ajaran mengatur periode utama SPMB. Program Pendaftaran mengatur jalur atau program di dalam tahun ajaran tersebut. Beberapa field tampil langsung di halaman publik <strong>/spmb</strong>.
+        </div>
+
         @if(session('success'))
             <div class="p-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">
                 {{ session('success') }}
@@ -38,20 +42,23 @@
                 <div class="p-5 space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Tahun Ajaran</label>
                             <input type="text" name="name" value="{{ old('name', $currentYear?->name ?? '') }}"
                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                            <p class="mt-1 text-xs text-gray-400">Label internal. Contoh: Tahun Ajaran 2026/2027.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Tahun Ajaran</label>
                             <input type="text" name="academic_year" value="{{ old('academic_year', $currentYear?->academic_year ?? '') }}"
                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required
                                    placeholder="2026/2027">
+                            <p class="mt-1 text-xs text-gray-400">Akan tampil sebagai badge, misalnya: SPMB Tahun Ajaran 2026/2027.</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Total</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Total SPMB</label>
                             <input type="number" name="quota" value="{{ old('quota', $currentYear?->quota ?? 36) }}"
                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required min="1">
+                            <p class="mt-1 text-xs text-gray-400">Digunakan untuk menghitung sisa kuota di halaman publik. Jumlah seluruh program.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
@@ -63,6 +70,7 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-xs text-gray-400">Status utama SPMB. Menampilkan badge dan tombol CTA di halaman publik. Program tidak bisa diakses jika tidak <strong>open</strong>.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Mulai</label>
@@ -76,15 +84,16 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Catatan Internal</label>
                         <textarea name="description" rows="3"
                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('description', $currentYear?->description ?? '') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-400">Tidak ditampilkan di halaman publik. Gunakan <strong>Deskripsi Promosi SPMB</strong> pada Program Pendaftaran untuk teks promosi.</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gambar Promo SPMB</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gambar Hero SPMB</label>
                         <input type="file" name="promo_image" accept="image/jpeg,image/png,image/webp"
                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                        <p class="mt-1 text-xs text-gray-400">Format: JPG, PNG, WebP. Maksimal 2MB.</p>
+                        <p class="mt-1 text-xs text-gray-400">Format: JPG, PNG, WebP. Maksimal 2MB. Tampil di halaman /spmb sebagai gambar utama.</p>
                         @if($currentYear?->promo_image)
                             <div class="mt-3">
                                 <img src="{{ asset('storage/' . $currentYear->promo_image) }}"
@@ -106,6 +115,7 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Program</label>
                             <input type="text" name="program_name" value="{{ old('program_name', $currentProgram?->name ?? '') }}"
                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
+                            <p class="mt-1 text-xs text-gray-400">Tampil di halaman /spmb dan beranda website. Contoh: Program Gratis Angkatan Pertama.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Tipe Program</label>
@@ -119,9 +129,10 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Program</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kuota Program Ini</label>
                             <input type="number" name="program_quota" value="{{ old('program_quota', $currentProgram?->quota ?? 36) }}"
                                    class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required min="1">
+                            <p class="mt-1 text-xs text-gray-400">Kuota khusus program/jalur ini. Tampil di kartu program.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Status Program</label>
@@ -133,6 +144,7 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-xs text-gray-400">Status khusus program ini. Status utama SPMB tetap mengikuti Tahun Ajaran.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Biaya Pendaftaran</label>
@@ -141,6 +153,7 @@
                                 <input type="number" name="registration_fee" value="{{ old('registration_fee', $currentProgram?->registration_fee ?? 0) }}"
                                        class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm pl-10" min="0">
                             </div>
+                            <p class="mt-1 text-xs text-gray-400">Tampil di kartu program halaman /spmb.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">SPP / Bulan</label>
@@ -181,12 +194,26 @@
                                        class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                                 <span class="text-sm font-semibold text-gray-700">Program Gratis</span>
                             </label>
+                            <p class="mt-1 text-xs text-gray-400">Jika dicentang, program ditandai sebagai program khusus/gratis.</p>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Program</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Promosi SPMB</label>
                         <textarea name="program_description" rows="3"
                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('program_description', $currentProgram?->description ?? '') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-400">Teks promosi yang tampil di halaman /spmb. Bisa menggunakan beberapa baris.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Benefit Program</label>
+                        <textarea name="program_benefits" rows="4"
+                                  class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('program_benefits', $currentProgram?->benefits ?? '') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-400">Isi satu benefit per baris. Tampil sebagai daftar di halaman /spmb. Contoh: Gratis biaya pendidikan selama program berjalan.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Syarat Pendaftaran</label>
+                        <textarea name="program_requirements" rows="4"
+                                  class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('program_requirements', $currentProgram?->requirements ?? '') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-400">Isi satu syarat per baris. Tampil sebagai daftar di halaman /spmb. Contoh: Lulusan SMP/MTs sederajat.</p>
                     </div>
                 </div>
             </div>

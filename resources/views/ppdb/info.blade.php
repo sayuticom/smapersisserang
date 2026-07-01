@@ -42,10 +42,19 @@
 
 @section('content')
 @php
+    $program = $programs->first();
     $academicYear = $admissionYear?->academic_year ?? '2026/2027';
-    $programQuota = 36;
-    $registrationFee = 0;
-    $programName = 'Program Gratis Angkatan Pertama';
+
+    $benefits = collect(preg_split('/\r\n|\r|\n/', $program?->benefits ?? ''))
+        ->map(fn ($item) => trim($item))
+        ->filter()
+        ->values();
+
+    $requirements = collect(preg_split('/\r\n|\r|\n/', $program?->requirements ?? ''))
+        ->map(fn ($item) => trim($item))
+        ->filter()
+        ->values();
+
     $whatsappUrl = $schoolSetting?->whatsappLink('Assalamu\'alaikum, saya ingin konsultasi tentang SPMB SMA Persis Serang.') ?? '#kontak';
 @endphp
 
@@ -103,21 +112,33 @@
     </section>
 
     <main class="bg-[#FBF7EF]">
-        <section class="py-12 lg:py-16">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <section class="py-5 md:py-8">
+            <div class="mx-auto max-w-4xl px-4">
                 @if($admissionYear && $admissionStats)
-                    <div class="grid gap-5 md:grid-cols-3">
-                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
-                            <p class="text-sm font-semibold text-emerald-800">Total Pendaftar</p>
-                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['totalApplicants'] }}</div>
+                    <div class="grid grid-cols-3 gap-2 md:gap-4">
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
+                            <div class="text-[10px] sm:text-xs md:text-base lg:text-lg font-semibold text-emerald-700 leading-tight">
+                                Total Pendaftar
+                            </div>
+                            <div class="mt-1 md:mt-2 text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-emerald-800 leading-none">
+                                {{ $admissionStats['totalApplicants'] }}
+                            </div>
                         </div>
-                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
-                            <p class="text-sm font-semibold text-emerald-800">Diterima</p>
-                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['totalAccepted'] }}</div>
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
+                            <div class="text-[10px] sm:text-xs md:text-base lg:text-lg font-semibold text-emerald-700 leading-tight">
+                                Diterima
+                            </div>
+                            <div class="mt-1 md:mt-2 text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-emerald-800 leading-none">
+                                {{ $admissionStats['totalAccepted'] }}
+                            </div>
                         </div>
-                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-sm shadow-emerald-950/5">
-                            <p class="text-sm font-semibold text-emerald-800">Sisa Kuota</p>
-                            <div class="mt-3 text-4xl font-bold text-[#0F6B3A]">{{ $admissionStats['remainingQuota'] }}</div>
+                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
+                            <div class="text-[10px] sm:text-xs md:text-base lg:text-lg font-semibold text-emerald-700 leading-tight">
+                                Sisa Kuota
+                            </div>
+                            <div class="mt-1 md:mt-2 text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-emerald-800 leading-none">
+                                {{ $admissionStats['remainingQuota'] }}
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -126,72 +147,99 @@
 
         <section class="pb-12 lg:pb-16">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="mx-auto max-w-2xl text-center">
-                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">SPMB SMA Persis Serang</p>
-                    <h2 class="mt-3 text-3xl font-bold text-gray-900 lg:text-4xl">Program Pendaftaran</h2>
-                    <p class="mt-4 text-lg leading-relaxed text-gray-600">
-                        Kesempatan bergabung di angkatan pertama dengan dukungan pendidikan berasrama yang terarah.
-                    </p>
-                </div>
-
                 @if($programs->isNotEmpty())
-                    <div class="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
-                        <article class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 lg:p-8">
-                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
-                                        Program Khusus
-                                    </span>
-                                    <h3 class="mt-4 text-2xl font-bold text-gray-900">{{ $programName }}</h3>
-                                    <p class="mt-3 text-sm leading-relaxed text-gray-600">
-                                        Gratis pendidikan, asrama, dan makan untuk murid angkatan pertama yang mengikuti proses SPMB.
-                                    </p>
-                                </div>
-                                <div class="w-full rounded-2xl bg-[#EAF6EE] p-4 text-center sm:w-32">
-                                    <div class="text-3xl font-bold text-[#0F6B3A]">{{ $programQuota }}</div>
-                                    <p class="text-xs font-semibold text-emerald-800">Kuota Murid</p>
-                                </div>
-                            </div>
-
-                            <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Biaya</p>
-                                    <p class="mt-1 text-2xl font-bold text-gray-900">Rp{{ number_format($registrationFee, 0, ',', '.') }}</p>
-                                </div>
-                                <div class="rounded-2xl border border-emerald-100 bg-white p-4">
-                                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tahun Ajaran</p>
-                                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ $academicYear }}</p>
-                                </div>
+                    <div class="grid items-stretch gap-6 lg:grid-cols-2">
+                        <article class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 shadow-md shadow-emerald-950/5 lg:p-8">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">Benefit Program</h3>
+                            <div class="mt-6 space-y-4 md:space-y-5">
+                                @if($benefits->isNotEmpty())
+                                    @foreach($benefits as $benefit)
+                                        <div class="flex items-start gap-3">
+                                            <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                                <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            </span>
+                                            <p class="text-sm md:text-base leading-relaxed text-gray-700">{{ $benefit }}</p>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Gratis biaya pendidikan selama program berjalan.</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Gratis fasilitas asrama dalam lingkungan Islamic Boarding School.</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Gratis makan untuk mendukung kegiatan belajar dan pembinaan harian.</p>
+                                    </div>
+                                @endif
                             </div>
                         </article>
 
-                        <aside class="rounded-2xl border border-amber-100 bg-white p-6 shadow-md shadow-emerald-950/5 lg:p-8">
-                            <h3 class="text-xl font-bold text-gray-900">Benefit Angkatan Pertama</h3>
-                            <div class="mt-6 space-y-4">
-                                <div class="flex items-start gap-3">
-                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                    </span>
-                                    <p class="text-sm leading-relaxed text-gray-600">Gratis biaya pendidikan selama program berjalan.</p>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                    </span>
-                                    <p class="text-sm leading-relaxed text-gray-600">Gratis fasilitas asrama dalam lingkungan Islamic Boarding School.</p>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0F6B3A] text-white">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                        </svg>
-                                    </span>
-                                    <p class="text-sm leading-relaxed text-gray-600">Gratis makan untuk mendukung kegiatan belajar dan pembinaan harian.</p>
-                                </div>
+                        <aside class="rounded-2xl border border-amber-200 bg-gradient-to-br from-white to-amber-50 p-6 shadow-md shadow-emerald-950/5 lg:p-8">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-900">Syarat Pendaftaran</h3>
+                            <div class="mt-6 space-y-4 md:space-y-5">
+                                @if($requirements->isNotEmpty())
+                                    @foreach($requirements as $requirement)
+                                        <div class="flex items-start gap-3">
+                                            <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#D4A017] text-white">
+                                                <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            </span>
+                                            <p class="text-sm md:text-base leading-relaxed text-gray-700">{{ $requirement }}</p>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#D4A017] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Lulusan SMP/MTs sederajat</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#D4A017] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Siap mengikuti program boarding/asrama</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#D4A017] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Mengisi formulir pendaftaran SPMB</p>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <span class="mt-0.5 flex h-6 w-6 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-[#D4A017] text-white">
+                                            <svg class="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </span>
+                                        <p class="text-sm md:text-base leading-relaxed text-gray-700">Melengkapi data siswa dan orang tua</p>
+                                    </div>
+                                @endif
                             </div>
                         </aside>
                     </div>

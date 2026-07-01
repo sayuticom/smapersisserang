@@ -14,7 +14,7 @@ class AdmissionProgram extends Model
     protected $fillable = [
         'admission_year_id', 'name', 'type', 'quota',
         'tuition_fee', 'boarding_fee', 'meal_fee', 'registration_fee', 'other_fee',
-        'is_free_program', 'status', 'start_date', 'end_date', 'description', 'sort_order'
+        'is_free_program', 'status', 'start_date', 'end_date', 'description', 'benefits', 'requirements', 'sort_order'
     ];
     
     protected $casts = [

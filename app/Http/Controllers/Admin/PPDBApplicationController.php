@@ -444,6 +444,8 @@ class PPDBApplicationController extends Controller
             'other_fee' => 'required|numeric|min:0',
             'is_free_program' => 'nullable|boolean',
             'program_description' => 'nullable|string',
+            'program_benefits' => 'nullable|string|max:5000',
+            'program_requirements' => 'nullable|string|max:5000',
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -483,6 +485,8 @@ class PPDBApplicationController extends Controller
                         'other_fee' => $validated['other_fee'],
                         'is_free_program' => $validated['is_free_program'] ?? false,
                         'description' => $validated['program_description'] ?? '',
+                        'benefits' => $validated['program_benefits'] ?? '',
+                        'requirements' => $validated['program_requirements'] ?? '',
                     ]);
                 }
             }
