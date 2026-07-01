@@ -117,6 +117,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/export', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'export'])->name('export');
         Route::get('/export-pdf', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])->name('show');
+        Route::get('/{studentApplication}/print', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'print'])->name('print');
         Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])->name('update-status');
         Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])->name('update-follow-up');
         Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])->name('mark-data-complete');

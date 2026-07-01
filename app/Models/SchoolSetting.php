@@ -34,6 +34,7 @@ class SchoolSetting extends Model
         'is_active',
         'google_maps_embed_url',
         'google_maps_link',
+        'letterhead_png',
     ];
 
     protected function casts(): array

@@ -47,6 +47,7 @@ class WebsiteSettingController extends Controller
             'meta_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'google_maps_embed_url' => ['nullable', 'string'],
             'google_maps_link' => ['nullable', 'string', 'max:500'],
+            'letterhead_png' => ['nullable', 'image', 'mimes:png', 'max:2048'],
         ]);
 
         $setting = SchoolSetting::current();
@@ -70,6 +71,13 @@ class WebsiteSettingController extends Controller
                 Storage::disk('public')->delete($setting->meta_image);
             }
             $validated['meta_image'] = $request->file('meta_image')->store('website/meta', 'public');
+        }
+
+        if ($request->hasFile('letterhead_png')) {
+            if ($setting->letterhead_png) {
+                Storage::disk('public')->delete($setting->letterhead_png);
+            }
+            $validated['letterhead_png'] = $request->file('letterhead_png')->store('settings/letterhead', 'public');
         }
 
         $validated['is_active'] = true;

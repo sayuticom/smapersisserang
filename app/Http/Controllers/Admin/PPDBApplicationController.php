@@ -290,6 +290,11 @@ class PPDBApplicationController extends Controller
         return view('admin.ppdb.applications.show', compact('studentApplication'));
     }
 
+    public function print(StudentApplication $studentApplication)
+    {
+        return view('admin.ppdb.applications.print', compact('studentApplication'));
+    }
+
     public function updateStatus(Request $request, StudentApplication $studentApplication)
     {
         $validStatuses = [
