@@ -27,7 +27,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.ppdb.settings.update') }}">
+            <form method="POST" action="{{ route('admin.ppdb.settings.update') }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -79,6 +79,19 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Deskripsi</label>
                         <textarea name="description" rows="3"
                                   class="block w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">{{ old('description', $currentYear?->description ?? '') }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Gambar Promo SPMB</label>
+                        <input type="file" name="promo_image" accept="image/jpeg,image/png,image/webp"
+                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <p class="mt-1 text-xs text-gray-400">Format: JPG, PNG, WebP. Maksimal 2MB.</p>
+                        @if($currentYear?->promo_image)
+                            <div class="mt-3">
+                                <img src="{{ asset('storage/' . $currentYear->promo_image) }}"
+                                     alt="Preview Promo SPMB"
+                                     class="max-w-xs rounded-xl border border-gray-200 shadow-sm">
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

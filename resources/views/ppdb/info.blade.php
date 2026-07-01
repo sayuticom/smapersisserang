@@ -1,5 +1,35 @@
 @extends('layouts.public')
 
+@php
+    $spmbTitle = 'SPMB SMA Persis Serang - Gratis Sekolah dan Asrama 3 Tahun';
+    $spmbDescription = 'Pendaftaran murid baru SMA Persis Serang. Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid.';
+
+    $promoImage = $admissionYear?->promo_image
+        ? asset('storage/' . $admissionYear->promo_image)
+        : asset('images/spmb/promo-gratis-3-tahun.png');
+
+    $spmbUrl = url('/spmb');
+@endphp
+
+@section('title', $spmbTitle)
+
+@section('meta')
+    <meta name="description" content="{{ $spmbDescription }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $spmbUrl }}">
+    <meta property="og:title" content="{{ $spmbTitle }}">
+    <meta property="og:description" content="{{ $spmbDescription }}">
+    <meta property="og:image" content="{{ $promoImage }}">
+    <meta property="og:image:secure_url" content="{{ $promoImage }}">
+    <meta property="og:image:alt" content="Promo SPMB SMA Persis Serang Gratis Sekolah dan Asrama 3 Tahun">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $spmbTitle }}">
+    <meta name="twitter:description" content="{{ $spmbDescription }}">
+    <meta name="twitter:image" content="{{ $promoImage }}">
+@endsection
+
 @section('content')
 @php
     $academicYear = $admissionYear?->academic_year ?? '2026/2027';
@@ -14,32 +44,50 @@
         <div class="absolute inset-0 opacity-[0.06]"
              style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
-        <div class="relative z-10 mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 lg:py-20">
-            <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
-                <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-                SPMB Tahun Ajaran {{ $academicYear }}
-            </div>
+        <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+            <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
 
-            <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-                Penerimaan Murid Baru SMA Persis Serang
-            </h1>
-            <div class="mx-auto mt-4 h-1.5 w-32 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300"></div>
-            <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl">
-                Islamic Boarding School berbasis Akhlak dan Teknologi
-            </p>
-            <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed text-amber-100 shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base">
-                Gratis biaya sekolah dan asrama khusus angkatan pertama 36 murid
-            </p>
-            <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a href="{{ route('spmb.create') }}"
-                   class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
-                    Daftar SPMB
-                </a>
-                <a href="{{ $whatsappUrl }}"
-                   target="_blank"
-                   class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
-                    Konsultasi WhatsApp
-                </a>
+                <div class="order-1 lg:order-1 flex justify-center">
+                    @if(!empty($admissionYear?->promo_image))
+                        <img src="{{ asset('storage/' . $admissionYear->promo_image) }}"
+                             alt="Promo SPMB SMA Persis Serang"
+                             class="w-full max-w-md lg:max-w-lg rounded-3xl shadow-2xl border border-yellow-400/30">
+                    @else
+                        <img src="{{ asset('images/spmb/promo-gratis-3-tahun.png') }}"
+                             alt="Promo Gratis Biaya Sekolah dan Asrama SMA Persis Serang 3 Tahun"
+                             class="w-full max-w-md lg:max-w-lg rounded-3xl shadow-2xl border border-yellow-400/30">
+                    @endif
+                </div>
+
+                <div class="order-2 lg:order-2 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
+                        <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                        SPMB Tahun Ajaran {{ $academicYear }}
+                    </div>
+
+                    <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
+                        Penerimaan Murid Baru SMA Persis Serang
+                    </h1>
+                    <div class="mx-auto mt-4 h-1.5 w-32 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 lg:mx-0"></div>
+                    <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl lg:mx-0">
+                        Islamic Boarding School berbasis Akhlak dan Teknologi
+                    </p>
+                    <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed text-amber-100 shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base lg:mx-0">
+                        Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid
+                    </p>
+                    <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+                        <a href="{{ route('spmb.create') }}"
+                           class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
+                            Daftar SPMB
+                        </a>
+                        <a href="{{ $whatsappUrl }}"
+                           target="_blank"
+                           class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
+                            Konsultasi WhatsApp
+                        </a>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>

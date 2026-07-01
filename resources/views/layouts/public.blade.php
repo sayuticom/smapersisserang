@@ -12,22 +12,26 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <meta name="description" content="SMA Persis Serang - Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
+        <title>@yield('title', ($schoolSetting->school_name ?? 'SMA Persis Serang') . ' - ' . ($title ?? 'Website Sekolah'))</title>
 
-        <meta property="og:title" content="SMA Persis Serang">
-        <meta property="og:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
-        <meta property="og:type" content="website">
-        <meta property="og:url" content="{{ url('/') }}">
-        <meta property="og:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
-        <meta property="og:image:width" content="1200">
-        <meta property="og:image:height" content="630">
+        @hasSection('meta')
+            @yield('meta')
+        @else
+            <meta name="description" content="SMA Persis Serang - Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
 
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="SMA Persis Serang">
-        <meta name="twitter:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami.">
-        <meta name="twitter:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
+            <meta property="og:title" content="SMA Persis Serang">
+            <meta property="og:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
+            <meta property="og:type" content="website">
+            <meta property="og:url" content="{{ url('/') }}">
+            <meta property="og:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
 
-        <title>{{ $schoolSetting->school_name ?? 'SMA Persis Serang' }} - {{ $title ?? 'Website Sekolah' }}</title>
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:title" content="SMA Persis Serang">
+            <meta name="twitter:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami.">
+            <meta name="twitter:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
+        @endif
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

@@ -1,5 +1,35 @@
 @extends('layouts.public')
 
+@php
+    $homeTitle = 'SMA Persis Serang - Islamic Boarding School';
+    $homeDescription = 'SMA Persis Serang adalah Islamic Boarding School berbasis akhlak dan teknologi. Pendaftaran SPMB dibuka, gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama.';
+
+    $homeImage = $currentAdmissionYear?->promo_image
+        ? asset('storage/' . $currentAdmissionYear->promo_image)
+        : asset('images/spmb/promo-gratis-3-tahun.png');
+
+    $homeUrl = url('/');
+@endphp
+
+@section('title', $homeTitle)
+
+@section('meta')
+    <meta name="description" content="{{ $homeDescription }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $homeUrl }}">
+    <meta property="og:title" content="{{ $homeTitle }}">
+    <meta property="og:description" content="{{ $homeDescription }}">
+    <meta property="og:image" content="{{ $homeImage }}">
+    <meta property="og:image:secure_url" content="{{ $homeImage }}">
+    <meta property="og:image:alt" content="SMA Persis Serang - Promo SPMB Gratis Sekolah dan Asrama 3 Tahun">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $homeTitle }}">
+    <meta name="twitter:description" content="{{ $homeDescription }}">
+    <meta name="twitter:image" content="{{ $homeImage }}">
+@endsection
+
 @section('content')
 
 @php

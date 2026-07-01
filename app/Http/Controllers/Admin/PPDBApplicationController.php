@@ -9,6 +9,7 @@ use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PPDBApplicationController extends Controller
@@ -392,6 +393,7 @@ class PPDBApplicationController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'description' => 'nullable|string',
+            'promo_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
 
             'program_name' => 'required|string|max:255',
             'program_type' => 'required|in:first_batch_free,regular_paid,scholarship,subsidy',
@@ -406,11 +408,11 @@ class PPDBApplicationController extends Controller
             'program_description' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $request) {
             $currentYear = AdmissionYear::where('is_current', true)->first();
 
             if ($currentYear) {
-                $currentYear->update([
+                $yearData = [
                     'name' => $validated['name'],
                     'academic_year' => $validated['academic_year'],
                     'quota' => $validated['quota'],
@@ -418,7 +420,16 @@ class PPDBApplicationController extends Controller
                     'start_date' => $validated['start_date'],
                     'end_date' => $validated['end_date'],
                     'description' => $validated['description'] ?? '',
-                ]);
+                ];
+
+                if ($request->hasFile('promo_image')) {
+                    if ($currentYear->promo_image) {
+                        Storage::disk('public')->delete($currentYear->promo_image);
+                    }
+                    $yearData['promo_image'] = $request->file('promo_image')->store('spmb/promos', 'public');
+                }
+
+                $currentYear->update($yearData);
 
                 $program = $currentYear->programs()->first();
                 if ($program) {
