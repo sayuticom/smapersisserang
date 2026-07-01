@@ -4,11 +4,10 @@
     $homeTitle = 'SMA Persis Serang - Islamic Boarding School';
     $homeDescription = 'SMA Persis Serang adalah Islamic Boarding School berbasis akhlak dan teknologi. Pendaftaran SPMB dibuka, gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama.';
 
-    $homeImage = $currentAdmissionYear?->promo_image
-        ? asset('storage/' . $currentAdmissionYear->promo_image)
-        : asset('images/spmb/promo-gratis-3-tahun.png');
-
     $homeUrl = request()->fullUrl();
+    $homeImage = $schoolSetting?->meta_image
+        ? asset('storage/' . $schoolSetting->meta_image)
+        : asset('images/og/default-og.jpg');
 @endphp
 
 @section('title', $homeTitle)
@@ -22,10 +21,10 @@
     <meta property="og:description" content="{{ $homeDescription }}">
     <meta property="og:image" content="{{ $homeImage }}">
     <meta property="og:image:secure_url" content="{{ $homeImage }}">
-    <meta property="og:image:alt" content="SMA Persis Serang - Promo SPMB Gratis Sekolah dan Asrama 3 Tahun">
-    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="SMA Persis Serang - Promo SPMB Gratis Sekolah dan Asrama 3 Tahun">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $homeTitle }}">

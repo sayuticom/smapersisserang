@@ -44,6 +44,7 @@ class WebsiteSettingController extends Controller
             'secondary_color' => ['nullable', 'string', 'max:20'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
             'building_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'meta_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'google_maps_embed_url' => ['nullable', 'string'],
             'google_maps_link' => ['nullable', 'string', 'max:500'],
         ]);
@@ -62,6 +63,13 @@ class WebsiteSettingController extends Controller
         if ($request->hasFile('building_image')) {
             $path = $request->file('building_image')->store('school/buildings', 'public');
             $validated['building_image_path'] = $path;
+        }
+
+        if ($request->hasFile('meta_image')) {
+            if ($setting->meta_image) {
+                Storage::disk('public')->delete($setting->meta_image);
+            }
+            $validated['meta_image'] = $request->file('meta_image')->store('website/meta', 'public');
         }
 
         $validated['is_active'] = true;

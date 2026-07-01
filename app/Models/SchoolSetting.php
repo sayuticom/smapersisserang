@@ -15,6 +15,7 @@ class SchoolSetting extends Model
         'hero_image_path',
         'building_image_path',
         'boarding_image_path',
+        'meta_image',
         'whatsapp_number',
         'email',
         'address',

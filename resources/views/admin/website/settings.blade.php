@@ -239,6 +239,27 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-gray-100 bg-emerald-50">
+                    <h3 class="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Gambar Meta Share Website</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    @if($setting->meta_image)
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-500 mb-2">Gambar meta saat ini:</p>
+                            <img src="{{ asset('storage/' . $setting->meta_image) }}" alt="Meta Image"
+                                 class="max-w-xs rounded-xl border border-gray-200 shadow-sm">
+                        </div>
+                    @endif
+                    <div>
+                        <label for="meta_image" class="block text-sm font-medium text-gray-700 mb-1">Upload Gambar Meta Share</label>
+                        <input type="file" name="meta_image" id="meta_image" accept="image/jpeg,image/png,image/webp"
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <p class="text-xs text-gray-400 mt-1">Digunakan untuk preview saat link website dibagikan ke WhatsApp/Facebook. Rekomendasi ukuran 1200x630 px, format JPG/PNG, maksimal 2 MB.</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end">
                 <button type="submit"
                         class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">

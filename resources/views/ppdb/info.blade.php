@@ -4,11 +4,10 @@
     $spmbTitle = 'SPMB SMA Persis Serang - Gratis Sekolah dan Asrama 3 Tahun';
     $spmbDescription = 'Pendaftaran murid baru SMA Persis Serang. Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid.';
 
-    $promoImage = $admissionYear?->promo_image
-        ? asset('storage/' . $admissionYear->promo_image)
-        : asset('images/spmb/promo-gratis-3-tahun.png');
-
     $spmbUrl = request()->fullUrl();
+    $spmbImage = $schoolSetting?->meta_image
+        ? asset('storage/' . $schoolSetting->meta_image)
+        : asset('images/og/default-og.jpg');
 @endphp
 
 @section('title', $spmbTitle)
@@ -20,17 +19,17 @@
     <meta property="og:url" content="{{ $spmbUrl }}">
     <meta property="og:title" content="{{ $spmbTitle }}">
     <meta property="og:description" content="{{ $spmbDescription }}">
-    <meta property="og:image" content="{{ $promoImage }}">
-    <meta property="og:image:secure_url" content="{{ $promoImage }}">
-    <meta property="og:image:alt" content="Promo SPMB SMA Persis Serang Gratis Sekolah dan Asrama 3 Tahun">
-    <meta property="og:image:type" content="image/png">
+    <meta property="og:image" content="{{ $spmbImage }}">
+    <meta property="og:image:secure_url" content="{{ $spmbImage }}">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Promo SPMB SMA Persis Serang Gratis Sekolah dan Asrama 3 Tahun">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $spmbTitle }}">
     <meta name="twitter:description" content="{{ $spmbDescription }}">
-    <meta name="twitter:image" content="{{ $promoImage }}">
+    <meta name="twitter:image" content="{{ $spmbImage }}">
 @endsection
 
 @section('content')

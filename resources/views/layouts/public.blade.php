@@ -4,6 +4,9 @@
     } catch (\Exception $e) {
         $schoolSetting = null;
     }
+    $defaultOgImage = $schoolSetting?->meta_image
+        ? asset('storage/' . $schoolSetting->meta_image)
+        : asset('images/og-sma-persis-serang.jpg');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -23,14 +26,15 @@
             <meta property="og:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
             <meta property="og:type" content="website">
             <meta property="og:url" content="{{ url('/') }}">
-            <meta property="og:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
+            <meta property="og:image" content="{{ $defaultOgImage }}">
+            <meta property="og:image:type" content="image/jpeg">
             <meta property="og:image:width" content="1200">
             <meta property="og:image:height" content="630">
 
             <meta name="twitter:card" content="summary_large_image">
             <meta name="twitter:title" content="SMA Persis Serang">
             <meta name="twitter:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami.">
-            <meta name="twitter:image" content="{{ asset('images/og-sma-persis-serang.jpg') }}">
+            <meta name="twitter:image" content="{{ $defaultOgImage }}">
         @endif
 
         <!-- Fonts -->
