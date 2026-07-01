@@ -25,7 +25,7 @@
     <meta property="og:image:alt" content="SMA Persis Serang - Promo SPMB Gratis Sekolah dan Asrama 3 Tahun">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image:height" content="1200">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $homeTitle }}">
