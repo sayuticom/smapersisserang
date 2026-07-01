@@ -1,7 +1,3 @@
-<style>
-    [x-cloak] { display: none !important; }
-</style>
-
 <div x-data="{
     open: false,
     input: '',
