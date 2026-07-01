@@ -80,7 +80,7 @@
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl lg:mx-0">
                         Islamic Boarding School berbasis Akhlak dan Teknologi
                     </p>
-                    <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed text-amber-100 shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base lg:mx-0">
+                    <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base lg:mx-0" style="color: #ffffff;">
                         Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid
                     </p>
                     <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
