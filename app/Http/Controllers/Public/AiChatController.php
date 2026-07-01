@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\AdmissionProgram;
 use App\Models\AdmissionYear;
+use App\Models\AiFaq;
 use App\Models\SchoolSetting;
 use App\Services\OpenAIChatService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AiChatController extends Controller
 {
@@ -25,25 +27,65 @@ class AiChatController extends Controller
             ]);
         }
 
-        if (!$chatService->isConfigured()) {
-            return response()->json([
-                'reply' => 'Maaf, layanan chat AI sedang tidak tersedia. Silakan hubungi panitia SPMB melalui WhatsApp atau telepon.',
-            ]);
+        $reply = null;
+
+        if ($chatService->isConfigured()) {
+            $context = $this->buildContext();
+            $reply = $chatService->chat($message, $context);
         }
 
-        $context = $this->buildContext();
-
-        $reply = $chatService->chat($message, $context);
+        if ($reply === null) {
+            Log::info('AI Chat fallback to FAQ', ['message_length' => strlen($message)]);
+            $reply = $this->searchFaq($message);
+        }
 
         if ($reply === null) {
-            return response()->json([
-                'reply' => 'Maaf, saya mengalami kendala teknis. Silakan hubungi panitia SPMB untuk informasi lebih lanjut.',
-            ]);
+            $reply = 'Maaf, saya tidak dapat menemukan jawaban untuk pertanyaan Anda. Silakan hubungi panitia SPMB melalui WhatsApp 089661234569 untuk informasi lebih lanjut.';
         }
 
         return response()->json([
             'reply' => $reply,
         ]);
+    }
+
+    protected function searchFaq(string $message): ?string
+    {
+        $faqs = AiFaq::active()->orderBy('sort_order')->orderBy('id')->get();
+
+        if ($faqs->isEmpty()) {
+            return null;
+        }
+
+        $keywords = preg_split('/[\s,?.\-!]+/', strtolower($message));
+        $keywords = array_filter($keywords, fn($w) => strlen($w) > 2);
+        $keywords = array_values($keywords);
+
+        if (empty($keywords)) {
+            return null;
+        }
+
+        $bestMatch = null;
+        $bestScore = 0;
+
+        foreach ($faqs as $faq) {
+            $text = strtolower($faq->question . ' ' . $faq->answer);
+            $score = 0;
+            foreach ($keywords as $word) {
+                if (str_contains($text, $word)) {
+                    $score++;
+                }
+            }
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = $faq;
+            }
+        }
+
+        if ($bestMatch && $bestScore > 0) {
+            return $bestMatch->answer;
+        }
+
+        return null;
     }
 
     protected function buildContext(): array
