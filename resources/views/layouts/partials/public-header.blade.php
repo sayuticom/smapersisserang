@@ -58,10 +58,7 @@
                     </a>
                 @endif
             @endforeach
-            <div class="mx-2 h-6 w-px bg-white/20"></div>
-            <a href="{{ route('login') }}" class="rounded-lg border border-amber-300/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10">
-                Login
-            </a>
+
         </nav>
     </div>
 
@@ -126,8 +123,7 @@
                         </a>
                     @endif
                 @endforeach
-                <hr class="my-2 border-white/10">
-                <a href="{{ route('login') }}" class="block rounded-lg px-4 py-3 text-sm font-medium text-amber-300 hover:bg-white/10">Login</a>
+
             </div>
         </div>
     </div>

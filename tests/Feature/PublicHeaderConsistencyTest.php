@@ -75,7 +75,6 @@ class PublicHeaderConsistencyTest extends TestCase
         $this->assertStringContainsString('SPMB', $html);
         $this->assertStringContainsString('Daftar SPMB', $html);
         $this->assertStringContainsString('Cek Status', $html);
-        $this->assertStringContainsString('Login', $html);
         $this->assertStringNotContainsString('/register', $html);
     }
 }

@@ -226,6 +226,14 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::patch('/{schoolValue}/toggle', [\App\Http\Controllers\Admin\SchoolValueController::class, 'toggle'])->name('toggle');
         Route::delete('/{schoolValue}', [\App\Http\Controllers\Admin\SchoolValueController::class, 'destroy'])->name('destroy');
     });
+
+    Route::name('users.')->prefix('users')->middleware('superadmin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
+    });
 });
 
 // Disable public registration - only allows administrator account

@@ -73,7 +73,7 @@
                         <a href="{{ route('public.profile') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Profil</a>
                         <a href="{{ route('public.teachers') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Guru</a>
                     @endforelse
-                    <a href="{{ route('login') }}" class="block pt-2 text-emerald-100/75 transition hover:text-amber-300">Login Admin</a>
+
                 </div>
             </div>
         </div>
