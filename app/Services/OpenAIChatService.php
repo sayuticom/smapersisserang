@@ -11,6 +11,24 @@ class OpenAIChatService
     protected string $apiKey;
     protected string $model;
 
+    protected array $stopwords = [
+        'apa', 'itu', 'siapa', 'dimana', 'kapan', 'mengapa', 'bagaimana',
+        'yang', 'ini', 'itu', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan',
+        'tidak', 'ada', 'bisa', 'akan', 'sudah', 'belum', 'apakah', 'saya',
+        'kami', 'kita', 'anda', 'dia', 'mereka', 'untuk', 'dalam', 'pada',
+        'sebagai', 'oleh', 'secara', 'ya', 'indonesia', 'sma', 'persis',
+        'serang', 'sekolah',
+    ];
+
+    protected array $suffixPatterns = [
+        '/^(.*)nya$/u',
+        '/^(.*)kan$/u',
+        '/^(.*)kah$/u',
+        '/^(.*)lah$/u',
+        '/^(.*)ku$/u',
+        '/^(.*)mu$/u',
+    ];
+
     public function __construct()
     {
         $this->apiKey = config('services.openai.api_key');
@@ -28,7 +46,15 @@ class OpenAIChatService
             return null;
         }
 
-        $systemPrompt = $this->buildSystemPrompt($context);
+        $faqs = $this->searchRelevantFaqs($message);
+
+        $systemPrompt = $this->buildSystemPrompt($context, $faqs);
+
+        Log::info('AI Chat context', [
+            'message' => $message,
+            'faq_count' => $faqs->count(),
+            'faq_questions' => $faqs->pluck('question')->values(),
+        ]);
 
         try {
             $response = Http::timeout(30)
@@ -59,13 +85,117 @@ class OpenAIChatService
         }
     }
 
-    protected function buildSystemPrompt(array $context): string
+    public function searchRelevantFaqs(string $message, int $limit = 5)
+    {
+        $faqs = AiFaq::active()->orderBy('sort_order')->orderBy('id')->get();
+
+        if ($faqs->isEmpty()) {
+            return collect();
+        }
+
+        $queryTokens = $this->tokenize($message);
+
+        if (empty($queryTokens)) {
+            return $faqs->take($limit);
+        }
+
+        $scored = [];
+        foreach ($faqs as $faq) {
+            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->answer);
+            $score = $this->calculateScore($queryTokens, $faqTokens, $faq);
+            $scored[] = ['faq' => $faq, 'score' => $score];
+        }
+
+        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        return collect(array_slice(array_map(fn($s) => $s['faq'], $scored), 0, $limit));
+    }
+
+    protected function tokenize(string $text): array
+    {
+        $text = strtolower($text);
+        $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
+        $words = preg_split('/\s+/', $text);
+        $words = array_filter($words, fn($w) => strlen($w) > 2);
+
+        $result = [];
+        foreach ($words as $word) {
+            $normalized = $this->normalize($word);
+            if ($normalized !== null) {
+                $result[] = $normalized;
+            }
+        }
+
+        return array_values($result);
+    }
+
+    protected function normalize(string $word): ?string
+    {
+        $word = trim($word);
+        if (in_array($word, $this->stopwords, true)) {
+            return null;
+        }
+        foreach ($this->suffixPatterns as $pattern) {
+            if (preg_match($pattern, $word, $matches)) {
+                $word = $matches[1];
+                break;
+            }
+        }
+        if (strlen($word) <= 2) {
+            return null;
+        }
+        return $word;
+    }
+
+    protected function calculateScore(array $queryTokens, array $faqTokens, $faq): float
+    {
+        $queryCount = count($queryTokens);
+        if ($queryCount === 0) {
+            return 0;
+        }
+
+        $exactMatches = 0;
+        $stemMatches = 0;
+
+        foreach ($queryTokens as $qToken) {
+            foreach ($faqTokens as $fToken) {
+                if ($qToken === $fToken) {
+                    $exactMatches++;
+                } elseif (str_starts_with($qToken, $fToken) || str_starts_with($fToken, $qToken)) {
+                    $stemMatches++;
+                }
+            }
+        }
+
+        $score = ($exactMatches * 2) + ($stemMatches * 1);
+
+        $score /= ($queryCount * 2);
+
+        $priorityKeywords = [
+            'syarat', 'biaya', 'kuota', 'asrama', 'whatsapp', 'wa', 'kontak',
+            'daftar', 'gratis', 'free', 'spmb', 'keunggulan', 'program',
+            'berkembang', 'informasi', 'daftar', 'pendaftaran',
+        ];
+
+        foreach ($queryTokens as $qToken) {
+            if (in_array($qToken, $priorityKeywords, true)) {
+                $question = strtolower($faq->question);
+                if (str_contains($question, $qToken)) {
+                    $score += 0.5;
+                }
+            }
+        }
+
+        return $score;
+    }
+
+    protected function buildSystemPrompt(array $context, $faqs): string
     {
         $school = $context['school'] ?? [];
         $year = $context['admission_year'] ?? [];
         $program = $context['admission_program'] ?? [];
 
-        $info = "Informasi SMA Persis Serang:\n";
+        $info = "INFORMASI SEKOLAH:\n";
 
         if (!empty($school['school_name'])) {
             $info .= "- Nama Sekolah: {$school['school_name']}\n";
@@ -82,32 +212,26 @@ class OpenAIChatService
         if (!empty($school['city'])) {
             $info .= "- Kota: {$school['city']}\n";
         }
-        if (!empty($school['province'])) {
-            $info .= "- Provinsi: {$school['province']}\n";
-        }
         if (!empty($school['whatsapp_number'])) {
-            $info .= "- WhatsApp: {$school['whatsapp_number']}\n";
+            $info .= "- WhatsApp Panitia: {$school['whatsapp_number']}\n";
         }
         if (!empty($school['email'])) {
             $info .= "- Email: {$school['email']}\n";
         }
 
         if (!empty($year)) {
-            $info .= "\nTahun Ajaran Pendaftaran:\n";
+            $info .= "\nPENDAFTARAN:\n";
             if (!empty($year['academic_year'])) {
-                $info .= "- Tahun: {$year['academic_year']}\n";
-            }
-            if (!empty($year['name'])) {
-                $info .= "- Nama: {$year['name']}\n";
+                $info .= "- Tahun Ajaran: {$year['academic_year']}\n";
             }
             if (!empty($year['quota'])) {
                 $info .= "- Kuota: {$year['quota']} siswa\n";
             }
             if (!empty($year['start_date'])) {
-                $info .= "- Pendaftaran dibuka: {$year['start_date']}\n";
+                $info .= "- Dibuka: {$year['start_date']}\n";
             }
             if (!empty($year['end_date'])) {
-                $info .= "- Pendaftaran ditutup: {$year['end_date']}\n";
+                $info .= "- Ditutup: {$year['end_date']}\n";
             }
             if (!empty($year['status'])) {
                 $statusLabel = [
@@ -123,9 +247,9 @@ class OpenAIChatService
         }
 
         if (!empty($program)) {
-            $info .= "\nProgram Pendaftaran:\n";
+            $info .= "\nPROGRAM:\n";
             if (!empty($program['name'])) {
-                $info .= "- Nama Program: {$program['name']}\n";
+                $info .= "- Nama: {$program['name']}\n";
             }
             if (!empty($program['type'])) {
                 $typeLabel = [
@@ -137,7 +261,7 @@ class OpenAIChatService
                 $info .= "- Tipe: " . ($typeLabel[$program['type']] ?? $program['type']) . "\n";
             }
             if (!empty($program['quota'])) {
-                $info .= "- Kuota Program: {$program['quota']} siswa\n";
+                $info .= "- Kuota: {$program['quota']} siswa\n";
             }
             if (!empty($program['description'])) {
                 $info .= "- Deskripsi: {$program['description']}\n";
@@ -164,26 +288,28 @@ class OpenAIChatService
 
         $info .= "\nLink pendaftaran: " . route('spmb.create');
 
-        $faqs = AiFaq::active()->orderBy('sort_order')->orderBy('id')->limit(20)->get();
+        $faqSection = '';
         if ($faqs->isNotEmpty()) {
-            $info .= "\n\nFAQ Resmi:\n";
+            $faqSection = "\nKONTEKS FAQ RESMI:\n";
             foreach ($faqs as $j => $faq) {
-                $info .= ($j + 1) . ". Q: {$faq->question}\n   A: {$faq->answer}\n";
+                $faqSection .= ($j + 1) . ". P: {$faq->question}\n   J: {$faq->answer}\n";
             }
         }
 
         return <<<PROMPT
-Kamu adalah Asisten SPMB SMA Persis Serang.
-Jawab dalam Bahasa Indonesia.
-Gunakan gaya ramah, sopan, singkat, dan jelas.
-Jawab hanya berdasarkan informasi resmi yang diberikan di konteks.
-Jangan mengarang data.
-Jika pertanyaan pengguna cocok dengan FAQ Resmi, prioritaskan jawaban dari FAQ tersebut. Jawaban boleh diringkas, tapi jangan mengubah makna jawaban resmi.
-Jika informasi tidak tersedia, arahkan pengguna untuk menghubungi panitia SPMB.
-Jika pertanyaan di luar konteks SMA Persis Serang atau SPMB, jawab singkat bahwa kamu hanya membantu konsultasi SPMB.
+Kamu adalah asisten resmi SMA Persis Serang untuk layanan SPMB (Sistem Penerimaan Murid Baru).
 
-KONTEKS INFORMASI RESMI:
+Tugasmu:
+- Jawab pertanyaan calon siswa atau orang tua dengan ramah, singkat, jelas, dan akurat.
+- Gunakan bahasa Indonesia yang alami dan mudah dipahami.
+- Prioritaskan jawaban berdasarkan konteks informasi resmi dan FAQ yang diberikan.
+- Jangan mengarang informasi yang tidak ada dalam konteks.
+- Jika data kurang lengkap atau ragu, arahkan pengguna untuk menghubungi panitia SPMB di WhatsApp 089661234569.
+- Gunakan istilah "SPMB", bukan "PPDB".
+- Jika pertanyaan di luar konteks pendaftaran SMA Persis Serang, tolak dengan sopan dan ajak kembali ke topik SPMB.
+
 {$info}
+{$faqSection}
 PROMPT;
     }
 }

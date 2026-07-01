@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdmissionProgram;
 use App\Models\AdmissionYear;
 use App\Models\AiFaq;
 use App\Models\SchoolSetting;
@@ -13,6 +12,23 @@ use Illuminate\Support\Facades\Log;
 
 class AiChatController extends Controller
 {
+    protected array $stopwords = [
+        'apa', 'itu', 'siapa', 'dimana', 'kapan', 'mengapa', 'bagaimana',
+        'yang', 'ini', 'itu', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan',
+        'tidak', 'ada', 'bisa', 'akan', 'sudah', 'belum', 'apakah', 'saya',
+        'kami', 'kita', 'anda', 'dia', 'mereka', 'untuk', 'dalam', 'pada',
+        'indonesia', 'sma', 'persis', 'serang', 'apa', 'itu',
+    ];
+
+    protected array $suffixPatterns = [
+        '/^(.*)nya$/u',
+        '/^(.*)kan$/u',
+        '/^(.*)kah$/u',
+        '/^(.*)lah$/u',
+        '/^(.*)ku$/u',
+        '/^(.*)mu$/u',
+    ];
+
     public function send(Request $request, OpenAIChatService $chatService)
     {
         $validated = $request->validate([
@@ -29,16 +45,19 @@ class AiChatController extends Controller
 
         $reply = null;
 
+        // 1. Try OpenAI first (with FAQ context)
         if ($chatService->isConfigured()) {
             $context = $this->buildContext();
             $reply = $chatService->chat($message, $context);
         }
 
+        // 2. Fallback: FAQ matching
         if ($reply === null) {
-            Log::info('AI Chat fallback to FAQ', ['message_length' => strlen($message)]);
+            Log::info('AI Chat fallback to FAQ', ['message' => $message]);
             $reply = $this->searchFaq($message);
         }
 
+        // 3. Last resort
         if ($reply === null) {
             $reply = 'Maaf, saya tidak dapat menemukan jawaban untuk pertanyaan Anda. Silakan hubungi panitia SPMB melalui WhatsApp 089661234569 untuk informasi lebih lanjut.';
         }
@@ -56,36 +75,104 @@ class AiChatController extends Controller
             return null;
         }
 
-        $keywords = preg_split('/[\s,?.\-!]+/', strtolower($message));
-        $keywords = array_filter($keywords, fn($w) => strlen($w) > 2);
-        $keywords = array_values($keywords);
+        $queryTokens = $this->tokenize($message);
 
-        if (empty($keywords)) {
+        if (empty($queryTokens)) {
             return null;
         }
 
-        $bestMatch = null;
-        $bestScore = 0;
-
+        $scored = [];
         foreach ($faqs as $faq) {
-            $text = strtolower($faq->question . ' ' . $faq->answer);
-            $score = 0;
-            foreach ($keywords as $word) {
-                if (str_contains($text, $word)) {
-                    $score++;
-                }
-            }
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestMatch = $faq;
-            }
+            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->answer);
+            $score = $this->calculateScore($queryTokens, $faqTokens, $faq);
+            $scored[] = ['faq' => $faq, 'score' => $score];
         }
 
-        if ($bestMatch && $bestScore > 0) {
-            return $bestMatch->answer;
+        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        $best = $scored[0] ?? null;
+        if ($best && $best['score'] > 0) {
+            return $best['faq']->answer;
         }
 
         return null;
+    }
+
+    protected function tokenize(string $text): array
+    {
+        $text = strtolower($text);
+        $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
+        $words = preg_split('/\s+/', $text);
+        $words = array_filter($words, fn($w) => strlen($w) > 2);
+
+        $result = [];
+        foreach ($words as $word) {
+            $normalized = $this->normalize($word);
+            if ($normalized !== null) {
+                $result[] = $normalized;
+            }
+        }
+
+        return array_values($result);
+    }
+
+    protected function normalize(string $word): ?string
+    {
+        $word = trim($word);
+        if (in_array($word, $this->stopwords, true)) {
+            return null;
+        }
+        foreach ($this->suffixPatterns as $pattern) {
+            if (preg_match($pattern, $word, $matches)) {
+                $word = $matches[1];
+                break;
+            }
+        }
+        if (strlen($word) <= 2) {
+            return null;
+        }
+        return $word;
+    }
+
+    protected function calculateScore(array $queryTokens, array $faqTokens, $faq): float
+    {
+        $queryCount = count($queryTokens);
+        if ($queryCount === 0) {
+            return 0;
+        }
+
+        $exactMatches = 0;
+        $stemMatches = 0;
+
+        foreach ($queryTokens as $qToken) {
+            foreach ($faqTokens as $fToken) {
+                if ($qToken === $fToken) {
+                    $exactMatches++;
+                } elseif (str_starts_with($qToken, $fToken) || str_starts_with($fToken, $qToken)) {
+                    $stemMatches++;
+                }
+            }
+        }
+
+        $score = ($exactMatches * 2) + ($stemMatches * 1);
+        $score /= ($queryCount * 2);
+
+        $priorityKeywords = [
+            'syarat', 'biaya', 'kuota', 'asrama', 'whatsapp', 'wa', 'kontak',
+            'daftar', 'gratis', 'free', 'keunggulan', 'program',
+            'informasi', 'pendaftaran',
+        ];
+
+        foreach ($queryTokens as $qToken) {
+            if (in_array($qToken, $priorityKeywords, true)) {
+                $question = strtolower($faq->question);
+                if (str_contains($question, $qToken)) {
+                    $score += 0.5;
+                }
+            }
+        }
+
+        return $score;
     }
 
     protected function buildContext(): array
