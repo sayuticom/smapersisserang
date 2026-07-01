@@ -8,7 +8,9 @@
     }
 
     $spmbTitle = 'SPMB SMA Persis Serang - Gratis Sekolah dan Asrama 3 Tahun';
-    $spmbDescription = 'Pendaftaran murid baru SMA Persis Serang. Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid.';
+
+    $defaultPromo = "Program khusus angkatan pertama SMA Persis Serang.\n\nGratis Uang Pendidikan, Asrama, dan Makan selama 3 tahun untuk 36 siswa angkatan pertama.\n\nRincian Program:\n• Uang Pendidikan Gratis\n• Uang Makan Asrama Gratis\n• Biaya Asrama Gratis\n• Berlaku selama 3 tahun\n• Kuota terbatas hanya untuk 36 siswa angkatan pertama\n\nCatatan:\nSeragam tidak gratis dan menjadi tanggung jawab masing-masing peserta didik.";
+    $spmbDescription = $programs->first()?->description ?: $defaultPromo;
 
     $spmbUrl = request()->fullUrl();
     $spmbImage = $schoolSetting?->meta_image
@@ -80,9 +82,9 @@
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-emerald-50 sm:text-xl lg:mx-0">
                         Islamic Boarding School berbasis Akhlak dan Teknologi
                     </p>
-                    <p class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm font-semibold leading-relaxed shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base lg:mx-0" style="color: #ffffff;">
-                        Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid
-                    </p>
+                    <div class="mx-auto mt-4 max-w-3xl rounded-2xl border border-amber-300/40 bg-white/10 px-5 py-3 text-sm leading-relaxed shadow-lg shadow-emerald-950/10 backdrop-blur sm:text-base lg:mx-0" style="color: #ffffff; text-align: left;">
+                        {!! nl2br(e($spmbDescription)) !!}
+                    </div>
                     <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                         <a href="{{ route('spmb.create') }}"
                            class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
