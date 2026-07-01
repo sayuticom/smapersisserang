@@ -97,6 +97,10 @@ Route::name('ppdb.')->prefix('ppdb')->group(function () {
     Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
 });
 
+Route::post('/ai-chat/send', [\App\Http\Controllers\Public\AiChatController::class, 'send'])
+    ->middleware('throttle:10,1')
+    ->name('ai-chat.send');
+
 Route::get('/spmb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('spmb.info');
 
 Route::name('spmb.')->prefix('spmb')->group(function () {
@@ -234,6 +238,15 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
+    });
+
+    Route::name('ai-faqs.')->prefix('ai-faqs')->middleware('superadmin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\AiFaqController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'store'])->name('store');
+        Route::get('/{aiFaq}/edit', [\App\Http\Controllers\Admin\AiFaqController::class, 'edit'])->name('edit');
+        Route::put('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'update'])->name('update');
+        Route::delete('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'destroy'])->name('destroy');
     });
 });
 

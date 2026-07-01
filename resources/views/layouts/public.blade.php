@@ -58,5 +58,7 @@
         </main>
 
         @include('layouts.partials.public-footer')
+        <x-ai-chat-widget />
+        @stack('scripts')
     </body>
 </html>

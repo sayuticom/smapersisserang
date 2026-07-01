@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             AdmissionYearsTableSeeder::class,
             AdmissionProgramsTableSeeder::class,
             FaqSeeder::class,
+            AiFaqSeeder::class,
         ]);
 
         User::updateOrCreate(
