@@ -1,4 +1,7 @@
 @php
+$statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan'];
+$statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800'];
+
 $statusLabels = [
     'baru_daftar' => 'Baru Daftar',
     'menunggu_verifikasi' => 'Menunggu Verifikasi',
@@ -207,6 +210,7 @@ $followUpStatuses = [
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Follow-up</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Daftar</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider no-print">Aksi</th>
                         </tr>
@@ -233,6 +237,11 @@ $followUpStatuses = [
                                         <span class="text-xs text-gray-400">-</span>
                                     @endif
                                 </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusDataColors[$app->status_data] ?? 'bg-gray-100 text-gray-800' }}">
+                                        {{ $statusDataLabels[$app->status_data] ?? $app->status_data }}
+                                    </span>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ $app->submitted_at?->format('d/m/Y') ?: $app->created_at->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 text-right no-print">
                                     <div class="flex items-center justify-end gap-1.5">
@@ -248,7 +257,7 @@ $followUpStatuses = [
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-12 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-12 text-center text-gray-500">
                                     <p class="text-lg font-medium">Belum ada pendaftar</p>
                                     <p class="text-sm mt-1">Belum ada siswa yang mendaftar SPMB.</p>
                                 </td>

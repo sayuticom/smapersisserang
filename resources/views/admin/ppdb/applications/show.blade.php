@@ -79,78 +79,239 @@ $app = $studentApplication;
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Data Siswa</h3>
             </div>
             <div class="p-4">
+                @php
+                    $genderLabel = $app->gender === 'laki_laki' ? 'Laki-laki' : 'Perempuan';
+                @endphp
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Nama Lengkap</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-900">{{ $app->student_name }}</dd>
+                        <dd class="mt-1 text-sm font-medium text-gray-900">{{ $app->student_name ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Nama Panggilan</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->nama_panggilan ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">No. Pendaftaran</dt>
+                        <dd class="mt-1 text-sm font-mono text-gray-900">{{ $app->registration_number ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">NISN</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->nisn ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Nomor Induk Asal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->nomor_induk_asal ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Jenis Kelamin</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->gender === 'laki_laki' ? 'Laki-laki' : 'Perempuan' }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $genderLabel }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Tempat Lahir</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->birth_place }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->birth_place ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Tanggal Lahir</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->birth_date?->format('d F Y') }}</dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->address }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->birth_date?->format('d F Y') ?? '-' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-xs font-medium text-gray-400 uppercase">Sekolah Sebelumnya</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->previous_school }}</dd>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Agama</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->agama ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Anak Ke</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->anak_ke ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Status Anak dalam Keluarga</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->status_anak_dalam_keluarga ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Telepon Siswa</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->telepon_siswa ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Siswa</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->address ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Kemampuan Baca Quran</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->quran_reading_ability }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->quran_reading_ability ?? '-' }}</dd>
                     </div>
-                    <div class="sm:col-span-2">
-                        <dt class="text-xs font-medium text-gray-400 uppercase">Motivasi</dt>
-                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ $app->motivation }}</dd>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Boarding Ready</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->boarding_ready ? 'Ya, siap boarding' : 'Tidak' }}</dd>
                     </div>
                     @if($app->health_notes)
                     <div class="sm:col-span-2">
                         <dt class="text-xs font-medium text-gray-400 uppercase">Catatan Kesehatan</dt>
-                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ $app->health_notes }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ $app->health_notes ?? '-' }}</dd>
                     </div>
                     @endif
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Motivasi</dt>
+                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ $app->motivation ?? '-' }}</dd>
+                    </div>
                 </dl>
             </div>
         </div>
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Data Orang Tua</h3>
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Data Sekolah Asal</h3>
+            </div>
+            <div class="p-4">
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Nama SMP/MTs Asal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->previous_school ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Sekolah Asal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->alamat_sekolah_asal ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Diterima di Kelas</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->diterima_di_kelas ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Tanggal Diterima</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->tanggal_diterima?->format('d F Y') ?? '-' }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Data Orang Tua Kandung</h3>
             </div>
             <div class="p-4">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Nama Ayah</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->father_name }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->father_name ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-400 uppercase">Nama Ibu</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->mother_name }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->mother_name ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Ayah</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->alamat_ayah ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Ibu</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->alamat_ibu ?? '-' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-xs font-medium text-gray-400 uppercase">No. WhatsApp</dt>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">No. WhatsApp Orang Tua</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            <span>{{ $app->parent_whatsapp }}</span>
-                            <x-whatsapp-status-button :application="$app" class="mt-1.5 px-3 py-1.5 text-xs font-medium rounded-lg gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                WA Cek Status
-                            </x-whatsapp-status-button>
+                            @if($app->parent_whatsapp)
+                                <span>{{ $app->parent_whatsapp }}</span>
+                                <x-whatsapp-status-button :application="$app" class="mt-1.5 px-3 py-1.5 text-xs font-medium rounded-lg gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                    WA Cek Status
+                                </x-whatsapp-status-button>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
                         </dd>
                     </div>
                     <div>
-                        <dt class="text-xs font-medium text-gray-400 uppercase">Pekerjaan Orang Tua</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ $app->parent_job ?? '-' }}</dd>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pekerjaan Ayah</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pekerjaan_ayah ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pekerjaan Ibu</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pekerjaan_ibu ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pendidikan Ayah</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pendidikan_ayah ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pendidikan Ibu</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pendidikan_ibu ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Penghasilan Ayah</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->penghasilan_ayah ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Penghasilan Ibu</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->penghasilan_ibu ?? '-' }}</dd>
                     </div>
                 </dl>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Data Orang Tua Wali</h3>
+            </div>
+            <div class="p-4">
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Nama Ayah Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->nama_ayah_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Nama Ibu Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->nama_ibu_wali ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Ayah Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->alamat_ayah_wali ?? '-' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Alamat Ibu Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->alamat_ibu_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Telepon Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->telepon_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pekerjaan Ayah Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pekerjaan_ayah_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pekerjaan Ibu Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pekerjaan_ibu_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pendidikan Ayah Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pendidikan_ayah_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Pendidikan Ibu Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->pendidikan_ibu_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Penghasilan Ayah Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->penghasilan_ayah_wali ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-400 uppercase">Penghasilan Ibu Wali</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ $app->penghasilan_ibu_wali ?? '-' }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Foto 3x4</h3>
+            </div>
+            <div class="p-4">
+                @if($app->foto_3x4)
+                    <img src="{{ asset('storage/' . $app->foto_3x4) }}" alt="Foto 3x4 {{ $app->student_name }}"
+                         class="max-w-[160px] rounded-lg border border-gray-200 shadow-sm">
+                @else
+                    <p class="text-sm text-gray-400">-</p>
+                @endif
             </div>
         </div>
 
@@ -224,6 +385,107 @@ $app = $studentApplication;
                     </div>
                     @endif
                 </dl>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Status Data Siswa</h3>
+            </div>
+            <div class="p-4">
+                @php
+                    $statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan'];
+                    $statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800'];
+                @endphp
+                <div class="flex flex-wrap items-center gap-4 mb-4">
+                    <span class="inline-flex px-3 py-1 rounded-full text-sm font-medium {{ $statusDataColors[$app->status_data] ?? 'bg-gray-100 text-gray-800' }}">
+                        {{ $statusDataLabels[$app->status_data] ?? $app->status_data }}
+                    </span>
+                    @if($app->updated_by_parent_at)
+                        <span class="text-xs text-gray-400">Terakhir diperbarui: {{ $app->updated_by_parent_at->format('d M Y H:i') }}</span>
+                    @endif
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <form method="POST" action="{{ route('admin.ppdb.applications.mark-data-complete', $app) }}" class="inline">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status_data" value="{{ $app->status_data === 'sudah_lengkap' ? 'belum_lengkap' : 'sudah_lengkap' }}">
+                        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg {{ $app->status_data === 'sudah_lengkap' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100' : 'bg-green-600 text-white hover:bg-green-700' }} transition-colors">
+                            {{ $app->status_data === 'sudah_lengkap' ? 'Tandai Belum Lengkap' : 'Tandai Data Lengkap' }}
+                        </button>
+                    </form>
+
+                    @if($app->status_data !== 'perlu_perbaikan')
+                    <form method="POST" action="{{ route('admin.ppdb.applications.mark-data-complete', $app) }}" class="inline">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status_data" value="perlu_perbaikan">
+                        <button type="submit" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
+                            Tandai Perlu Perbaikan
+                        </button>
+                    </form>
+                    @endif
+
+                    <form method="POST" action="{{ route('admin.ppdb.applications.generate-update-link', $app) }}" class="inline">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                            {{ $app->update_token ? 'Buat Ulang Link' : 'Buat Link Pembaruan' }}
+                        </button>
+                    </form>
+                </div>
+
+                @php
+                    $waPhone = $app->normalizedParentWhatsapp();
+                    $waUpdateUrl = $app->updateDataUrl();
+                @endphp
+
+                @if($waPhone && $waUpdateUrl)
+                    @php
+                        $waMessage = "Assalamu'alaikum Bapak/Ibu.\n\n"
+                            . "Kami dari Panitia SPMB SMA Persis Serang memohon bantuan Bapak/Ibu untuk melengkapi atau memperbarui data calon siswa:\n\n"
+                            . "Nama: {$app->student_name}\n"
+                            . "Nomor Pendaftaran: {$app->registration_number}\n\n"
+                            . "Silakan klik link berikut:\n{$waUpdateUrl}\n\n"
+                            . "Mohon data diisi dengan benar dan lengkap.\n\n"
+                            . "Terima kasih.\nPanitia SPMB SMA Persis Serang";
+                        $waUrl = 'https://wa.me/' . $waPhone . '?text=' . urlencode($waMessage);
+                    @endphp
+                    <div class="mt-4">
+                        <a href="{{ $waUrl }}" target="_blank" rel="noopener"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            Kirim WA Perbaikan Data
+                        </a>
+                    </div>
+                @elseif(!$waPhone)
+                    <p class="mt-4 text-xs text-gray-400">Nomor WA orang tua belum tersedia.</p>
+                @elseif(!$waUpdateUrl)
+                    <p class="mt-4 text-xs text-gray-400">Buat link pembaruan terlebih dahulu.</p>
+                @endif
+
+                @if(session('update_link'))
+                    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p class="text-sm font-medium text-blue-800 mb-2">Link Pembaruan Data:</p>
+                        <div class="flex items-center gap-2">
+                            <input type="text" value="{{ session('update_link') }}" readonly
+                                   class="w-full text-sm font-mono bg-white border border-blue-300 rounded-lg px-3 py-2" id="update-link-input">
+                            <button onclick="copyUpdateLink()" class="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0">
+                                Salin
+                            </button>
+                        </div>
+                    </div>
+                    <script>
+                        function copyUpdateLink() {
+                            const input = document.getElementById('update-link-input');
+                            input.select();
+                            document.execCommand('copy');
+                            alert('Link berhasil disalin!');
+                        }
+                    </script>
+                @endif
             </div>
         </div>
 

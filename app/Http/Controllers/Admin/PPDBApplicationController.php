@@ -10,6 +10,7 @@ use App\Models\AdmissionProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PPDBApplicationController extends Controller
@@ -361,6 +362,38 @@ class PPDBApplicationController extends Controller
         ];
 
         return back()->with('success', 'Follow-up diperbarui: ' . ($labels[$validated['follow_up_status']] ?? $validated['follow_up_status']));
+    }
+
+    public function markDataComplete(Request $request, StudentApplication $studentApplication)
+    {
+        $validated = $request->validate([
+            'status_data' => ['required', 'in:belum_lengkap,sudah_lengkap,perlu_perbaikan'],
+        ]);
+
+        $studentApplication->update(['status_data' => $validated['status_data']]);
+
+        $labels = [
+            'belum_lengkap' => 'Belum Lengkap',
+            'sudah_lengkap' => 'Sudah Lengkap',
+            'perlu_perbaikan' => 'Perlu Perbaikan',
+        ];
+
+        return back()->with('success', 'Status data diubah: ' . ($labels[$validated['status_data']] ?? $validated['status_data']));
+    }
+
+    public function generateUpdateLink(StudentApplication $studentApplication)
+    {
+        if (!$studentApplication->update_token) {
+            $studentApplication->update([
+                'update_token' => Str::random(64),
+                'status_data' => 'belum_lengkap',
+            ]);
+        }
+
+        $link = route('spmb.update-data', $studentApplication->update_token);
+
+        return back()->with('success', 'Link pembaruan data berhasil dibuat. Silakan salin link berikut:')
+            ->with('update_link', $link);
     }
 
     public function settingsEdit()

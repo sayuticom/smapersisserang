@@ -8,6 +8,7 @@ use App\Models\StudentApplication;
 use App\Models\ApplicationStatusHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PPDBController extends Controller
 {
@@ -205,6 +206,102 @@ class PPDBController extends Controller
             'title' => 'Pendaftaran Berhasil',
             'application' => $studentApplication,
         ]);
+    }
+
+    public function editData($token)
+    {
+        $application = StudentApplication::where('update_token', $token)->first();
+
+        if (!$application) {
+            return view('ppdb.closed', [
+                'title' => 'Link Tidak Valid',
+                'message' => 'Link pembaruan data tidak valid atau sudah kadaluarsa. Silakan hubungi panitia SPMB.',
+            ]);
+        }
+
+        $application->load(['admissionYear', 'admissionProgram']);
+
+        $agamaOptions = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+        $statusKeluargaOptions = ['anak_kandung', 'anak_tiri', 'anak_angkat'];
+
+        return view('ppdb.update-data', compact(
+            'application', 'agamaOptions', 'statusKeluargaOptions'
+        ));
+    }
+
+    public function updateData(Request $request, $token)
+    {
+        $application = StudentApplication::where('update_token', $token)->first();
+
+        if (!$application) {
+            return back()->with('error', 'Link pembaruan data tidak valid.');
+        }
+
+        $validated = $request->validate([
+            'nama_panggilan' => 'nullable|string|max:100',
+            'nomor_induk_asal' => 'nullable|string|max:50',
+            'nisn' => 'nullable|string|max:20',
+            'student_name' => 'required|string|max:255',
+            'gender' => 'required|in:laki_laki,perempuan',
+            'birth_place' => 'required|string|max:255',
+            'birth_date' => 'required|date',
+            'agama' => 'required|string|max:20',
+            'anak_ke' => 'nullable|integer|min:1',
+            'status_anak_dalam_keluarga' => 'nullable|string|max:50',
+            'previous_school' => 'required|string|max:255',
+            'alamat_sekolah_asal' => 'nullable|string',
+            'address' => 'required|string',
+            'telepon_siswa' => 'nullable|string|max:20',
+            'boarding_ready' => 'required|in:0,1',
+            'quran_reading_ability' => 'required|in:belum_bisa,terbata_bata,lancar,baik',
+            'health_notes' => 'nullable|string',
+            'motivation' => 'required|string',
+            'foto_3x4' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            'father_name' => 'required|string|max:255',
+            'mother_name' => 'required|string|max:255',
+            'alamat_ayah' => 'nullable|string',
+            'alamat_ibu' => 'nullable|string',
+            'parent_whatsapp' => 'required|string|max:20',
+            'parent_job' => 'nullable|string|max:255',
+            'pekerjaan_ayah' => 'nullable|string|max:100',
+            'pekerjaan_ibu' => 'nullable|string|max:100',
+            'pendidikan_ayah' => 'nullable|string|max:100',
+            'pendidikan_ibu' => 'nullable|string|max:100',
+            'penghasilan_ayah' => 'nullable|string|max:50',
+            'penghasilan_ibu' => 'nullable|string|max:50',
+
+            'nama_ayah_wali' => 'nullable|string|max:255',
+            'nama_ibu_wali' => 'nullable|string|max:255',
+            'alamat_ayah_wali' => 'nullable|string',
+            'alamat_ibu_wali' => 'nullable|string',
+            'telepon_wali' => 'nullable|string|max:20',
+            'pekerjaan_ayah_wali' => 'nullable|string|max:100',
+            'pekerjaan_ibu_wali' => 'nullable|string|max:100',
+            'pendidikan_ayah_wali' => 'nullable|string|max:100',
+            'pendidikan_ibu_wali' => 'nullable|string|max:100',
+            'penghasilan_ayah_wali' => 'nullable|string|max:50',
+            'penghasilan_ibu_wali' => 'nullable|string|max:50',
+        ]);
+
+        DB::transaction(function () use ($validated, $application, $request) {
+            $data = $validated;
+
+            if ($request->hasFile('foto_3x4')) {
+                if ($application->foto_3x4) {
+                    Storage::disk('public')->delete($application->foto_3x4);
+                }
+                $data['foto_3x4'] = $request->file('foto_3x4')->store('spmb/foto-siswa', 'public');
+            }
+
+            $data['boarding_ready'] = (bool) $validated['boarding_ready'];
+            $data['updated_by_parent_at'] = now();
+            $data['status_data'] = 'sudah_lengkap';
+
+            $application->update($data);
+        });
+
+        return redirect()->route('spmb.info')->with('success', 'Data berhasil diperbarui. Terima kasih.');
     }
 
     public function statusForm()

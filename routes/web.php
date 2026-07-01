@@ -105,6 +105,8 @@ Route::name('spmb.')->prefix('spmb')->group(function () {
     Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
     Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
     Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
+    Route::get('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'editData'])->name('update-data');
+    Route::post('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'updateData'])->name('update-data.store');
 });
 
 Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
@@ -117,6 +119,8 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])->name('show');
         Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])->name('update-status');
         Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])->name('update-follow-up');
+        Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])->name('mark-data-complete');
+        Route::post('/{studentApplication}/generate-update-link', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'generateUpdateLink'])->name('generate-update-link');
     });
 
     Route::name('ppdb.settings.')->prefix('ppdb/pengaturan')->group(function () {
