@@ -1,6 +1,12 @@
 @extends('layouts.public')
 
 @php
+    try {
+        $schoolSetting ??= \App\Models\SchoolSetting::current();
+    } catch (\Exception $e) {
+        $schoolSetting = null;
+    }
+
     $homeTitle = 'SMA Persis Serang - Islamic Boarding School';
     $homeDescription = 'SMA Persis Serang adalah Islamic Boarding School berbasis akhlak dan teknologi. Pendaftaran SPMB dibuka, gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama.';
 

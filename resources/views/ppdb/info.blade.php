@@ -1,6 +1,12 @@
 @extends('layouts.public')
 
 @php
+    try {
+        $schoolSetting ??= \App\Models\SchoolSetting::current();
+    } catch (\Exception $e) {
+        $schoolSetting = null;
+    }
+
     $spmbTitle = 'SPMB SMA Persis Serang - Gratis Sekolah dan Asrama 3 Tahun';
     $spmbDescription = 'Pendaftaran murid baru SMA Persis Serang. Gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama, hanya untuk 36 murid.';
 
