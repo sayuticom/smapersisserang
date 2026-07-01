@@ -386,6 +386,17 @@ class PPDBApplicationController extends Controller
         return back()->with('success', 'Status data diubah: ' . ($labels[$validated['status_data']] ?? $validated['status_data']));
     }
 
+    public function destroy(StudentApplication $studentApplication)
+    {
+        $studentName = $studentApplication->student_name ?? 'Pendaftar';
+
+        $studentApplication->delete();
+
+        return redirect()
+            ->route('admin.ppdb.applications.index')
+            ->with('success', "Data pendaftar {$studentName} berhasil dihapus.");
+    }
+
     public function generateUpdateLink(StudentApplication $studentApplication)
     {
         if (!$studentApplication->update_token) {

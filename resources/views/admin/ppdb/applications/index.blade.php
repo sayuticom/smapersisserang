@@ -252,6 +252,12 @@ $followUpStatuses = [
                                         <a href="{{ route('admin.ppdb.applications.show', $app) }}" class="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors">
                                             Detail
                                         </a>
+                                        <form method="POST" action="{{ route('admin.ppdb.applications.destroy', $app) }}" class="inline" onsubmit="return confirm('Yakin ingin menghapus data pendaftar ini? Data yang dihapus tidak bisa dikembalikan.');">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors">
+                                                Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -306,6 +312,12 @@ $followUpStatuses = [
                             <a href="{{ route('admin.ppdb.applications.show', $app) }}" class="inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
                                 Detail
                             </a>
+                            <form method="POST" action="{{ route('admin.ppdb.applications.destroy', $app) }}" class="inline" onsubmit="return confirm('Yakin ingin menghapus data pendaftar ini? Data yang dihapus tidak bisa dikembalikan.');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors">
+                                    Hapus
+                                </button>
+                            </form>
                         </div>
                     </div>
                 @empty

@@ -4,23 +4,26 @@
             <a href="{{ route('admin.users.index') }}" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">&larr; Kembali</a>
             <h2 class="text-2xl font-bold text-gray-900 mt-2">Edit User</h2>
         </div>
-        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
+        <form method="POST" action="{{ route('admin.users.update', $user) }}" autocomplete="off" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
             @csrf @method('PUT')
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama <span class="text-red-500">*</span></label>
                 <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}"
+                       autocomplete="off"
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
                 @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
                 <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}"
+                       autocomplete="off"
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
                 @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
                 <input type="password" name="password" id="password"
+                       autocomplete="new-password"
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" minlength="8">
                 <p class="text-xs text-gray-400 mt-1">Kosongkan jika tidak ingin mengganti password.</p>
                 @error('password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
@@ -28,6 +31,7 @@
             <div>
                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
                 <input type="password" name="password_confirmation" id="password_confirmation"
+                       autocomplete="new-password"
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
             </div>
             <div>
