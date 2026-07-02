@@ -46,19 +46,41 @@ class OpenAIChatService
             return null;
         }
 
-        // Try AI-based intent classification first, fall back to keyword search
-        $faqs = $this->searchRelevantFaqsByAi($message);
+        // 1. Understand user intent
+        $intent = $this->understandIntent($message);
+
+        Log::info('AI Chat intent', [
+            'message' => $message,
+            'intent' => $intent['intent'] ?? null,
+            'rewritten_query' => $intent['rewritten_query'] ?? null,
+            'needs_whatsapp' => $intent['needs_whatsapp'] ?? null,
+            'confidence' => $intent['confidence'] ?? null,
+        ]);
+
+        // 2. Handle greeting/thanks directly
+        if (in_array($intent['intent'] ?? '', ['greeting', 'thanks'])) {
+            $greetingReplies = [
+                'greeting' => 'Halo, selamat datang di layanan Chat AI SMA Persis Serang. Silakan tanyakan seputar SPMB, biaya sekolah, asrama, kuota siswa, syarat pendaftaran, atau program sekolah.',
+                'thanks' => 'Sama-sama. Jika ada pertanyaan lain seputar SPMB SMA Persis Serang, silakan tanyakan kembali.',
+            ];
+            return $greetingReplies[$intent['intent']] ?? null;
+        }
+
+        // 3. Low confidence → ask clarification
+        if (($intent['confidence'] ?? 0) < 0.4) {
+            return 'Boleh diperjelas, ingin bertanya tentang biaya, syarat pendaftaran, kuota, asrama, atau program sekolah?';
+        }
+
+        // 4. Search FAQ prioritized by intent category
+        $faqs = $this->searchFaqByIntent($intent['intent'] ?? '', $message);
         if ($faqs->isEmpty()) {
             $faqs = $this->searchRelevantFaqs($message);
         }
 
-        $systemPrompt = $this->buildSystemPrompt($context, $faqs);
+        // 5. Build prompt with intent context
+        $systemPrompt = $this->buildSystemPrompt($context, $faqs, $intent);
 
-        Log::info('AI Chat context', [
-            'message' => $message,
-            'faq_count' => $faqs->count(),
-            'faq_questions' => $faqs->pluck('question')->values(),
-        ]);
+        $queryText = $intent['rewritten_query'] ?? $message;
 
         try {
             $response = Http::timeout(30)
@@ -67,7 +89,7 @@ class OpenAIChatService
                     'model' => $this->model,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $message],
+                        ['role' => 'user', 'content' => $queryText],
                     ],
                     'max_tokens' => 400,
                     'temperature' => 0.8,
@@ -87,6 +109,144 @@ class OpenAIChatService
             Log::error('OpenAI API exception', ['message' => $e->getMessage()]);
             return null;
         }
+    }
+
+    public function understandIntent(string $message): array
+    {
+        $default = [
+            'intent' => 'lainnya',
+            'rewritten_query' => $message,
+            'needs_whatsapp' => false,
+            'confidence' => 0.5,
+        ];
+
+        $prompt = <<<PROMPT
+Kamu bertugas memahami maksud pertanyaan pengunjung website SMA Persis Serang.
+Pilih satu intent paling cocok dari daftar:
+greeting, thanks, profil, persis, spmb, syarat, biaya, kuota, asrama, program, keunggulan, kontak, daftar, jadwal, lokasi, lainnya.
+
+Tentukan juga:
+- rewritten_query: ubah pertanyaan user menjadi pertanyaan lengkap yang jelas
+- needs_whatsapp: true jika user meminta nomor WA, ingin daftar, ingin dihubungkan ke panitia, atau informasi butuh konfirmasi terbaru
+- confidence: 0 sampai 1
+
+Balas hanya JSON valid (tanpa markdown, tanpa ```).
+
+Contoh:
+User: "Berapa harganya?"
+Output: {"intent": "biaya", "rewritten_query": "Berapa biaya sekolah dan biaya asrama SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.9}
+
+User: "SPP berapa?"
+Output: {"intent": "biaya", "rewritten_query": "Berapa SPP dan biaya sekolah SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.95}
+
+User: "mau daftar"
+Output: {"intent": "daftar", "rewritten_query": "Bagaimana cara mendaftar SPMB SMA Persis Serang?", "needs_whatsapp": true, "confidence": 0.95}
+
+User: "nomor wa panitia"
+Output: {"intent": "kontak", "rewritten_query": "Nomor WhatsApp panitia SPMB SMA Persis Serang", "needs_whatsapp": true, "confidence": 0.98}
+
+User: "syaratnya apa?"
+Output: {"intent": "syarat", "rewritten_query": "Apa saja syarat pendaftaran SPMB SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.9}
+
+User: "ada asrama?"
+Output: {"intent": "asrama", "rewritten_query": "Apa saja fasilitas dan program asrama SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.9}
+
+User: "berapa kuotanya?"
+Output: {"intent": "kuota", "rewritten_query": "Berapa kuota siswa yang diterima SPMB SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.95}
+
+User: "program unggulannya apa?"
+Output: {"intent": "program", "rewritten_query": "Apa saja program unggulan SMA Persis Serang?", "needs_whatsapp": false, "confidence": 0.9}
+
+User: "apa keunggulan sekolah ini?"
+Output: {"intent": "keunggulan", "rewritten_query": "Apa keunggulan SMA Persis Serang dibanding sekolah lain?", "needs_whatsapp": false, "confidence": 0.9}
+
+User: "tes"
+Output: {"intent": "lainnya", "rewritten_query": "Tes", "needs_whatsapp": false, "confidence": 0.2}
+PROMPT;
+
+        try {
+            $response = Http::timeout(15)
+                ->withToken($this->apiKey)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => $this->model,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $prompt],
+                        ['role' => 'user', 'content' => $message],
+                    ],
+                    'max_tokens' => 150,
+                    'temperature' => 0.3,
+                ]);
+
+            if (!$response->successful()) {
+                Log::warning('AI intent detection API error', ['status' => $response->status()]);
+                return $default;
+            }
+
+            $content = trim($response->json('choices.0.message.content'));
+            $content = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', $content);
+            $parsed = json_decode($content, true);
+
+            if (!is_array($parsed) || empty($parsed['intent'])) {
+                Log::warning('AI intent parse failed', ['raw' => $response->json('choices.0.message.content')]);
+                return $default;
+            }
+
+            return [
+                'intent' => $parsed['intent'] ?? 'lainnya',
+                'rewritten_query' => $parsed['rewritten_query'] ?? $message,
+                'needs_whatsapp' => !empty($parsed['needs_whatsapp']),
+                'confidence' => (float) ($parsed['confidence'] ?? 0.5),
+            ];
+        } catch (\Exception $e) {
+            Log::error('AI intent detection exception', ['message' => $e->getMessage()]);
+            return $default;
+        }
+    }
+
+    public function searchFaqByIntent(string $intent, string $originalMessage): \Illuminate\Support\Collection
+    {
+        // Map intent to FAQ category
+        $categoryMap = [
+            'profil' => 'Umum',
+            'persis' => 'Umum',
+            'spmb' => 'SPMB',
+            'syarat' => 'SPMB',
+            'biaya' => 'Biaya',
+            'kuota' => 'SPMB',
+            'asrama' => 'Asrama',
+            'program' => 'Program',
+            'keunggulan' => 'Umum',
+            'kontak' => 'Kontak',
+            'daftar' => 'SPMB',
+            'jadwal' => 'SPMB',
+            'lokasi' => 'Umum',
+        ];
+
+        $category = $categoryMap[$intent] ?? null;
+
+        if ($category) {
+            $faqs = AiFaq::active()
+                ->where('category', $category)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->take(5)
+                ->get();
+
+            if ($faqs->isNotEmpty()) {
+                return $faqs;
+            }
+        }
+
+        // For "lainnya" intent, try keyword search before AI classification
+        if ($intent === 'lainnya') {
+            $keywordFaqs = $this->searchRelevantFaqs($originalMessage);
+            if ($keywordFaqs->isNotEmpty()) {
+                return $keywordFaqs;
+            }
+        }
+
+        // Fallback to AI-based classification
+        return $this->searchRelevantFaqsByAi($originalMessage);
     }
 
     public function searchRelevantFaqsByAi(string $message, int $limit = 5): \Illuminate\Support\Collection
@@ -302,7 +462,7 @@ PROMPT;
         return $score;
     }
 
-    protected function buildSystemPrompt(array $context, $faqs): string
+    protected function buildSystemPrompt(array $context, $faqs, array $intent = []): string
     {
         $school = $context['school'] ?? [];
         $year = $context['admission_year'] ?? [];
@@ -401,6 +561,8 @@ PROMPT;
 
         $info .= "\nLink pendaftaran: " . route('spmb.create');
 
+        $needsWhatsapp = $intent['needs_whatsapp'] ?? false;
+
         $faqSection = '';
         if ($faqs->isNotEmpty()) {
             $faqSection = "\nKONTEKS FAQ RESMI:\n";
@@ -409,48 +571,25 @@ PROMPT;
             }
         }
 
+        $waInstruction = $needsWhatsapp
+            ? 'User membutuhkan kontak WhatsApp. Tampilkan nomor **089661234569** dan link https://wa.me/6289661234569 jika diminta.'
+            : 'Jangan tampilkan nomor atau link WhatsApp. User tidak meminta kontak WhatsApp. Jawab di Chat AI saja.';
+
         return <<<PROMPT
 Kamu adalah asisten Chat AI resmi SMA Persis Serang.
 Jawablah seperti admin sekolah yang ramah, sopan, dan membantu.
 Gunakan bahasa Indonesia yang natural, tidak terlalu formal, tidak kaku, dan tidak terasa seperti menyalin FAQ.
 Jawaban harus singkat, jelas, dan nyaman dibaca di HP.
 Mulai jawaban langsung ke inti, tapi tetap ramah.
-Jangan terlalu sering menutup jawaban dengan WhatsApp.
-Arahkan ke WhatsApp hanya jika user meminta nomor WA, mau daftar, ingin menghubungi panitia, atau pertanyaannya perlu konfirmasi terbaru.
-Jika user bertanya singkat seperti "syaratnya?", pahami sebagai syarat pendaftaran SPMB.
 Jika membuat daftar, gunakan bullet dengan tanda "•".
 Jangan gunakan HTML.
 Jangan menyebut "berdasarkan FAQ" atau "berdasarkan konteks".
 
-Sebelum menjawab, pahami maksud pertanyaan pengguna. Jangan hanya mencocokkan kata secara mentah.
-Jika pertanyaan pengguna menanyakan "beda", "keunggulan", "kelebihan", "kenapa memilih", atau "apa yang membedakan", maka topiknya adalah keunggulan sekolah.
-Gunakan jawaban resmi FAQ yang paling relevan. Jangan menjawab dari FAQ biaya kecuali pengguna memang bertanya tentang biaya, gratis, SPP, pembayaran, atau beasiswa.
+{$waInstruction}
+
+Gunakan jawaban resmi FAQ yang paling relevan.
 Jika tidak menemukan FAQ yang cocok, jawab secara umum berdasarkan informasi resmi sekolah dan arahkan ke panitia SPMB.
 Jawaban maksimal 2–4 kalimat untuk pertanyaan sederhana. Gunakan bullet hanya jika memang daftar.
-
-Contoh gaya jawaban:
-
-User: apa aja syaratnya?
-Jawaban:
-Untuk pendaftaran SMA Persis Serang, syarat umumnya seperti ini:
-• Scan ijazah atau SKL
-• Scan akta kelahiran
-• Scan kartu keluarga
-• Screenshot NISN
-• Nilai rapor semester 1–5
-• Pas foto berwarna 3x4 latar merah
-Kalau ingin lanjut daftar, bisa ketik: mau daftar.
-
-User: sekolahnya gratis?
-Jawaban:
-Iya, untuk angkatan pertama ada program **GRATIS biaya sekolah dan asrama selama 3 tahun**.
-Kuotanya terbatas untuk **36 siswa**, jadi sebaiknya calon siswa segera menyiapkan berkas pendaftaran.
-
-User: nomor wa panitia
-Jawaban:
-Bisa. Nomor WhatsApp Official panitia SPMB SMA Persis Serang adalah **089661234569**.
-Silakan klik link berikut untuk menghubungi panitia:
-https://wa.me/6289661234569
 
 Gunakan **tebal** (dua bintang) untuk informasi penting seperti **GRATIS**, **36 siswa**, atau nomor WhatsApp **089661234569** jika muncul.
 Jangan mengarang informasi yang belum tersedia.
