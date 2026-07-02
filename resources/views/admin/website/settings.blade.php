@@ -23,6 +23,49 @@
             </div>
         @endif
 
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-gray-100 bg-indigo-50">
+                <h3 class="text-sm font-semibold text-indigo-800 uppercase tracking-wider">Dashboard Progress Publik</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                @if(empty($setting->public_dashboard_token))
+                    <p class="text-sm text-gray-600">
+                        Token belum dibuat. Klik "Generate Token Baru" untuk membuat link dashboard publik.
+                    </p>
+                    <form method="POST" action="{{ route('admin.website.settings.public-dashboard-token.generate') }}">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+                            Generate Token Baru
+                        </button>
+                    </form>
+                @else
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Link Dashboard Progress Publik
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="public-progress-url" readonly
+                                value="{{ route('public.progress', $setting->public_dashboard_token) }}"
+                                class="w-full rounded-lg border-gray-300 bg-gray-50 text-sm font-mono text-gray-700">
+                            <button type="button" id="copy-public-progress-url"
+                                class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap shadow-sm">
+                                Salin Link
+                            </button>
+                        </div>
+                        <form method="POST" action="{{ route('admin.website.settings.public-dashboard-token.generate') }}" class="mt-4"
+                            onsubmit="return confirm('Generate token baru? Link lama tidak bisa digunakan lagi.')">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors shadow-sm">
+                                Reset Token
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('admin.website.settings.update') }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
@@ -289,4 +332,24 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+    document.getElementById('copy-public-progress-url')?.addEventListener('click', function () {
+        const input = document.getElementById('public-progress-url');
+        if (!input) return;
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try {
+            document.execCommand('copy');
+            const btn = this;
+            const orig = btn.textContent;
+            btn.textContent = 'Tersalin!';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+        } catch (e) {
+            alert('Tekan Ctrl+C untuk menyalin');
+        }
+    });
+    </script>
+    @endpush
 </x-admin-layout>

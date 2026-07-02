@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SchoolSetting;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class WebsiteSettingController extends Controller
 {
@@ -48,6 +50,7 @@ class WebsiteSettingController extends Controller
             'google_maps_embed_url' => ['nullable', 'string'],
             'google_maps_link' => ['nullable', 'string', 'max:500'],
             'letterhead_png' => ['nullable', 'image', 'mimes:png', 'max:2048'],
+            'public_dashboard_token' => ['nullable', 'string', 'max:100'],
         ]);
 
         $setting = SchoolSetting::current();
@@ -87,5 +90,20 @@ class WebsiteSettingController extends Controller
 
         return redirect()->route('admin.website.settings.edit')
             ->with('success', 'Pengaturan website berhasil diperbarui.');
+    }
+
+    public function generateToken()
+    {
+        $setting = SchoolSetting::current();
+
+        if (!$setting) {
+            $setting = new SchoolSetting();
+            $setting->is_active = true;
+        }
+
+        $setting->public_dashboard_token = Str::random(48);
+        $setting->save();
+
+        return back()->with('success', 'Token dashboard publik berhasil dibuat.');
     }
 }

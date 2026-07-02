@@ -12,7 +12,7 @@ class TrackVisitorMiddleware
 {
     protected array $excludedPrefixes = [
         'admin', 'login', 'register', 'logout', 'password',
-        'profile', 'ai-chat',
+        'profile', 'ai-chat', 'progress', 'api', 'settings',
     ];
 
     protected array $excludedPatterns = [
@@ -96,7 +96,7 @@ class TrackVisitorMiddleware
 
         VisitorLog::create([
             'url' => $request->fullUrl(),
-            'path' => '/' . $request->path(),
+            'path' => $request->getPathInfo(),
             'title' => null,
             'referrer' => $request->header('referer'),
             'user_agent' => $userAgent,

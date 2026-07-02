@@ -6,8 +6,10 @@ use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\WebsitePageController;
 use App\Http\Controllers\Admin\WebsiteSettingController;
+use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
+use App\Http\Controllers\PublicProgressController;
 use App\Models\AdmissionYear;
 use App\Models\NavigationMenu;
 use App\Models\SchoolImage;
@@ -15,6 +17,7 @@ use App\Models\SchoolSetting;
 use App\Models\StudentApplication;
 use App\Models\WebsitePage;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     $schoolSetting = null;
@@ -93,14 +96,28 @@ Route::get('/dashboard', function () {
     })->count();
 
     $topPages = VisitorLog::selectRaw('path, url, count(*) as total, max(visited_at) as last_visited')
+        ->where('path', 'NOT LIKE', '/progress%')
+        ->where('path', 'NOT LIKE', '%dashboard%')
+        ->where('path', 'NOT LIKE', '/admin%')
         ->groupBy('path', 'url')
         ->orderByDesc('total')
         ->take(10)
         ->get();
 
-    $topReferrers = VisitorLog::whereNotNull('referrer')
-        ->selectRaw('referrer, count(*) as total')
-        ->groupBy('referrer')
+    $raw = "COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp')";
+    $topReferrers = VisitorLog::selectRaw("{$raw} as referrer, count(*) as total")
+        ->where(function ($q) {
+            $q->whereNull('referrer')
+              ->orWhere('referrer', '')
+              ->orWhere(function ($q2) {
+                  $q2->whereNotNull('referrer')
+                      ->where('referrer', '!=', '')
+                      ->where('referrer', 'NOT LIKE', '%/progress/%')
+                      ->where('referrer', 'NOT LIKE', '%/dashboard%')
+                      ->where('referrer', 'NOT LIKE', '%/admin%');
+              });
+        })
+        ->groupBy(DB::raw($raw))
         ->orderByDesc('total')
         ->take(5)
         ->get();
@@ -188,6 +205,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::name('website.settings.')->prefix('website/pengaturan')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'edit'])->name('edit');
         Route::put('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'update'])->name('update');
+        Route::post('/generate-token', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'generateToken'])->name('public-dashboard-token.generate');
     });
 
     Route::name('website.media.')->prefix('website/media')->group(function () {
@@ -301,5 +319,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::delete('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'destroy'])->name('destroy');
     });
 });
+
+Route::get('/progress/{token}', [PublicProgressController::class, 'show'])->name('public.progress');
 
 // Disable public registration - only allows administrator account
