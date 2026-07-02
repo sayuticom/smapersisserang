@@ -56,7 +56,7 @@ class AiChatController extends Controller
 
         if ($this->isGreetingOnly($message)) {
             return response()->json([
-                'reply' => 'Halo, selamat datang di layanan informasi SMA Persis Serang. Silakan tanyakan seputar SPMB, biaya sekolah, asrama, kuota siswa, program unggulan, atau kontak panitia.',
+                'reply' => 'Halo, selamat datang di layanan Chat AI SMA Persis Serang. Silakan tanyakan seputar SPMB, biaya sekolah, asrama, kuota siswa, syarat pendaftaran, atau program sekolah.',
             ]);
         }
 
@@ -82,7 +82,7 @@ class AiChatController extends Controller
 
         // 3. Last resort
         if ($reply === null) {
-            $reply = 'Maaf, saya tidak dapat menemukan jawaban untuk pertanyaan Anda. Silakan hubungi panitia SPMB melalui WhatsApp 089661234569 untuk informasi lebih lanjut.';
+            $reply = 'Maaf, saya tidak dapat menemukan jawaban untuk pertanyaan Anda. Silakan coba bertanya dengan kata kunci lain, atau ketik "mau daftar" jika ingin dihubungkan dengan panitia SPMB.';
         }
 
         return response()->json([
