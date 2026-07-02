@@ -46,7 +46,11 @@ class OpenAIChatService
             return null;
         }
 
-        $faqs = $this->searchRelevantFaqs($message);
+        // Try AI-based intent classification first, fall back to keyword search
+        $faqs = $this->searchRelevantFaqsByAi($message);
+        if ($faqs->isEmpty()) {
+            $faqs = $this->searchRelevantFaqs($message);
+        }
 
         $systemPrompt = $this->buildSystemPrompt($context, $faqs);
 
@@ -82,6 +86,90 @@ class OpenAIChatService
         } catch (\Exception $e) {
             Log::error('OpenAI API exception', ['message' => $e->getMessage()]);
             return null;
+        }
+    }
+
+    public function searchRelevantFaqsByAi(string $message, int $limit = 5): \Illuminate\Support\Collection
+    {
+        $faqs = AiFaq::active()->orderBy('sort_order')->orderBy('id')->get();
+
+        if ($faqs->isEmpty()) {
+            return collect();
+        }
+
+        // Build a compact numbered list of FAQs for the AI to classify against
+        $faqLines = [];
+        foreach ($faqs as $i => $faq) {
+            $faqLines[] = ($i + 1) . '. [' . $faq->category . '] ' . $faq->question;
+        }
+        $faqList = implode("\n", $faqLines);
+
+        $classifyPrompt = <<<PROMPT
+Kamu adalah asisten klasifikasi pertanyaan untuk SMA Persis Serang.
+
+Berikut daftar FAQ yang tersedia:
+{$faqList}
+
+Tugas: pahami MAKSUD pertanyaan user, lalu pilih nomor FAQ yang PALING RELEVAN (maksimal {$limit}).
+
+Aturan:
+- Pilih berdasarkan MAKSUD pertanyaan, bukan kata kunci mentah.
+- Contoh: "apa keunggulannya", "bedanya apa", "kenapa harus di sini", "apa yang membedakan" → cari FAQ keunggulan/pembeda.
+- Contoh: "gratis", "berapa biaya", "free" → cari FAQ biaya.
+- Contoh: "gimana cara daftar", "mau daftar", "cara mendaftar" → cari FAQ pendaftaran.
+- Contoh: "apa syarat daftar", "syarat pendaftaran" → cari FAQ syarat.
+- Contoh: "tes masuk", "tes seleksi" → cari FAQ tes masuk.
+- Jangan pilih FAQ yang topiknya berbeda meskipun ada kata yang sama persis.
+
+Balas hanya dengan nomor FAQ dipisah koma. Contoh: 3,7,12
+Jika tidak ada yang sesuai, balas: TIDAK ADA
+PROMPT;
+
+        try {
+            $response = Http::timeout(15)
+                ->withToken($this->apiKey)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => $this->model,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $classifyPrompt],
+                        ['role' => 'user', 'content' => $message],
+                    ],
+                    'max_tokens' => 50,
+                    'temperature' => 0.3,
+                ]);
+
+            if (!$response->successful()) {
+                Log::warning('AI FAQ classification API error', [
+                    'status' => $response->status(),
+                ]);
+                return collect();
+            }
+
+            $content = trim($response->json('choices.0.message.content'));
+
+            if (strtoupper($content) === 'TIDAK ADA') {
+                return collect();
+            }
+
+            // Parse comma-separated 1-indexed numbers, map to collection indices
+            $indices = [];
+            foreach (explode(',', $content) as $part) {
+                $num = (int) trim($part);
+                if ($num > 0 && $num <= $faqs->count()) {
+                    $indices[] = $num - 1;
+                }
+            }
+
+            $indices = array_slice(array_unique($indices), 0, $limit);
+
+            if (empty($indices)) {
+                return collect();
+            }
+
+            return collect(array_map(fn($i) => $faqs->get($i), $indices));
+        } catch (\Exception $e) {
+            Log::error('AI FAQ classification exception', ['message' => $e->getMessage()]);
+            return collect();
         }
     }
 
@@ -322,16 +410,16 @@ class OpenAIChatService
         }
 
         return <<<PROMPT
-Kamu adalah asisten Chat AI resmi SMA Persis Serang.
-Tugasmu adalah melayani konsultasi awal pengunjung website tentang SPMB, biaya, asrama, kuota, syarat pendaftaran, program sekolah, dan kontak.
-Jawab pertanyaan dengan ramah, natural, singkat, dan mudah dipahami.
-Gunakan konteks FAQ sebagai bahan informasi, bukan untuk disalin mentah.
-Utamakan menjawab di Chat AI terlebih dahulu.
-Jangan langsung mengarahkan ke WhatsApp jika pertanyaan masih bisa dijawab oleh Chat AI.
-Berikan link WhatsApp Official hanya jika user meminta kontak/WA, ingin daftar, ingin lanjut ke panitia, atau pertanyaannya membutuhkan konfirmasi terbaru.
-Jangan berikan link WhatsApp di setiap jawaban.
-Gunakan istilah SPMB, bukan PPDB.
-Jika membuat daftar, gunakan bullet dengan tanda "•".
+Kamu adalah asisten resmi SMA Persis Serang.
+
+Sebelum menjawab, pahami maksud pertanyaan pengguna. Jangan hanya mencocokkan kata secara mentah.
+
+Jika pertanyaan pengguna menanyakan "beda", "keunggulan", "kelebihan", "kenapa memilih", atau "apa yang membedakan", maka topiknya adalah keunggulan sekolah.
+
+Gunakan jawaban resmi FAQ yang paling relevan. Jangan menjawab dari FAQ biaya kecuali pengguna memang bertanya tentang biaya, gratis, SPP, pembayaran, atau beasiswa.
+
+Jika tidak menemukan FAQ yang cocok, jawab secara umum berdasarkan informasi resmi sekolah dan arahkan ke panitia SPMB.
+
 Gunakan **tebal** (dua bintang) untuk informasi penting seperti **GRATIS**, **36 siswa**, atau nomor WhatsApp **089661234569** jika muncul.
 Jangan gunakan HTML.
 Jangan mengarang informasi yang belum tersedia.
