@@ -162,8 +162,9 @@
                 <a href="{{ url('/') }}" class="text-sm text-gray-600 hover:text-gray-900">
                     &larr; Kembali ke Beranda
                 </a>
-                <button type="submit"
-                    class="px-6 py-3 bg-[#0F6B3A] text-white font-semibold rounded-lg hover:bg-[#0A4F2B] focus:outline-none focus:ring-2 focus:ring-[#0F6B3A] focus:ring-offset-2 transition-colors duration-200">
+                <button type="submit" id="btn-submit"
+                    class="px-6 py-3 bg-[#0F6B3A] text-white font-semibold rounded-lg hover:bg-[#0A4F2B] focus:outline-none focus:ring-2 focus:ring-[#0F6B3A] focus:ring-offset-2 transition-colors duration-200"
+                    onclick="this.disabled=true; this.textContent='Mendaftarkan...'; this.form.submit();">
                     Daftar Sekarang
                 </button>
             </div>

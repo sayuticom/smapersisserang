@@ -64,9 +64,27 @@ class StudentApplication extends Model
     public function generateRegistrationNumber()
     {
         $year = $this->admission_year->academic_year;
-        $count = StudentApplication::where('admission_year_id', $this->admission_year_id)->count();
-        $paddedCount = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
-        return "SPMB-{$year}-{$paddedCount}";
+        $prefix = 'SPMB-' . $year . '-';
+
+        $lastNumber = StudentApplication::where('registration_number', 'like', $prefix . '%')
+            ->lockForUpdate()
+            ->orderByDesc('registration_number')
+            ->value('registration_number');
+
+        $nextNumber = 1;
+        if ($lastNumber) {
+            $nextNumber = (int) substr($lastNumber, -4) + 1;
+        }
+
+        do {
+            $regNumber = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $exists = StudentApplication::where('registration_number', $regNumber)->exists();
+            if ($exists) {
+                $nextNumber++;
+            }
+        } while ($exists);
+
+        return $regNumber;
     }
     
     public function isPending()

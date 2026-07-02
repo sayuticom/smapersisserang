@@ -161,8 +161,25 @@ class PPDBController extends Controller
 
         return DB::transaction(function () use ($validated, $admissionYear, $program) {
             $yearPrefix = explode('/', $admissionYear->academic_year)[0];
-            $count = StudentApplication::where('admission_year_id', $admissionYear->id)->count();
-            $regNumber = 'SPMB-' . $yearPrefix . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $prefix = 'SPMB-' . $yearPrefix . '-';
+
+            $lastNumber = StudentApplication::where('registration_number', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderByDesc('registration_number')
+                ->value('registration_number');
+
+            $nextNumber = 1;
+            if ($lastNumber) {
+                $nextNumber = (int) substr($lastNumber, -4) + 1;
+            }
+
+            do {
+                $regNumber = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                $exists = StudentApplication::where('registration_number', $regNumber)->exists();
+                if ($exists) {
+                    $nextNumber++;
+                }
+            } while ($exists);
 
             $application = StudentApplication::create([
                 'registration_number' => $regNumber,
