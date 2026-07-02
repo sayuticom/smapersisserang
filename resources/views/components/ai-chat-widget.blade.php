@@ -44,12 +44,8 @@
                     </div>
                 </template>
                 <div x-show="loading" class="flex justify-start">
-                    <div class="bg-white text-gray-500 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style="animation-delay:0ms"></span>
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style="animation-delay:150ms"></span>
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style="animation-delay:300ms"></span>
-                        </div>
+                    <div class="bg-white text-gray-500 rounded-2xl rounded-bl-md px-4 py-3 text-sm shadow-sm border border-gray-100">
+                        Asisten sedang mengetik...
                     </div>
                 </div>
             </div>
@@ -113,11 +109,12 @@ function aiChatWidget() {
         },
 
         renderMessage(text) {
-            var html = this.escapeHtml(text);
+            try {
+                var html = this.escapeHtml(text);
 
-            html = html.replace(/089661234569/g, '<a href="https://wa.me/6289661234569" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline font-semibold hover:text-emerald-700">089661234569</a>');
+                html = html.replace(/089661234569/g, '<a href="https://wa.me/6289661234569" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline font-semibold hover:text-emerald-700">089661234569</a>');
 
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
             var lines = html.split('\n');
             var out = [];
@@ -151,6 +148,10 @@ function aiChatWidget() {
             }
 
             return out.join('\n');
+        } catch (error) {
+            console.error('Render message error:', error);
+            return this.escapeHtml(text || '');
+        }
         },
 
         async sendMessage() {
@@ -173,25 +174,77 @@ function aiChatWidget() {
                     body: JSON.stringify({ message: msg }),
                 });
                 var data = await response.json();
-                this.messages.push({
-                    role: 'assistant',
-                    content: data.reply || 'Maaf, saya tidak bisa menjawab saat ini. Silakan hubungi panitia SPMB.'
-                });
+                var reply = data.reply || data.answer || 'Maaf, saya belum bisa menjawab saat ini.';
+                this.loading = false;
+                await this.typeBotMessage(reply);
             } catch (e) {
-                this.messages.push({
+                this.loading = false;
+                await this.typeBotMessage('Maaf, terjadi kendala. Silakan coba lagi.');
+            }
+        },
+
+        getTypingDelay(chunk) {
+            if (chunk.includes('\n')) return 120;
+            if (/[.!?]/.test(chunk)) return 90;
+            if (/,/.test(chunk)) return 50;
+            return 25;
+        },
+
+        async typeBotMessage(fullText) {
+            var safeText = fullText || '';
+
+            this.messages.push({
+                role: 'assistant',
+                content: '',
+                typing: true
+            });
+
+            var messageIndex = this.messages.length - 1;
+            var chunkSize = safeText.length > 500 ? 3 : 2;
+
+            try {
+                for (var idx = 0; idx < safeText.length; idx += chunkSize) {
+                    var end = Math.min(idx + chunkSize, safeText.length);
+                    var current = safeText.slice(0, end);
+                    var chunk = safeText.slice(idx, end);
+                    var delay = this.getTypingDelay(chunk);
+
+                    this.messages[messageIndex] = {
+                        role: 'assistant',
+                        content: current,
+                        typing: true
+                    };
+
+                    this.messages = this.messages.slice();
+                    this.$nextTick(function() { this.scrollToBottom(); }.bind(this));
+                    await new Promise(function(resolve) { setTimeout(resolve, delay); });
+                }
+
+                this.messages[messageIndex] = {
                     role: 'assistant',
-                    content: 'Maaf, terjadi kesalahan koneksi. Silakan coba lagi nanti.'
-                });
+                    content: safeText,
+                    typing: false
+                };
+
+                this.messages = this.messages.slice();
+            } catch (error) {
+                console.error('Typing effect error:', error);
+                this.messages[messageIndex] = {
+                    role: 'assistant',
+                    content: safeText,
+                    typing: false
+                };
+                this.messages = this.messages.slice();
             }
 
-            this.loading = false;
-            this.$nextTick(function() { this.scrollToBottom(); }.bind(this));
             this.saveMessages();
+            this.$nextTick(function() { this.scrollToBottom(); }.bind(this));
         },
 
         scrollToBottom() {
             var container = this.$refs.messagesContainer;
-            if (container) container.scrollTop = container.scrollHeight;
+            if (!container) return;
+            container.scrollTop = container.scrollHeight;
         },
 
         saveMessages() {
