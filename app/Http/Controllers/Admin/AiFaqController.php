@@ -8,10 +8,24 @@ use Illuminate\Http\Request;
 
 class AiFaqController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $faqs = AiFaq::orderBy('sort_order')->orderBy('id')->paginate(20);
-        return view('admin.ai-faqs.index', compact('faqs'));
+        $search = $request->input('search');
+
+        $faqs = AiFaq::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('question', 'like', "%{$search}%")
+                      ->orWhere('answer', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.ai-faqs.index', compact('faqs', 'search'));
     }
 
     public function create()

@@ -18,6 +18,33 @@
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
         @endif
 
+        <form method="GET" action="{{ route('admin.ai-faqs.index') }}" class="mb-4">
+            <div class="flex flex-col md:flex-row gap-2">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Cari pertanyaan, jawaban, atau kategori..."
+                    class="w-full rounded-lg border-gray-300 focus:border-green-600 focus:ring-green-600 focus:outline-none"
+                >
+                <button type="submit" class="px-4 py-2 rounded-lg bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition-colors">
+                    Cari
+                </button>
+                @if(request('search'))
+                    <a href="{{ route('admin.ai-faqs.index') }}" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors text-center">
+                        Reset
+                    </a>
+                @endif
+            </div>
+        </form>
+
+        @if(request('search'))
+            <div class="text-sm text-gray-600 mb-4">
+                Hasil pencarian untuk: <strong>"{{ request('search') }}"</strong>
+                — ditemukan {{ $faqs->total() }} hasil
+            </div>
+        @endif
+
         @if($faqs->count())
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
@@ -73,12 +100,17 @@
                 </div>
             </div>
             <div class="px-4">
-                {{ $faqs->links() }}
+                {{ $faqs->withQueryString()->links() }}
             </div>
         @else
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
-                <p class="text-gray-400 font-medium">Belum ada FAQ AI.</p>
-                <a href="{{ route('admin.ai-faqs.create') }}" class="inline-flex items-center px-4 py-2 mt-4 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Tambah FAQ AI</a>
+                @if(request('search'))
+                    <p class="text-gray-400 font-medium">Tidak ditemukan FAQ dengan kata kunci "<strong>{{ request('search') }}</strong>".</p>
+                    <a href="{{ route('admin.ai-faqs.index') }}" class="inline-flex items-center px-4 py-2 mt-4 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Reset Pencarian</a>
+                @else
+                    <p class="text-gray-400 font-medium">Belum ada FAQ AI.</p>
+                    <a href="{{ route('admin.ai-faqs.create') }}" class="inline-flex items-center px-4 py-2 mt-4 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">Tambah FAQ AI</a>
+                @endif
             </div>
         @endif
     </div>
