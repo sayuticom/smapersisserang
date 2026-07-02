@@ -26,7 +26,6 @@
         ['title' => 'Kemandirian Siswa', 'description' => 'Pembinaan life skill dan tanggung jawab pribadi melalui kegiatan boarding sehari-hari.', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
     ];
 
-    $whatsappUrl = $schoolSetting?->whatsappLink("Assalamu'alaikum, saya ingin mengetahui lebih lanjut tentang SMA Persis Serang.");
 @endphp
 
 <section class="relative isolate min-h-[600px] overflow-hidden bg-[#052E1F] lg:min-h-[700px]">
@@ -73,10 +72,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                         </svg>
                     </a>
-                    <a href="{{ $whatsappUrl ?? '#' }}" target="_blank" rel="noopener"
+                    <button type="button" onclick="toggleAiChatPanel()"
                        class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
-                        Hubungi Kami
-                    </a>
+                        Konsultasi SPMB
+                    </button>
                 </div>
             </div>
         </div>
@@ -443,10 +442,10 @@
             Kami siap menyambut putra-putri Anda untuk bergabung dalam lingkungan pendidikan islami yang berasrama, berakhlak, dan berteknologi.
         </p>
         <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href="{{ $whatsappUrl ?? '#' }}" target="_blank" rel="noopener"
+            <button type="button" onclick="toggleAiChatPanel()"
                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-8 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
-                Hubungi Kami
-            </a>
+                Konsultasi SPMB
+            </button>
             <a href="{{ route('public.program') }}"
                class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                 Lihat Program

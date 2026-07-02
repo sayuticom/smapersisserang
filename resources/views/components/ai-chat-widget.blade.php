@@ -68,7 +68,7 @@
                         </svg>
                     </button>
                 </form>
-                <p class="text-[10px] text-gray-400 mt-1.5 text-center">AI bisa salah. Untuk info pasti hubungi panitia SPMB.</p>
+                <p class="text-[10px] text-gray-400 mt-1.5 text-center">AI bisa salah. Jika perlu panitia, ketik: nomor WA.</p>
             </div>
         </div>
     </div>

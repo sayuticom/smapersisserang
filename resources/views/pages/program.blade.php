@@ -233,12 +233,10 @@
                class="rounded-xl border-2 border-[#0F6B3A] px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE]">
                 Cek Status Pendaftaran
             </a>
-            @if($schoolSetting?->whatsappLink('Assalamu\'alaikum, saya ingin bertanya tentang program pendidikan.'))
-                <a href="{{ $schoolSetting->whatsappLink('Assalamu\'alaikum, saya ingin bertanya tentang program pendidikan.') }}"
-                   class="rounded-xl border-2 border-[#D4A017] px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5">
-                    Konsultasi WhatsApp
-                </a>
-            @endif
+            <button type="button" onclick="toggleAiChatPanel()"
+               class="rounded-xl border-2 border-[#D4A017] px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5">
+                Konsultasi SPMB
+            </button>
         </div>
     </div>
 </section>

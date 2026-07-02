@@ -114,7 +114,7 @@ class PublicWebsiteTest extends TestCase
         $response->assertSee('6281234567890');
         $response->assertSee('info@test.sch.id');
         $response->assertSee('Lihat Program');
-        $response->assertSee('Hubungi Kami');
+        $response->assertSee('Konsultasi SPMB');
     }
 
     public function test_profile_page_works_without_school_settings(): void

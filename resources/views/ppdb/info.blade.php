@@ -55,7 +55,7 @@
         ->filter()
         ->values();
 
-    $whatsappUrl = $schoolSetting?->whatsappLink('Assalamu\'alaikum, saya ingin konsultasi tentang SPMB SMA Persis Serang.') ?? '#kontak';
+
 @endphp
 
 <div class="bg-white">
@@ -99,11 +99,10 @@
                            class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
                             Daftar SPMB
                         </a>
-                        <a href="{{ $whatsappUrl }}"
-                           target="_blank"
+                        <button type="button" onclick="toggleAiChatPanel()"
                            class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
-                            Konsultasi WhatsApp
-                        </a>
+                            Konsultasi SPMB
+                        </button>
                     </div>
                 </div>
 
@@ -275,11 +274,10 @@
                            class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#0F6B3A] bg-white px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE] sm:w-auto">
                             Cek Status
                         </a>
-                        <a href="{{ $whatsappUrl }}"
-                           target="_blank"
+                        <button type="button" onclick="toggleAiChatPanel()"
                            class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#D4A017] bg-white px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5 sm:w-auto">
-                            Konsultasi WhatsApp
-                        </a>
+                            Konsultasi SPMB
+                        </button>
                     </div>
                 </div>
             </div>

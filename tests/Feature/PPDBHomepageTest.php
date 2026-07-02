@@ -200,7 +200,7 @@ class PPDBHomepageTest extends TestCase
         ]);
 
         $response = $this->get('/');
-        $response->assertSee('Konsultasi WhatsApp');
+        $response->assertSee('Konsultasi SPMB');
     }
 
     public function test_homepage_shows_draft_status(): void

@@ -74,11 +74,9 @@
     $primaryActionLabel = ($currentAdmissionYear && in_array($currentAdmissionYear->status, ['open', 'almost_full']))
         ? 'Daftar SPMB'
         : 'Cek Status';
-    $whatsappMessage = "Assalamu'alaikum, saya ingin bertanya tentang SPMB.";
-    $whatsappUrl = $schoolSetting?->whatsappLink($whatsappMessage) ?? 'tel:+6281234567890';
     $contactActionLabel = ($currentAdmissionYear && in_array($currentAdmissionYear->status, ['quota_full', 'closed', 'draft', 'archived']))
         ? 'Hubungi Admin'
-        : 'Konsultasi WhatsApp';
+        : 'Konsultasi SPMB';
 
     $values = $schoolValues?->isNotEmpty()
         ? $schoolValues
@@ -161,10 +159,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                         </svg>
                     </a>
-                    <a href="{{ $whatsappUrl }}"
+                    <button type="button" onclick="toggleAiChatPanel()"
                        class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                         {{ $contactActionLabel }}
-                    </a>
+                    </button>
                 </div>
 
                 @if($currentAdmissionYear && $currentAdmissionYear->status === 'almost_full')
