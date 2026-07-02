@@ -68,7 +68,6 @@
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Kategori</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600 w-16">Urutan</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Diperbarui</th>
                                 <th class="px-4 py-3 text-right font-semibold text-gray-600 whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
@@ -93,7 +92,6 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-gray-500">{{ $faq->sort_order }}</td>
-                                    <td class="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{{ $faq->updated_at->format('d M Y H:i') }}</td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.ai-faqs.edit', $faq) }}"
