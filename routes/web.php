@@ -240,7 +240,8 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
     });
 
-    Route::name('ai-faqs.')->prefix('ai-faqs')->middleware('superadmin')->group(function () {
+    Route::name('ai-faqs.')->prefix('ai-faqs')->middleware('auth')->group(function () {
+        // Access controlled by isAdmin() check in controller
         Route::get('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\AiFaqController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'store'])->name('store');

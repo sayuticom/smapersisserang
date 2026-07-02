@@ -44,6 +44,13 @@
                 <p class="text-xs text-gray-400 mt-1">Gunakan format sederhana seperti <strong class="text-gray-500">**tebal**</strong>, <em class="text-gray-500">*miring*</em>, dan <strong class="text-gray-500">•</strong> bullet list agar jawaban chatbot lebih rapi.</p>
                 @error('answer')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
+            <div>
+                <label for="keywords" class="block text-sm font-medium text-gray-700 mb-1">Kata Kunci</label>
+                <input type="text" name="keywords" id="keywords" value="{{ old('keywords') }}"
+                       class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" maxlength="500">
+                <p class="text-xs text-gray-400 mt-1">Pisahkan dengan koma. Contoh: syarat, dokumen, berkas</p>
+                @error('keywords')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>

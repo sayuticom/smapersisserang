@@ -9,6 +9,7 @@ class AiFaq extends Model
     protected $fillable = [
         'question',
         'answer',
+        'keywords',
         'category',
         'is_active',
         'sort_order',

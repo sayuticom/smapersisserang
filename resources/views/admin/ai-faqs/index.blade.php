@@ -24,13 +24,24 @@
                     type="text"
                     name="search"
                     value="{{ request('search') }}"
-                    placeholder="Cari pertanyaan, jawaban, atau kategori..."
+                    placeholder="Cari pertanyaan, jawaban, kata kunci..."
                     class="w-full rounded-lg border-gray-300 focus:border-green-600 focus:ring-green-600 focus:outline-none"
                 >
+                <select name="category" class="rounded-lg border-gray-300 focus:border-green-600 focus:ring-green-600 text-sm">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
+                <select name="status" class="rounded-lg border-gray-300 focus:border-green-600 focus:ring-green-600 text-sm">
+                    <option value="">Semua Status</option>
+                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Aktif</option>
+                    <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Nonaktif</option>
+                </select>
                 <button type="submit" class="px-4 py-2 rounded-lg bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition-colors">
                     Cari
                 </button>
-                @if(request('search'))
+                @if(request('search') || request('category') || request('status'))
                     <a href="{{ route('admin.ai-faqs.index') }}" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors text-center">
                         Reset
                     </a>
@@ -53,9 +64,11 @@
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600 w-12">No</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Pertanyaan</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Kata Kunci</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Kategori</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600 w-20">Urutan</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Diperbarui</th>
                                 <th class="px-4 py-3 text-right font-semibold text-gray-600">Aksi</th>
                             </tr>
                         </thead>
@@ -64,6 +77,7 @@
                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                     <td class="px-4 py-3 text-gray-500">{{ $faqs->firstItem() + $i }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{{ $faq->question }}</td>
+                                    <td class="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs">{{ $faq->keywords ?? '-' }}</td>
                                     <td class="px-4 py-3">
                                         @if($faq->category)
                                             <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{{ $faq->category }}</span>
@@ -79,6 +93,7 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-gray-500">{{ $faq->sort_order }}</td>
+                                    <td class="px-4 py-3 text-gray-400 text-xs">{{ $faq->updated_at->format('d M Y H:i') }}</td>
                                     <td class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.ai-faqs.edit', $faq) }}"
