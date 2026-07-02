@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\StudentApplication;
 use App\Models\VisitorLog;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-
 class DashboardStatsService
 {
     public function getSpmbStats(): array
@@ -65,9 +63,7 @@ class DashboardStatsService
 
     public function getTopReferrers(int $limit = 5): \Illuminate\Support\Collection
     {
-        $raw = "COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp')";
-
-        return VisitorLog::selectRaw("{$raw} as referrer, count(*) as total")
+        return VisitorLog::selectRaw('referrer, count(*) as total')
             ->where(function ($q) {
                 $q->whereNull('referrer')
                   ->orWhere('referrer', '')
@@ -79,10 +75,16 @@ class DashboardStatsService
                           ->where('referrer', 'NOT LIKE', '%/admin%');
                   });
             })
-            ->groupBy(DB::raw($raw))
+            ->groupBy('referrer')
             ->orderByDesc('total')
             ->take($limit)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                if (empty($item->referrer)) {
+                    $item->referrer = 'Langsung / WhatsApp';
+                }
+                return $item;
+            });
     }
 
     public function getDeviceStats(): \Illuminate\Support\Collection

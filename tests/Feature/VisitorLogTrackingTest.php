@@ -92,7 +92,7 @@ class VisitorLogTrackingTest extends TestCase
             'visited_at' => now(),
         ]);
 
-        $topReferrers = VisitorLog::selectRaw("COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp') as referrer, count(*) as total")
+        $topReferrers = VisitorLog::selectRaw('referrer, count(*) as total')
             ->where(function ($q) {
                 $q->whereNull('referrer')
                   ->orWhere('referrer', '')
@@ -104,10 +104,18 @@ class VisitorLogTrackingTest extends TestCase
                           ->where('referrer', 'NOT LIKE', '%/admin%');
                   });
             })
-            ->groupBy(\Illuminate\Support\Facades\DB::raw("COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp')"))
+            ->groupBy('referrer')
             ->orderByDesc('total')
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                if (empty($item->referrer)) {
+                    $item->referrer = 'Langsung / WhatsApp';
+                }
+                return $item;
+            })
+            ->sortByDesc('total')
+            ->values();
 
         $referrers = $topReferrers->pluck('referrer')->toArray();
         $this->assertContains('http://google.com', $referrers);

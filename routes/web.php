@@ -17,7 +17,6 @@ use App\Models\SchoolSetting;
 use App\Models\StudentApplication;
 use App\Models\WebsitePage;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     $schoolSetting = null;
@@ -104,8 +103,7 @@ Route::get('/dashboard', function () {
         ->take(10)
         ->get();
 
-    $raw = "COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp')";
-    $topReferrers = VisitorLog::selectRaw("{$raw} as referrer, count(*) as total")
+    $topReferrers = VisitorLog::selectRaw('referrer, count(*) as total')
         ->where(function ($q) {
             $q->whereNull('referrer')
               ->orWhere('referrer', '')
@@ -117,10 +115,16 @@ Route::get('/dashboard', function () {
                       ->where('referrer', 'NOT LIKE', '%/admin%');
               });
         })
-        ->groupBy(DB::raw($raw))
+        ->groupBy('referrer')
         ->orderByDesc('total')
         ->take(5)
-        ->get();
+        ->get()
+        ->map(function ($item) {
+            if (empty($item->referrer)) {
+                $item->referrer = 'Langsung / WhatsApp';
+            }
+            return $item;
+        });
 
     $deviceStats = VisitorLog::selectRaw("device, count(*) as total")
         ->whereNotNull('device')

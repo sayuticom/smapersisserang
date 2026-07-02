@@ -7,7 +7,6 @@ use App\Models\AdmissionYear;
 use App\Models\StudentApplication;
 use App\Models\VisitorLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PublicProgressController extends Controller
 {
@@ -54,8 +53,7 @@ class PublicProgressController extends Controller
             ->take(10)
             ->get();
 
-        $raw = "COALESCE(NULLIF(referrer, ''), 'Langsung / WhatsApp')";
-        $topReferrers = VisitorLog::selectRaw("{$raw} as referrer, count(*) as total")
+        $topReferrers = VisitorLog::selectRaw('referrer, count(*) as total')
             ->where(function ($q) {
                 $q->whereNull('referrer')
                   ->orWhere('referrer', '')
@@ -67,10 +65,16 @@ class PublicProgressController extends Controller
                           ->where('referrer', 'NOT LIKE', '%/admin%');
                   });
             })
-            ->groupBy(DB::raw($raw))
+            ->groupBy('referrer')
             ->orderByDesc('total')
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                if (empty($item->referrer)) {
+                    $item->referrer = 'Langsung / WhatsApp';
+                }
+                return $item;
+            });
 
         $deviceStats = VisitorLog::selectRaw("device, count(*) as total")
             ->whereNotNull('device')
