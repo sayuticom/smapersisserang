@@ -68,8 +68,9 @@
                 </div>
                 <div>
                     <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">Urutan</label>
-                    <input type="number" name="sort_order" id="sort_order" value="{{ old('sort_order', 0) }}"
-                           class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" min="0">
+                    <input type="number" name="sort_order" id="sort_order" value="{{ old('sort_order') }}"
+                           class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" min="0" placeholder="Otomatis">
+                    <p class="text-xs text-gray-400 mt-1">Kosongkan untuk urutan otomatis.</p>
                     @error('sort_order')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>

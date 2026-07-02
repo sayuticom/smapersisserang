@@ -58,12 +58,16 @@ class AiFaqController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $sortOrder = $request->filled('sort_order')
+            ? $validated['sort_order']
+            : (AiFaq::max('sort_order') ?? 0) + 1;
+
         AiFaq::create([
             'question' => $validated['question'],
             'answer' => $validated['answer'],
             'keywords' => $validated['keywords'] ?? null,
             'category' => $validated['category'] ?? null,
-            'sort_order' => $validated['sort_order'] ?? 0,
+            'sort_order' => $sortOrder,
             'is_active' => $request->boolean('is_active'),
         ]);
 
