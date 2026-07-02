@@ -8,16 +8,6 @@ use Illuminate\Http\Request;
 
 class AiFaqController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!$request->user()?->isAdmin()) {
-                abort(403, 'Unauthorized.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index(Request $request)
     {
         $search = $request->input('search');
