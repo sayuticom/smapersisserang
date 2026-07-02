@@ -190,6 +190,18 @@ class AiFaqSeeder extends Seeder
                 'category' => 'Kontak',
                 'sort_order' => 30,
             ],
+            [
+                'question' => 'Apa itu Persis?',
+                'answer' => 'Persis adalah singkatan dari Persatuan Islam, yaitu organisasi Islam yang bergerak dalam bidang dakwah, pendidikan, dan pembinaan umat. SMA Persis Serang membawa nilai-nilai pendidikan Islam Persis dengan fokus pada ilmu, akhlak, dakwah, dan pembentukan generasi yang beradab serta berpikir kritis.',
+                'category' => 'Umum',
+                'sort_order' => 31,
+            ],
+            [
+                'question' => 'Apakah SMA Persis Serang berada di bawah Persis?',
+                'answer' => 'Ya, SMA Persis Serang merupakan sekolah yang membawa nilai pendidikan Persatuan Islam atau Persis. Pendidikan di SMA Persis Serang diarahkan untuk membentuk siswa yang berilmu, berakhlak, terbiasa berdakwah, dan mampu berpikir kritis.',
+                'category' => 'Umum',
+                'sort_order' => 32,
+            ],
         ];
 
         $now = now();

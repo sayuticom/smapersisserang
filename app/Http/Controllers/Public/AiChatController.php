@@ -12,12 +12,23 @@ use Illuminate\Support\Facades\Log;
 
 class AiChatController extends Controller
 {
+    protected array $greetings = [
+        'halo', 'hallo', 'hai', 'hi', 'hey',
+        'assalamualaikum', 'assalamu\'alaikum',
+        'salam', 'pagi', 'siang', 'sore', 'malam',
+        'tes', 'test',
+    ];
+
+    protected array $thanks = [
+        'terima kasih', 'terimakasih', 'makasih', 'nuhun', 'thanks', 'thankyou',
+    ];
+
     protected array $stopwords = [
         'apa', 'itu', 'siapa', 'dimana', 'kapan', 'mengapa', 'bagaimana',
         'yang', 'ini', 'itu', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan',
         'tidak', 'ada', 'bisa', 'akan', 'sudah', 'belum', 'apakah', 'saya',
         'kami', 'kita', 'anda', 'dia', 'mereka', 'untuk', 'dalam', 'pada',
-        'indonesia', 'sma', 'persis', 'serang', 'apa', 'itu',
+        'indonesia', 'sma', 'serang', 'apa', 'itu',
     ];
 
     protected array $suffixPatterns = [
@@ -40,6 +51,18 @@ class AiChatController extends Controller
         if (empty($message)) {
             return response()->json([
                 'reply' => 'Silakan ketik pertanyaan Anda.',
+            ]);
+        }
+
+        if ($this->isGreetingOnly($message)) {
+            return response()->json([
+                'reply' => 'Halo, selamat datang di layanan informasi SMA Persis Serang. Silakan tanyakan seputar SPMB, biaya sekolah, asrama, kuota siswa, program unggulan, atau kontak panitia.',
+            ]);
+        }
+
+        if ($this->isThankYouOnly($message)) {
+            return response()->json([
+                'reply' => 'Sama-sama. Jika ada pertanyaan lain seputar SPMB SMA Persis Serang, silakan tanyakan kembali.',
             ]);
         }
 
@@ -67,6 +90,22 @@ class AiChatController extends Controller
         ]);
     }
 
+    protected function isGreetingOnly(string $message): bool
+    {
+        $normalized = strtolower(trim($message));
+        $normalized = preg_replace('/[^a-zA-Z0-9\s]/', '', $normalized);
+
+        return in_array($normalized, $this->greetings, true);
+    }
+
+    protected function isThankYouOnly(string $message): bool
+    {
+        $normalized = strtolower(trim($message));
+        $normalized = preg_replace('/[^a-zA-Z0-9\s]/', '', $normalized);
+
+        return in_array($normalized, $this->thanks, true);
+    }
+
     protected function searchFaq(string $message): ?string
     {
         $faqs = AiFaq::active()->orderBy('sort_order')->orderBy('id')->get();
@@ -83,15 +122,18 @@ class AiChatController extends Controller
 
         $scored = [];
         foreach ($faqs as $faq) {
-            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->answer);
+            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->category);
             $score = $this->calculateScore($queryTokens, $faqTokens, $faq);
             $scored[] = ['faq' => $faq, 'score' => $score];
         }
 
-        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+        usort($scored, fn($a, $b) => 
+            $b['score'] <=> $a['score'] ?: 
+            strlen($a['faq']->question) <=> strlen($b['faq']->question)
+        );
 
         $best = $scored[0] ?? null;
-        if ($best && $best['score'] > 0) {
+        if ($best && $best['score'] > 0.3) {
             return $best['faq']->answer;
         }
 
@@ -103,7 +145,7 @@ class AiChatController extends Controller
         $text = strtolower($text);
         $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
         $words = preg_split('/\s+/', $text);
-        $words = array_filter($words, fn($w) => strlen($w) > 2);
+        $words = array_filter($words, fn($w) => strlen($w) >= 2);
 
         $result = [];
         foreach ($words as $word) {
@@ -128,7 +170,7 @@ class AiChatController extends Controller
                 break;
             }
         }
-        if (strlen($word) <= 2) {
+        if (strlen($word) <= 1) {
             return null;
         }
         return $word;
@@ -145,29 +187,49 @@ class AiChatController extends Controller
         $stemMatches = 0;
 
         foreach ($queryTokens as $qToken) {
+            $foundExact = false;
+            $foundStem = false;
             foreach ($faqTokens as $fToken) {
                 if ($qToken === $fToken) {
-                    $exactMatches++;
-                } elseif (str_starts_with($qToken, $fToken) || str_starts_with($fToken, $qToken)) {
-                    $stemMatches++;
+                    $foundExact = true;
+                } elseif (!$foundExact && !$foundStem && strlen($fToken) >= 4 && strlen($qToken) > strlen($fToken) && str_starts_with($qToken, $fToken)) {
+                    $foundStem = true;
                 }
+            }
+            if ($foundExact) {
+                $exactMatches++;
+            } elseif ($foundStem) {
+                $stemMatches++;
             }
         }
 
         $score = ($exactMatches * 2) + ($stemMatches * 1);
         $score /= ($queryCount * 2);
 
+        $faqQuestionTokens = $this->tokenize($faq->question);
+        $questionTokenCount = count($faqQuestionTokens);
+        if ($questionTokenCount > 0 && $exactMatches > 0) {
+            $coverage = $exactMatches / $questionTokenCount;
+            $score += $coverage * 0.3;
+        }
+
         $priorityKeywords = [
             'syarat', 'biaya', 'kuota', 'asrama', 'whatsapp', 'wa', 'kontak',
-            'daftar', 'gratis', 'free', 'keunggulan', 'program',
+            'daftar', 'gratis', 'free', 'spmb', 'keunggulan', 'program',
             'informasi', 'pendaftaran',
+            'persis', 'persatuan',
         ];
 
         foreach ($queryTokens as $qToken) {
             if (in_array($qToken, $priorityKeywords, true)) {
                 $question = strtolower($faq->question);
-                if (str_contains($question, $qToken)) {
-                    $score += 0.5;
+                $cleanQuestion = preg_replace('/[^a-z0-9\s]/', ' ', $question);
+                $questionWords = preg_split('/\s+/', trim($cleanQuestion));
+                foreach ($questionWords as $word) {
+                    if ($qToken === $word || str_starts_with($word, $qToken)) {
+                        $score += 0.5;
+                        break;
+                    }
                 }
             }
         }

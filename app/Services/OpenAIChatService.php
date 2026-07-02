@@ -16,7 +16,7 @@ class OpenAIChatService
         'yang', 'ini', 'itu', 'di', 'ke', 'dari', 'dan', 'atau', 'dengan',
         'tidak', 'ada', 'bisa', 'akan', 'sudah', 'belum', 'apakah', 'saya',
         'kami', 'kita', 'anda', 'dia', 'mereka', 'untuk', 'dalam', 'pada',
-        'sebagai', 'oleh', 'secara', 'ya', 'indonesia', 'sma', 'persis',
+        'sebagai', 'oleh', 'secara', 'ya', 'indonesia', 'sma',
         'serang', 'sekolah',
     ];
 
@@ -96,19 +96,24 @@ class OpenAIChatService
         $queryTokens = $this->tokenize($message);
 
         if (empty($queryTokens)) {
-            return $faqs->take($limit);
+            return collect();
         }
 
         $scored = [];
         foreach ($faqs as $faq) {
-            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->answer);
+            $faqTokens = $this->tokenize($faq->question . ' ' . $faq->category . ' ' . $faq->answer);
             $score = $this->calculateScore($queryTokens, $faqTokens, $faq);
             $scored[] = ['faq' => $faq, 'score' => $score];
         }
 
-        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+        usort($scored, fn($a, $b) => 
+            $b['score'] <=> $a['score'] ?: 
+            strlen($a['faq']->question) <=> strlen($b['faq']->question)
+        );
 
-        return collect(array_slice(array_map(fn($s) => $s['faq'], $scored), 0, $limit));
+        $filtered = array_filter($scored, fn($s) => $s['score'] > 0.3);
+
+        return collect(array_slice(array_map(fn($s) => $s['faq'], $filtered), 0, $limit));
     }
 
     protected function tokenize(string $text): array
@@ -116,7 +121,7 @@ class OpenAIChatService
         $text = strtolower($text);
         $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
         $words = preg_split('/\s+/', $text);
-        $words = array_filter($words, fn($w) => strlen($w) > 2);
+        $words = array_filter($words, fn($w) => strlen($w) >= 2);
 
         $result = [];
         foreach ($words as $word) {
@@ -141,7 +146,7 @@ class OpenAIChatService
                 break;
             }
         }
-        if (strlen($word) <= 2) {
+        if (strlen($word) <= 1) {
             return null;
         }
         return $word;
@@ -158,12 +163,19 @@ class OpenAIChatService
         $stemMatches = 0;
 
         foreach ($queryTokens as $qToken) {
+            $foundExact = false;
+            $foundStem = false;
             foreach ($faqTokens as $fToken) {
                 if ($qToken === $fToken) {
-                    $exactMatches++;
-                } elseif (str_starts_with($qToken, $fToken) || str_starts_with($fToken, $qToken)) {
-                    $stemMatches++;
+                    $foundExact = true;
+                } elseif (!$foundExact && !$foundStem && strlen($fToken) >= 4 && strlen($qToken) > strlen($fToken) && str_starts_with($qToken, $fToken)) {
+                    $foundStem = true;
                 }
+            }
+            if ($foundExact) {
+                $exactMatches++;
+            } elseif ($foundStem) {
+                $stemMatches++;
             }
         }
 
@@ -171,17 +183,30 @@ class OpenAIChatService
 
         $score /= ($queryCount * 2);
 
+        $faqQuestionTokens = $this->tokenize($faq->question);
+        $questionTokenCount = count($faqQuestionTokens);
+        if ($questionTokenCount > 0 && $exactMatches > 0) {
+            $coverage = $exactMatches / $questionTokenCount;
+            $score += $coverage * 0.3;
+        }
+
         $priorityKeywords = [
             'syarat', 'biaya', 'kuota', 'asrama', 'whatsapp', 'wa', 'kontak',
             'daftar', 'gratis', 'free', 'spmb', 'keunggulan', 'program',
             'berkembang', 'informasi', 'daftar', 'pendaftaran',
+            'persis', 'persatuan',
         ];
 
         foreach ($queryTokens as $qToken) {
             if (in_array($qToken, $priorityKeywords, true)) {
                 $question = strtolower($faq->question);
-                if (str_contains($question, $qToken)) {
-                    $score += 0.5;
+                $cleanQuestion = preg_replace('/[^a-z0-9\s]/', ' ', $question);
+                $questionWords = preg_split('/\s+/', trim($cleanQuestion));
+                foreach ($questionWords as $word) {
+                    if ($qToken === $word || str_starts_with($word, $qToken)) {
+                        $score += 0.5;
+                        break;
+                    }
                 }
             }
         }
