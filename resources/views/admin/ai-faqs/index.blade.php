@@ -57,19 +57,19 @@
         @endif
 
         @if($faqs->count())
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600 w-12">No</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Pertanyaan</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Kata Kunci</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600 w-1/3">Pertanyaan</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600 w-1/4">Kata Kunci</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Kategori</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-600 w-20">Urutan</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600 w-16">Urutan</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Diperbarui</th>
-                                <th class="px-4 py-3 text-right font-semibold text-gray-600">Aksi</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-600 whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -77,10 +77,10 @@
                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                     <td class="px-4 py-3 text-gray-500">{{ $faqs->firstItem() + $i }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{{ $faq->question }}</td>
-                                    <td class="px-4 py-3 text-gray-500 max-w-[120px] truncate text-xs">{{ $faq->keywords ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-gray-500 max-w-[200px] truncate text-xs" title="{{ $faq->keywords }}">{{ \Illuminate\Support\Str::limit($faq->keywords, 80) ?: '-' }}</td>
                                     <td class="px-4 py-3">
                                         @if($faq->category)
-                                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{{ $faq->category }}</span>
+                                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 whitespace-nowrap">{{ $faq->category }}</span>
                                         @else
                                             <span class="text-gray-400">-</span>
                                         @endif
@@ -93,16 +93,16 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-gray-500">{{ $faq->sort_order }}</td>
-                                    <td class="px-4 py-3 text-gray-400 text-xs">{{ $faq->updated_at->format('d M Y H:i') }}</td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{{ $faq->updated_at->format('d M Y H:i') }}</td>
+                                    <td class="px-4 py-3 text-right whitespace-nowrap">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.ai-faqs.edit', $faq) }}"
-                                               class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                                               class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors whitespace-nowrap">
                                                 Edit
                                             </a>
                                             <form method="POST" action="{{ route('admin.ai-faqs.destroy', $faq) }}" class="inline" onsubmit="return confirm('Yakin ingin menghapus FAQ ini?');">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                                                <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors whitespace-nowrap">
                                                     Hapus
                                                 </button>
                                             </form>
