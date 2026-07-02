@@ -10,32 +10,30 @@
 </button>
 
 <div id="ai-chat-panel"
-     style="display: none; position: fixed; left: 0; right: 0; bottom: 6.5rem; z-index: 9998;"
+     style="display: none; position: fixed; left: 0; right: 0; top: 5rem; bottom: 6.5rem; z-index: 9998;"
      class="px-3 sm:px-6">
-    <div class="w-full max-w-3xl mx-auto rounded-2xl bg-white shadow-2xl border border-emerald-100 overflow-hidden">
-        <div x-data="aiChatWidget()">
-            <div class="bg-gradient-to-r from-emerald-700 to-emerald-600 px-4 py-3.5">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-white">Asisten SPMB</h3>
-                            <p class="text-[11px] text-emerald-100">Tanyakan informasi pendaftaran SMA Persis Serang</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="toggleAiChatPanel()" class="text-white/80 hover:text-white transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    <div class="flex h-full w-full max-w-3xl mx-auto flex-col rounded-2xl bg-white shadow-2xl border border-emerald-100 overflow-hidden">
+        <div x-data="aiChatWidget()" class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex items-center justify-between bg-gradient-to-r from-emerald-700 to-emerald-600 px-4 sm:px-5 py-3 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                         </svg>
-                    </button>
+                    </div>
+                    <div>
+                        <div class="text-sm font-semibold leading-tight">Asisten SPMB</div>
+                        <div class="text-xs text-white/80">Tanyakan informasi pendaftaran SMA Persis Serang</div>
+                    </div>
                 </div>
+                <button type="button" onclick="toggleAiChatPanel()" class="rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white transition-colors" title="Tutup chat" aria-label="Tutup chat">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
 
-            <div class="h-80 max-h-[70vh] overflow-y-auto px-4 sm:px-6 py-4 space-y-3 bg-gray-50" x-ref="messagesContainer">
+            <div class="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-3 bg-gray-50" x-ref="messagesContainer">
                 <template x-for="(msg, i) in messages" :key="i">
                     <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
                         <div :class="msg.role === 'user'
@@ -75,6 +73,15 @@
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width: 640px) {
+    #ai-chat-panel {
+        top: 4rem !important;
+        bottom: 5.5rem !important;
+    }
+}
+</style>
 
 <script>
 function aiChatWidget() {
