@@ -360,69 +360,6 @@
     </div>
 </section>
 
-@if($currentAdmissionProgram)
-<section id="program" class="bg-white pb-16 lg:pb-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="rounded-[2rem] bg-gradient-to-br from-[#052E1F] via-[#063f2a] to-[#0F6B3A] p-8 text-white shadow-xl shadow-emerald-950/15 lg:p-12">
-            <div class="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex-1">
-                    <span class="mb-5 inline-flex items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-1.5 text-sm font-medium text-amber-300">
-                        {{ $currentAdmissionProgram->is_free_program ? 'Program Khusus Angkatan Pertama' : 'SPMB Reguler' }}
-                    </span>
-                    <h2 class="font-serif text-2xl font-bold lg:text-4xl">{{ $currentAdmissionProgram->name }}</h2>
-                    <p class="mt-4 max-w-xl text-lg leading-relaxed text-emerald-100/90">
-                        @if($currentAdmissionProgram->is_free_program)
-                            Gratis pendidikan, asrama, dan makan untuk {{ $currentAdmissionProgram->quota }} siswa.
-                        @else
-                            SPMB reguler berbayar sesuai ketentuan sekolah.
-                            @if($currentAdmissionProgram->tuition_fee || $currentAdmissionProgram->boarding_fee || $currentAdmissionProgram->meal_fee)
-                                <br><br>
-                                @if($currentAdmissionProgram->tuition_fee)
-                                    Biaya Pendidikan: Rp{{ number_format($currentAdmissionProgram->tuition_fee, 0, ',', '.') }}<br>
-                                @endif
-                                @if($currentAdmissionProgram->boarding_fee)
-                                    Biaya Asrama: Rp{{ number_format($currentAdmissionProgram->boarding_fee, 0, ',', '.') }}<br>
-                                @endif
-                                @if($currentAdmissionProgram->meal_fee)
-                                    Biaya Makan: Rp{{ number_format($currentAdmissionProgram->meal_fee, 0, ',', '.') }}<br>
-                                @endif
-                                @if($currentAdmissionProgram->registration_fee)
-                                    Biaya Pendaftaran: Rp{{ number_format($currentAdmissionProgram->registration_fee, 0, ',', '.') }}<br>
-                                @endif
-                            @endif
-                        @endif
-                    </p>
-                </div>
-                <div class="rounded-2xl border border-white/10 bg-white/10 p-6 text-center backdrop-blur lg:min-w-56">
-                    <div class="text-4xl font-bold text-amber-300">{{ $currentAdmissionProgram->quota }}</div>
-                    <p class="mt-1 text-sm text-emerald-100/80">Kuota</p>
-                    @if($currentAdmissionProgram->is_free_program)
-                        <div class="mt-3 text-2xl font-bold text-amber-300">Gratis</div>
-                        <p class="text-sm text-emerald-100/80">Biaya Pendidikan</p>
-                    @else
-                        <div class="mt-3 text-lg font-bold text-amber-300">Berbayar</div>
-                        <p class="text-sm text-emerald-100/80">Sesuai ketentuan</p>
-                    @endif
-
-                    <a href="{{ $primaryActionRoute }}"
-                       class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-white px-6 py-3.5 font-bold text-[#0F6B3A] shadow-lg transition hover:bg-amber-50">
-                        {{ $primaryActionLabel === 'Daftar SPMB' ? 'Daftar Sekarang' : 'Cek Status' }}
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-@else
-<section id="program" class="bg-white pb-16 lg:pb-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="rounded-[2rem] bg-gradient-to-br from-[#052E1F] to-[#0F6B3A] p-8 text-center text-white shadow-xl">
-            <p class="text-lg text-emerald-100/90">Program SPMB belum tersedia</p>
-        </div>
-    </div>
-</section>
-@endif
-
 <section id="kontak" class="bg-[#FBF7EF] py-16 lg:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
