@@ -63,10 +63,60 @@ Route::get('/', function () {
     return view('pages.welcome', compact(
         'schoolSetting', 'heroImages', 'currentAdmissionYear', 'currentAdmissionProgram', 'admissionStats', 'homePage', 'schoolValues', 'buildingImages'
     ));
-});
+})->middleware('track.visitor');
+
+use App\Models\VisitorLog;
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $currentYear = \App\Models\AdmissionYear::where('is_current', true)->first();
+    $counts = \App\Models\StudentApplication::when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id))
+        ->selectRaw("status, count(*) as total")
+        ->groupBy('status')
+        ->pluck('total', 'status');
+    $quota = $currentYear?->quota ?? 0;
+    $terisi = $counts->get('diterima', 0);
+    $sisa = max(0, $quota - $terisi);
+    $total = array_sum($counts->toArray()) ?: 0;
+    $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar', 0);
+
+    $now = now();
+    $visitorToday = VisitorLog::whereDate('visited_at', $today = $now->toDateString())->count();
+    $visitorTodayUnique = VisitorLog::whereDate('visited_at', $today)->distinct('ip_hash')->count('ip_hash');
+    $visitor7Days = VisitorLog::where('visited_at', '>=', $now->copy()->subDays(7))->count();
+    $visitor7DaysUnique = VisitorLog::where('visited_at', '>=', $now->copy()->subDays(7))->distinct('ip_hash')->count('ip_hash');
+    $visitor30Days = VisitorLog::where('visited_at', '>=', $now->copy()->subDays(30))->count();
+    $visitor30DaysUnique = VisitorLog::where('visited_at', '>=', $now->copy()->subDays(30))->distinct('ip_hash')->count('ip_hash');
+    $totalVisits = VisitorLog::count();
+    $spmbVisits = VisitorLog::where(function ($q) {
+        $q->where('path', 'like', '%/spmb%')
+          ->orWhere('path', 'like', '%/ppdb%');
+    })->count();
+
+    $topPages = VisitorLog::selectRaw('path, url, count(*) as total, max(visited_at) as last_visited')
+        ->groupBy('path', 'url')
+        ->orderByDesc('total')
+        ->take(10)
+        ->get();
+
+    $topReferrers = VisitorLog::whereNotNull('referrer')
+        ->selectRaw('referrer, count(*) as total')
+        ->groupBy('referrer')
+        ->orderByDesc('total')
+        ->take(5)
+        ->get();
+
+    $deviceStats = VisitorLog::selectRaw("device, count(*) as total")
+        ->whereNotNull('device')
+        ->groupBy('device')
+        ->orderByDesc('total')
+        ->get();
+
+    return view('dashboard', compact(
+        'currentYear', 'counts', 'quota', 'terisi', 'sisa', 'total', 'menunggu',
+        'visitorToday', 'visitorTodayUnique', 'visitor7Days', 'visitor7DaysUnique',
+        'visitor30Days', 'visitor30DaysUnique', 'totalVisits', 'spmbVisits',
+        'topPages', 'topReferrers', 'deviceStats',
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -77,40 +127,42 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-Route::get('/profil', [PublicPageController::class, 'profile'])->name('public.profile');
-Route::get('/program', [PublicPageController::class, 'program'])->name('public.program');
-Route::get('/boarding-school', [PublicPageController::class, 'boarding'])->name('public.boarding');
-Route::get('/galeri', [PublicPageController::class, 'gallery'])->name('public.gallery');
-Route::get('/tokoh-pembina', [PublicPageController::class, 'figures'])->name('public.figures');
-Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
-Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
-Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
-Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
+Route::middleware('track.visitor')->group(function () {
+    Route::get('/profil', [PublicPageController::class, 'profile'])->name('public.profile');
+    Route::get('/program', [PublicPageController::class, 'program'])->name('public.program');
+    Route::get('/boarding-school', [PublicPageController::class, 'boarding'])->name('public.boarding');
+    Route::get('/galeri', [PublicPageController::class, 'gallery'])->name('public.gallery');
+    Route::get('/tokoh-pembina', [PublicPageController::class, 'figures'])->name('public.figures');
+    Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
+    Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
+    Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
+    Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 
-Route::get('/ppdb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('ppdb.info');
+    Route::get('/ppdb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('ppdb.info');
 
-Route::name('ppdb.')->prefix('ppdb')->group(function () {
-    Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
-    Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
-    Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
-    Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
-    Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
-});
+    Route::name('ppdb.')->prefix('ppdb')->group(function () {
+        Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
+        Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
+        Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
+        Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
+        Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
+    });
 
-Route::post('/ai-chat/send', [\App\Http\Controllers\Public\AiChatController::class, 'send'])
-    ->middleware('throttle:10,1')
-    ->name('ai-chat.send');
+    Route::post('/ai-chat/send', [\App\Http\Controllers\Public\AiChatController::class, 'send'])
+        ->middleware('throttle:10,1')
+        ->name('ai-chat.send');
 
-Route::get('/spmb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('spmb.info');
+    Route::get('/spmb', [\App\Http\Controllers\PPDBController::class, 'info'])->name('spmb.info');
 
-Route::name('spmb.')->prefix('spmb')->group(function () {
-    Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
-    Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
-    Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
-    Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
-    Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
-    Route::get('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'editData'])->name('update-data');
-    Route::post('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'updateData'])->name('update-data.store');
+    Route::name('spmb.')->prefix('spmb')->group(function () {
+        Route::get('/daftar', [\App\Http\Controllers\PPDBController::class, 'create'])->name('create');
+        Route::post('/daftar', [\App\Http\Controllers\PPDBController::class, 'store'])->name('store');
+        Route::get('/sukses/{studentApplication}', [\App\Http\Controllers\PPDBController::class, 'success'])->name('success');
+        Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
+        Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
+        Route::get('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'editData'])->name('update-data');
+        Route::post('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'updateData'])->name('update-data.store');
+    });
 });
 
 Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {

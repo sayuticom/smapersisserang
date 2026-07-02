@@ -93,6 +93,36 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
         </div>
 
         <div>
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Statistik Kunjungan Website</h3>
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                <div class="bg-white rounded-xl border border-indigo-200 shadow-sm p-4">
+                    <p class="text-xs font-medium text-slate-500">Hari Ini</p>
+                    <p class="text-2xl font-bold text-indigo-700 mt-1">{{ $visitorToday }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $visitorTodayUnique }} unique</p>
+                </div>
+                <div class="bg-white rounded-xl border border-blue-200 shadow-sm p-4">
+                    <p class="text-xs font-medium text-slate-500">7 Hari</p>
+                    <p class="text-2xl font-bold text-blue-700 mt-1">{{ $visitor7Days }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $visitor7DaysUnique }} unique</p>
+                </div>
+                <div class="bg-white rounded-xl border border-sky-200 shadow-sm p-4">
+                    <p class="text-xs font-medium text-slate-500">30 Hari</p>
+                    <p class="text-2xl font-bold text-sky-700 mt-1">{{ $visitor30Days }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $visitor30DaysUnique }} unique</p>
+                </div>
+                <div class="bg-white rounded-xl border border-violet-200 shadow-sm p-4">
+                    <p class="text-xs font-medium text-slate-500">Total Kunjungan</p>
+                    <p class="text-2xl font-bold text-violet-700 mt-1">{{ $totalVisits }}</p>
+                </div>
+                <div class="bg-white rounded-xl border border-purple-200 shadow-sm p-4">
+                    <p class="text-xs font-medium text-slate-500">Kunjungan SPMB</p>
+                    <p class="text-2xl font-bold text-purple-700 mt-1">{{ $spmbVisits }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">/spmb & /ppdb</p>
+                </div>
+            </div>
+        </div>
+
+        <div>
             <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Menu Cepat</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <a href="{{ route('admin.ppdb.dashboard') }}"
@@ -148,5 +178,63 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
                 </a>
             </div>
         </div>
+
+        @if($topPages->isNotEmpty())
+        <div>
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Halaman Terpopuler</h3>
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600">Halaman</th>
+                                <th class="px-4 py-3 text-center font-semibold text-gray-600 w-24">Kunjungan</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-600 w-40">Terakhir Dikunjungi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($topPages as $page)
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">
+                                    <a href="{{ $page->url }}" target="_blank" class="hover:text-emerald-700">{{ $page->path ?: '/' }}</a>
+                                </td>
+                                <td class="px-4 py-3 text-center text-gray-700">{{ $page->total }}</td>
+                                <td class="px-4 py-3 text-right text-gray-400 text-xs whitespace-nowrap">{{ \Carbon\Carbon::parse($page->last_visited)->diffForHumans() }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if($topReferrers->isNotEmpty())
+        <div>
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Sumber Trafik Teratas</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach($topReferrers as $ref)
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center justify-between">
+                    <span class="text-sm text-gray-700 truncate max-w-[80%]">{{ $ref->referrer }}</span>
+                    <span class="text-sm font-semibold text-gray-900">{{ $ref->total }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($deviceStats->isNotEmpty())
+        <div>
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Perangkat</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                @foreach($deviceStats as $dev)
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
+                    <p class="text-xl font-bold text-gray-900">{{ $dev->total }}</p>
+                    <p class="text-xs text-gray-500 mt-1 capitalize">{{ $dev->device }}</p>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
     </div>
 </x-admin-layout>
