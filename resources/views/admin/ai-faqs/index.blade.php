@@ -67,7 +67,6 @@
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600 w-1/4">Kata Kunci</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Kategori</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-600 w-16">Urutan</th>
                                 <th class="px-4 py-3 text-right font-semibold text-gray-600 whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
@@ -91,7 +90,6 @@
                                             <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Nonaktif</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 text-gray-500">{{ $faq->sort_order }}</td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.ai-faqs.edit', $faq) }}"
