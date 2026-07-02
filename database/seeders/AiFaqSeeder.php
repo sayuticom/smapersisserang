@@ -24,7 +24,14 @@ class AiFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Apa keunggulan SMA Persis Serang?',
-                'answer' => 'Keunggulan SMA Persis Serang meliputi: boarding school penuh, gratis biaya sekolah dan asrama untuk angkatan pertama, kurikulum perpaduan agama dan teknologi, pembelajaran kitab kuning dan Arab gundul, serta pembinaan akhlak dan dakwah.',
+                'answer' => 'Keunggulan SMA Persis Serang:
+• Boarding school penuh (sistem asrama)
+• Gratis biaya sekolah dan asrama untuk angkatan pertama
+• Kurikulum perpaduan agama dan teknologi
+• Pembelajaran kitab kuning dan Arab gundul
+• Pembinaan akhlak dan dakwah secara intensif
+
+Untuk informasi lebih lanjut, hubungi panitia SPMB di WhatsApp 089661234569.',
                 'category' => 'Umum',
                 'sort_order' => 3,
             ],
@@ -84,7 +91,16 @@ class AiFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Apa saja syarat pendaftaran?',
-                'answer' => 'Syarat pendaftaran meliputi: mengisi formulir pendaftaran online, menyerahkan dokumen yang diminta, dan bersedia mengikuti proses seleksi. Untuk detail syarat lengkap, silakan lihat di halaman SPMB website resmi kami atau hubungi panitia di 089661234569.',
+                'answer' => 'Syarat pendaftaran meliputi:
+• Scan ijazah atau SKL / surat keterangan aktif kelas 9 SMP/MTs
+• Scan akta kelahiran
+• Scan kartu keluarga
+• Screenshot NISN
+• Nilai rapor semester 1–5
+• Pas foto berwarna 3x4 dengan latar merah
+• Dokumen tambahan jika ada: KIP, PKH, atau SKTM untuk jalur afirmasi
+
+Untuk informasi lengkap dan terbaru, silakan hubungi panitia SPMB melalui WhatsApp 089661234569.',
                 'category' => 'SPMB',
                 'sort_order' => 13,
             ],
@@ -108,7 +124,15 @@ class AiFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Apa saja program pembinaan di asrama?',
-                'answer' => 'Program pembinaan di asrama meliputi: pembinaan ibadah harian, tahsin dan tahfidz Al-Qur\'an, kajian kitab kuning dan Arab gundul, pelatihan dakwah, pengembangan soft skill, serta kegiatan olahraga dan seni.',
+                'answer' => 'Program pembinaan di asrama meliputi:
+• Pembinaan ibadah harian
+• Tahsin dan tahfidz Al-Qur\'an
+• Kajian kitab kuning dan Arab gundul
+• Pelatihan dakwah
+• Pengembangan soft skill
+• Kegiatan olahraga dan seni
+
+Untuk informasi lebih detail, silakan hubungi panitia SPMB di WhatsApp 089661234569.',
                 'category' => 'Asrama',
                 'sort_order' => 17,
             ],
@@ -180,7 +204,14 @@ class AiFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Apa yang membedakan SMA Persis Serang dengan sekolah biasa?',
-                'answer' => 'SMA Persis Serang berbeda karena menggabungkan pendidikan formal dengan pembinaan asrama penuh (boarding school), kurikulum perpaduan agama dan teknologi, program gratis biaya sekolah dan asrama untuk angkatan pertama, serta fokus pada akhlak, dakwah, dan berpikir kritis.',
+                'answer' => 'Yang membedakan SMA Persis Serang dengan sekolah biasa:
+• Sistem boarding school penuh (semua siswa tinggal di asrama)
+• Kurikulum perpaduan agama dan teknologi
+• Gratis biaya sekolah dan asrama untuk angkatan pertama
+• Fokus pada akhlak, dakwah, dan berpikir kritis
+• Pembinaan 24 jam oleh ustadz/ustadzah
+
+Untuk informasi lebih lanjut, hubungi panitia SPMB di WhatsApp 089661234569.',
                 'category' => 'Umum',
                 'sort_order' => 29,
             ],
