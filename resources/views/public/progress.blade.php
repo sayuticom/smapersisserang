@@ -91,6 +91,40 @@
         </div>
 
         <div>
+            <h3 class="text-[11px] sm:text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 sm:mb-3">Pendaftar Berdasarkan Jenis Kelamin</h3>
+            <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                <div class="bg-white rounded-xl border border-blue-200 shadow-sm p-3 sm:p-5">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-[10px] sm:text-sm font-medium text-slate-500">Laki-laki</p>
+                            <p class="text-xl sm:text-3xl font-bold text-blue-700 mt-1">{{ $totalLakiLaki ?? 0 }}</p>
+                        </div>
+                        <div class="w-7 h-7 sm:w-10 sm:h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1 sm:mt-2">Pendaftar laki-laki</p>
+                </div>
+                <div class="bg-white rounded-xl border border-pink-200 shadow-sm p-3 sm:p-5">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-[10px] sm:text-sm font-medium text-slate-500">Perempuan</p>
+                            <p class="text-xl sm:text-3xl font-bold text-pink-700 mt-1">{{ $totalPerempuan ?? 0 }}</p>
+                        </div>
+                        <div class="w-7 h-7 sm:w-10 sm:h-10 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1 sm:mt-2">Pendaftar perempuan</p>
+                </div>
+            </div>
+        </div>
+
+        <div>
             <h3 class="text-[11px] sm:text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 sm:mb-3">Statistik Kunjungan Website</h3>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                 <div class="bg-white rounded-xl border border-indigo-200 shadow-sm p-3 sm:p-4">
@@ -185,7 +219,7 @@
                             <tr>
                                 <th class="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-600 w-8 sm:w-12">No</th>
                                 <th class="px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-600">Nama Murid</th>
-                                <th class="hidden sm:table-cell px-2 py-2 sm:px-4 sm:py-3 text-center font-semibold text-gray-600 w-24">Jenis Kelamin</th>
+                                <th class="px-2 py-2 sm:px-4 sm:py-3 text-center font-semibold text-gray-600 w-12 sm:w-24">JK</th>
                                 <th class="hidden sm:table-cell px-2 py-2 sm:px-4 sm:py-3 text-left font-semibold text-gray-600">Asal Sekolah</th>
                                 <th class="px-2 py-2 sm:px-4 sm:py-3 text-center font-semibold text-gray-600 w-24 sm:w-32">Status</th>
                                 <th class="px-2 py-2 sm:px-4 sm:py-3 text-right font-semibold text-gray-600 w-24 sm:w-36">Tanggal</th>
@@ -196,7 +230,23 @@
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-2 py-2 sm:px-4 sm:py-3 text-gray-500">{{ $loop->iteration }}</td>
                                 <td class="px-2 py-2 sm:px-4 sm:py-3 font-medium text-gray-900">{{ $student->student_name }}</td>
-                                <td class="hidden sm:table-cell px-2 py-2 sm:px-4 sm:py-3 text-center text-gray-700">{{ $student->gender === 'L' ? 'Laki-laki' : ($student->gender === 'P' ? 'Perempuan' : '-') }}</td>
+                                @php
+                                    $_g = strtolower(trim($student->gender ?? ''));
+                                    $_labelJk = match (true) {
+                                        in_array($_g, ['l', 'laki-laki', 'laki_laki', 'laki laki', 'male']) => 'Laki-laki',
+                                        in_array($_g, ['p', 'perempuan', 'female']) => 'Perempuan',
+                                        default => '-',
+                                    };
+                                    $_shortJk = match (true) {
+                                        in_array($_g, ['l', 'laki-laki', 'laki_laki', 'laki laki', 'male']) => 'L',
+                                        in_array($_g, ['p', 'perempuan', 'female']) => 'P',
+                                        default => '-',
+                                    };
+                                @endphp
+                                <td class="px-2 py-2 sm:px-4 sm:py-3 text-center text-gray-700">
+                                    <span class="sm:hidden">{{ $_shortJk }}</span>
+                                    <span class="hidden sm:inline">{{ $_labelJk }}</span>
+                                </td>
                                 <td class="hidden sm:table-cell px-2 py-2 sm:px-4 sm:py-3 text-gray-700">{{ $student->previous_school ?: '-' }}</td>
                                 <td class="px-2 py-2 sm:px-4 sm:py-3 text-center">
                                     @php

@@ -82,7 +82,19 @@ class PublicProgressController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        $students = StudentApplication::when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id))
+        $baseQuery = StudentApplication::when($currentYear, fn($q) => $q->where('admission_year_id', $currentYear->id));
+
+        $totalLakiLaki = (clone $baseQuery)
+            ->where(function ($q) {
+                $q->whereIn('gender', ['L', 'l', 'laki-laki', 'laki_laki', 'laki laki', 'male']);
+            })->count();
+
+        $totalPerempuan = (clone $baseQuery)
+            ->where(function ($q) {
+                $q->whereIn('gender', ['P', 'p', 'perempuan', 'female']);
+            })->count();
+
+        $students = (clone $baseQuery)
             ->latest()
             ->limit(50)
             ->get(['student_name', 'gender', 'previous_school', 'status', 'created_at']);
@@ -101,6 +113,7 @@ class PublicProgressController extends Controller
             'visitorToday', 'visitorTodayUnique', 'visitor7Days', 'visitor7DaysUnique',
             'visitor30Days', 'visitor30DaysUnique', 'totalVisits', 'spmbVisits',
             'topPages', 'topReferrers', 'deviceStats',
+            'totalLakiLaki', 'totalPerempuan',
             'students', 'statusLabels',
             'now',
         ));
