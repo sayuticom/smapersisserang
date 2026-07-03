@@ -11,8 +11,8 @@
     <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-white">Pembaruan Data Siswa</h1>
-            <p class="mt-2 text-emerald-200">Lengkapi data diri putra/putri Anda untuk kelengkapan administrasi SPMB</p>
-            <p class="mt-1 text-sm text-emerald-300">Nomor Pendaftaran: <strong>{{ $app->registration_number }}</strong></p>
+            <p class="mt-3 text-sm md:text-base text-[#F5D36B] font-medium">Lengkapi data diri putra/putri Anda untuk kelengkapan administrasi SPMB</p>
+            <p class="mt-2 text-sm text-white/90">Nomor Pendaftaran: <strong>{{ $app->registration_number }}</strong></p>
         </div>
 
         @if(session('error'))

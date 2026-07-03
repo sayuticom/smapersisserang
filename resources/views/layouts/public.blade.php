@@ -68,7 +68,9 @@
         </main>
 
         @include('layouts.partials.public-footer')
-        <x-ai-chat-widget />
+        @if (!request()->routeIs('spmb.update-data*'))
+            <x-ai-chat-widget />
+        @endif
         @stack('scripts')
     </body>
 </html>
