@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\StudentRequirementFile;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PPDBApplicationController extends Controller
@@ -293,6 +294,65 @@ class PPDBApplicationController extends Controller
     public function print(StudentApplication $studentApplication)
     {
         return view('admin.ppdb.applications.print', compact('studentApplication'));
+    }
+
+    public function downloadRequirements(StudentApplication $studentApplication)
+    {
+        $studentApplication->load('requirementFiles');
+
+        if ($studentApplication->requirementFiles->isEmpty()) {
+            return back()->with('error', 'Belum ada dokumen persyaratan yang diunggah oleh calon siswa.');
+        }
+
+        $zipFileName = 'berkas-spmb-' . Str::slug($studentApplication->student_name) . '-' . $studentApplication->registration_number . '.zip';
+        $tempDir = storage_path('app/temp');
+
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $zipPath = $tempDir . '/' . $zipFileName;
+
+        if (!class_exists('ZipArchive')) {
+            return back()->with('error', 'Fitur ZIP belum aktif di server. Aktifkan PHP ZipArchive terlebih dahulu.');
+        }
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Gagal membuat file ZIP.');
+        }
+
+        $allKeys = array_keys(StudentRequirementFile::$requirements);
+
+        foreach ($allKeys as $index => $key) {
+            $file = $studentApplication->requirementFiles->firstWhere('requirement_key', $key);
+            if (!$file || !$file->file_path) {
+                continue;
+            }
+
+            $fullPath = Storage::disk('public')->path($file->file_path);
+            if (!file_exists($fullPath)) {
+                continue;
+            }
+
+            $ext = $file->fileExtension();
+            $safeName = StudentRequirementFile::safeDownloadName($key, $index) . '.' . $ext;
+            $zip->addFile($fullPath, $safeName);
+        }
+
+        $legacyFiles = $studentApplication->requirementFiles->whereIn('requirement_key', array_keys(StudentRequirementFile::$legacyRequirements));
+        foreach ($legacyFiles as $file) {
+            if (!$file->file_path) continue;
+            $fullPath = Storage::disk('public')->path($file->file_path);
+            if (!file_exists($fullPath)) continue;
+            $ext = $file->fileExtension();
+            $zip->addFile($fullPath, '00-' . $file->requirement_key . '.' . $ext);
+        }
+
+        $zip->close();
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 
     public function updateStatus(Request $request, StudentApplication $studentApplication)

@@ -14,8 +14,17 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
 <x-admin-layout>
     <div class="space-y-6">
         <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Beranda Admin</h2>
-            <p class="text-sm text-gray-500 mt-0.5">SMA Persis Serang Islamic Boarding School</p>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-7m-6 0h6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Dashboard Admin</h2>
+                    <p class="text-sm text-gray-500 mt-0.5">SMA Persis Serang Islamic Boarding School</p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

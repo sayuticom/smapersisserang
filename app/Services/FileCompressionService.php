@@ -19,18 +19,12 @@ class FileCompressionService
     private int $photoMaxHeight = 1200;
     private int $photoQuality = 85;
 
-    private int $maxFileSize = 2 * 1024 * 1024;
-
     public function storeRequirementFile(UploadedFile $file, string $requirementKey): array
     {
         $originalName = $file->getClientOriginalName();
         $mimeType = $file->getMimeType();
         $originalSize = $file->getSize();
         $extension = strtolower($file->getClientOriginalExtension());
-
-        if ($originalSize > $this->maxFileSize) {
-            throw new \RuntimeException('Ukuran file maksimal 2MB.');
-        }
 
         $filename = $requirementKey . '_' . time() . '_' . uniqid();
 

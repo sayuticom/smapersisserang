@@ -278,7 +278,7 @@ class PPDBController extends Controller
             'quran_reading_ability' => 'required|in:belum_bisa,terbata_bata,lancar,baik',
             'health_notes' => 'nullable|string',
             'motivation' => 'required|string',
-            'foto_3x4' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto_3x4' => 'nullable|image|mimes:jpg,jpeg,png',
 
             'father_name' => 'required|string|max:255',
             'mother_name' => 'required|string|max:255',
@@ -311,15 +311,53 @@ class PPDBController extends Controller
 
         foreach (StudentRequirementFile::$requirements as $key => $req) {
             if (!$req['required']) {
-                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png';
             } elseif ($existingFiles->has($key)) {
-                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png';
             } else {
-                $rules[$key] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                $rules[$key] = 'required|file|mimes:pdf,jpg,jpeg,png';
             }
         }
 
-        $validated = $request->validate($rules);
+        $fileMessages = [];
+        $fileReqKeys = array_keys(StudentRequirementFile::$requirements);
+        $fileReqKeys[] = 'foto_3x4';
+
+        foreach ($fileReqKeys as $key) {
+            $fileMessages["$key.required"] = 'Harap unggah file persyaratan ini.';
+            $fileMessages["$key.file"] = 'Data yang diunggah harus berupa file.';
+            $fileMessages["$key.mimes"] = 'Format file harus PDF, JPG, JPEG, atau PNG.';
+        }
+
+        $validated = $request->validate($rules, $fileMessages);
+
+        $sizeErrors = [];
+        $allFileFields = array_keys(StudentRequirementFile::$requirements);
+        $allFileFields[] = 'foto_3x4';
+
+        foreach ($allFileFields as $key) {
+            if (!$request->hasFile($key)) {
+                continue;
+            }
+
+            $file = $request->file($key);
+            $extension = strtolower($file->getClientOriginalExtension());
+            $size = $file->getSize();
+            $isImage = in_array($extension, ['jpg', 'jpeg', 'png']);
+            $isPdf = $extension === 'pdf';
+
+            if (!$isImage && !$isPdf) {
+                $sizeErrors[$key] = 'Format file harus PDF, JPG, JPEG, atau PNG.';
+            } elseif ($isPdf && $size > 2048 * 1024) {
+                $sizeErrors[$key] = 'File PDF maksimal 2MB.';
+            } elseif ($isImage && $size > 8192 * 1024) {
+                $sizeErrors[$key] = 'File gambar maksimal 8MB sebelum dikompres.';
+            }
+        }
+
+        if (!empty($sizeErrors)) {
+            return back()->withErrors($sizeErrors)->withInput();
+        }
 
         DB::transaction(function () use ($validated, $application, $request) {
             $data = $validated;

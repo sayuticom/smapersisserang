@@ -378,8 +378,9 @@
                             </div>
                         </div>
                     @endforeach
-                    <div class="text-xs text-gray-400 mt-2">
-                        Format file: PDF, JPG, JPEG, PNG. Maksimal 2MB per file.
+                    <div class="text-xs text-gray-400 mt-2 space-y-1">
+                        <p>Format file: PDF, JPG, JPEG, PNG.</p>
+                        <p>PDF maksimal 2MB. File gambar (JPG/PNG) maksimal 8MB sebelum dikompres.</p>
                     </div>
                 </div>
             </div>

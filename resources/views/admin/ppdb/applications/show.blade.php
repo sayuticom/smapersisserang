@@ -396,48 +396,138 @@ $app = $studentApplication;
         </div>
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Persyaratan Pendaftaran</h3>
+                @php $hasAnyFile = $app->requirementFiles->whereNotNull('file_path')->isNotEmpty(); @endphp
+                @if($hasAnyFile)
+                    <a href="{{ route('admin.ppdb.applications.requirements.download', $app) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download Semua Berkas
+                    </a>
+                @endif
             </div>
-            <div class="p-4 space-y-3">
+            <div class="p-4">
                 @php $uploadedFiles = $app->requirementFiles->keyBy('requirement_key'); @endphp
-                @foreach(\App\Models\StudentRequirementFile::$requirements as $key => $req)
-                    @php $file = $uploadedFiles[$key] ?? null; @endphp
-                    <div class="flex items-center justify-between gap-3 p-3 rounded-lg border {{ $file ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200 bg-gray-50/50' }}">
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
-                            @if($file)
-                                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                                    </svg>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    @foreach(\App\Models\StudentRequirementFile::$requirements as $key => $req)
+                        @php $file = $uploadedFiles[$key] ?? null; @endphp
+                        <div class="rounded-lg border overflow-hidden {{ $file ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40' }}">
+                            @if($file && $file->isImage())
+                                <a href="{{ $file->fileUrl() }}" target="_blank" class="block bg-gray-100 flex items-center justify-center" style="min-height:140px;max-height:220px;overflow:hidden;">
+                                    <img src="{{ $file->fileUrl() }}" alt="{{ $req['label'] }}"
+                                         class="w-full h-full object-contain"
+                                         style="max-height:220px; background: #f8f9fa;">
+                                </a>
+                            @elseif($file && $file->isPdf())
+                                <div class="bg-gray-100 flex items-center justify-center p-6" style="min-height:140px;">
+                                    <div class="text-center">
+                                        <svg class="w-12 h-12 mx-auto text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"></path>
+                                        </svg>
+                                        <p class="text-xs text-gray-400 mt-1 font-medium">PDF</p>
+                                    </div>
+                                </div>
+                            @elseif($file)
+                                <div class="bg-gray-100 flex items-center justify-center p-6" style="min-height:140px;">
+                                    <div class="text-center">
+                                        <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <p class="text-xs text-gray-400 mt-1 font-medium">File</p>
+                                    </div>
                                 </div>
                             @else
-                                <div class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                    </svg>
+                                <div class="bg-gray-100 flex items-center justify-center p-6" style="min-height:140px;">
+                                    <div class="text-center">
+                                        <svg class="w-10 h-10 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                        <p class="text-xs text-gray-400 mt-1">Belum diunggah</p>
+                                    </div>
                                 </div>
                             @endif
-                            <div class="min-w-0">
-                                <p class="text-sm font-medium text-gray-800 truncate">{{ $req['label'] }}</p>
+                            <div class="p-3">
+                                <p class="text-sm font-medium text-gray-800 leading-tight">{{ $req['label'] }}</p>
                                 @if($file)
-                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                                        <span class="text-xs text-emerald-700 font-medium">Sudah diunggah</span>
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                                        <span class="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Sudah
+                                        </span>
                                         @if($file->fileSizeDisplay())
                                             <span class="text-xs text-gray-400">{{ $file->fileSizeDisplay() }}</span>
                                         @endif
-                                        @if($file->fileUrl())
-                                            <a href="{{ $file->fileUrl() }}" target="_blank"
-                                               class="text-xs text-blue-600 hover:text-blue-700 underline">Lihat File</a>
-                                        @endif
+                                        <span class="text-xs text-gray-400 uppercase">{{ $file->fileExtension() }}</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="{{ $file->fileUrl() }}" target="_blank"
+                                           class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-800 underline">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                            Lihat File
+                                        </a>
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400 font-medium">Belum diunggah</span>
+                                    <div class="mt-1.5">
+                                        @if($req['required'])
+                                            <span class="text-xs text-amber-600 font-medium">Dokumen belum diunggah oleh calon siswa.</span>
+                                        @else
+                                            <span class="text-xs text-gray-400 font-medium">Opsional - belum diunggah.</span>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                    @foreach(\App\Models\StudentRequirementFile::$legacyRequirements as $key => $req)
+                        @php $file = $uploadedFiles[$key] ?? null; @endphp
+                        @if($file)
+                            <div class="rounded-lg border border-amber-200 bg-amber-50/40 overflow-hidden">
+                                @if($file->isImage())
+                                    <a href="{{ $file->fileUrl() }}" target="_blank" class="block bg-gray-100 flex items-center justify-center" style="min-height:140px;max-height:220px;overflow:hidden;">
+                                        <img src="{{ $file->fileUrl() }}" alt="{{ $req['label'] }}"
+                                             class="w-full h-full object-contain" style="max-height:220px; background: #f8f9fa;">
+                                    </a>
+                                @else
+                                    <div class="bg-gray-100 flex items-center justify-center p-6" style="min-height:140px;">
+                                        <div class="text-center">
+                                            <svg class="w-10 h-10 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="p-3">
+                                    <p class="text-sm font-medium text-amber-800 leading-tight">{{ $req['label'] }}</p>
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                                        <span class="inline-flex items-center gap-0.5 text-xs font-medium text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                            Sudah
+                                        </span>
+                                        @if($file->fileSizeDisplay())
+                                            <span class="text-xs text-gray-400">{{ $file->fileSizeDisplay() }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="mt-2">
+                                        <a href="{{ $file->fileUrl() }}" target="_blank"
+                                           class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-800 underline">
+                                            Lihat File
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
             </div>
         </div>
 
