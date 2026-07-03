@@ -6,6 +6,8 @@ use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
 use App\Models\StudentApplication;
 use App\Models\ApplicationStatusHistory;
+use App\Models\StudentRequirementFile;
+use App\Services\FileCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -236,13 +238,16 @@ class PPDBController extends Controller
             ]);
         }
 
-        $application->load(['admissionYear', 'admissionProgram']);
+        $application->load(['admissionYear', 'admissionProgram', 'requirementFiles']);
 
         $agamaOptions = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
         $statusKeluargaOptions = ['anak_kandung', 'anak_tiri', 'anak_angkat'];
 
+        $requirements = StudentRequirementFile::$requirements;
+        $uploadedFiles = $application->requirementFiles->keyBy('requirement_key');
+
         return view('ppdb.update-data', compact(
-            'application', 'agamaOptions', 'statusKeluargaOptions'
+            'application', 'agamaOptions', 'statusKeluargaOptions', 'requirements', 'uploadedFiles'
         ));
     }
 
@@ -254,7 +259,7 @@ class PPDBController extends Controller
             return back()->with('error', 'Link pembaruan data tidak valid.');
         }
 
-        $validated = $request->validate([
+        $rules = [
             'nama_panggilan' => 'nullable|string|max:100',
             'nomor_induk_asal' => 'nullable|string|max:50',
             'nisn' => 'nullable|string|max:20',
@@ -299,7 +304,22 @@ class PPDBController extends Controller
             'pendidikan_ibu_wali' => 'nullable|string|max:100',
             'penghasilan_ayah_wali' => 'nullable|string|max:50',
             'penghasilan_ibu_wali' => 'nullable|string|max:50',
-        ]);
+        ];
+
+        $application->load('requirementFiles');
+        $existingFiles = $application->requirementFiles->keyBy('requirement_key');
+
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            if (!$req['required']) {
+                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            } elseif ($existingFiles->has($key)) {
+                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            } else {
+                $rules[$key] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            }
+        }
+
+        $validated = $request->validate($rules);
 
         DB::transaction(function () use ($validated, $application, $request) {
             $data = $validated;
@@ -317,6 +337,51 @@ class PPDBController extends Controller
 
             $application->update($data);
         });
+
+        $compressionService = app(FileCompressionService::class);
+
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            if (!$request->hasFile($key)) {
+                continue;
+            }
+
+            $file = $request->file($key);
+
+            try {
+                $result = $compressionService->storeRequirementFile($file, $key);
+            } catch (\RuntimeException $e) {
+                return back()->with('error', $e->getMessage())->withInput();
+            }
+
+            $existingFile = $existingFiles->get($key);
+
+            DB::transaction(function () use ($application, $key, $req, $result, $existingFile) {
+                if ($existingFile) {
+                    $existingFile->deleteFile();
+                    $existingFile->update([
+                        'file_path' => $result['file_path'],
+                        'original_filename' => $result['original_filename'],
+                        'mime_type' => $result['mime_type'],
+                        'file_size_original' => $result['file_size_original'],
+                        'file_size_compressed' => $result['file_size_compressed'],
+                        'compression_status' => $result['compression_status'],
+                        'uploaded_at' => now(),
+                    ]);
+                } else {
+                    $application->requirementFiles()->create([
+                        'requirement_key' => $key,
+                        'requirement_label' => $req['label'],
+                        'file_path' => $result['file_path'],
+                        'original_filename' => $result['original_filename'],
+                        'mime_type' => $result['mime_type'],
+                        'file_size_original' => $result['file_size_original'],
+                        'file_size_compressed' => $result['file_size_compressed'],
+                        'compression_status' => $result['compression_status'],
+                        'uploaded_at' => now(),
+                    ]);
+                }
+            });
+        }
 
         return redirect()->route('spmb.info')->with('success', 'Data berhasil diperbarui. Terima kasih.');
     }

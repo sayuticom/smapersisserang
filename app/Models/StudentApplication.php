@@ -60,6 +60,11 @@ class StudentApplication extends Model
     {
         return $this->hasMany(ApplicationStatusHistory::class);
     }
+
+    public function requirementFiles()
+    {
+        return $this->hasMany(StudentRequirementFile::class, 'student_application_id');
+    }
     
     public function generateRegistrationNumber()
     {

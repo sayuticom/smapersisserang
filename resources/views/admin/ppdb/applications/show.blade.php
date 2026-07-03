@@ -397,6 +397,52 @@ $app = $studentApplication;
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Persyaratan Pendaftaran</h3>
+            </div>
+            <div class="p-4 space-y-3">
+                @php $uploadedFiles = $app->requirementFiles->keyBy('requirement_key'); @endphp
+                @foreach(\App\Models\StudentRequirementFile::$requirements as $key => $req)
+                    @php $file = $uploadedFiles[$key] ?? null; @endphp
+                    <div class="flex items-center justify-between gap-3 p-3 rounded-lg border {{ $file ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200 bg-gray-50/50' }}">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            @if($file)
+                                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                            @else
+                                <div class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                </div>
+                            @endif
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">{{ $req['label'] }}</p>
+                                @if($file)
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                        <span class="text-xs text-emerald-700 font-medium">Sudah diunggah</span>
+                                        @if($file->fileSizeDisplay())
+                                            <span class="text-xs text-gray-400">{{ $file->fileSizeDisplay() }}</span>
+                                        @endif
+                                        @if($file->fileUrl())
+                                            <a href="{{ $file->fileUrl() }}" target="_blank"
+                                               class="text-xs text-blue-600 hover:text-blue-700 underline">Lihat File</a>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400 font-medium">Belum diunggah</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Status Data Siswa</h3>
             </div>
             <div class="p-4">

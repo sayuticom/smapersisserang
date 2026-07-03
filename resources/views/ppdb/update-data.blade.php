@@ -304,6 +304,86 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 bg-amber-50 border-b border-amber-100">
+                    <h2 class="text-lg font-bold text-amber-800">Syarat Pendaftaran</h2>
+                    <p class="text-sm text-amber-600 mt-1">Silakan unggah dokumen berikut agar data pendaftaran dapat diverifikasi oleh panitia.</p>
+                </div>
+                <div class="p-6 space-y-5">
+                    @foreach($requirements as $key => $req)
+                        @php
+                            $uploaded = $uploadedFiles[$key] ?? null;
+                            $hasFile = !is_null($uploaded);
+                            $isRequired = $req['required'] && !$hasFile;
+                        @endphp
+                        <div class="flex flex-col sm:flex-row sm:items-start gap-3 p-4 rounded-xl border {{ $hasFile ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200 bg-gray-50/30' }}">
+                            <div class="flex-shrink-0 mt-1">
+                                @if($hasFile)
+                                    <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                @else
+                                    <div class="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800">
+                                            {{ $req['label'] }}
+                                            @if($isRequired)
+                                                <span class="text-red-500">*</span>
+                                            @endif
+                                        </p>
+                                        @if($hasFile)
+                                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                                <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                                    Sudah diunggah
+                                                </span>
+                                                <span class="text-xs text-gray-500">{{ $uploaded->original_filename }}</span>
+                                                @if($uploaded->fileSizeDisplay())
+                                                    <span class="text-xs text-gray-400">{{ $uploaded->fileSizeDisplay() }}</span>
+                                                @endif
+                                                @if($uploaded->fileUrl())
+                                                    <a href="{{ $uploaded->fileUrl() }}" target="_blank"
+                                                       class="text-xs text-emerald-600 hover:text-emerald-700 underline font-medium">
+                                                        Lihat File
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <p class="text-xs text-amber-600 mt-1">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 font-medium">
+                                                    Belum diunggah
+                                                </span>
+                                            </p>
+                                        @endif
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <input type="file" name="{{ $key }}"
+                                               accept=".pdf,.jpg,.jpeg,.png"
+                                               {{ $isRequired ? 'required' : '' }}
+                                               class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                                    </div>
+                                </div>
+                                @error($key)
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    @endforeach
+                    <div class="text-xs text-gray-400 mt-2">
+                        Format file: PDF, JPG, JPEG, PNG. Maksimal 2MB per file.
+                    </div>
+                </div>
+            </div>
+
             <div class="flex items-center gap-4">
                 <button type="submit" class="px-8 py-3 bg-amber-400 text-emerald-950 font-bold rounded-xl hover:bg-amber-300 transition-colors shadow-lg">
                     Simpan Data

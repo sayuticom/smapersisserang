@@ -285,7 +285,7 @@ class PPDBApplicationController extends Controller
 
     public function show(StudentApplication $studentApplication)
     {
-        $studentApplication->load(['admissionYear', 'admissionProgram', 'verifier', 'statusHistories.changedBy', 'followUpBy']);
+        $studentApplication->load(['admissionYear', 'admissionProgram', 'verifier', 'statusHistories.changedBy', 'followUpBy', 'requirementFiles']);
 
         return view('admin.ppdb.applications.show', compact('studentApplication'));
     }
