@@ -44,9 +44,12 @@
                                    class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">NISN</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">NISN <span class="text-red-500">*</span></label>
                             <input type="text" name="nisn" value="{{ old('nisn', $app->nisn) }}"
                                    class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                            @error('nisn')
+                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
@@ -307,7 +310,7 @@
             <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div class="px-6 py-4 bg-amber-50 border-b border-amber-100">
                     <h2 class="text-lg font-bold text-amber-800">Syarat Pendaftaran</h2>
-                    <p class="text-sm text-amber-600 mt-1">Silakan unggah dokumen berikut agar data pendaftaran dapat diverifikasi oleh panitia.</p>
+                    <p class="text-sm text-amber-600 mt-1">Unggah dokumen berikut agar data pendaftaran dapat diverifikasi. Dokumen bisa diunggah bertahap.</p>
                 </div>
                 <div class="p-6 space-y-5">
                     @foreach($requirements as $key => $req)
@@ -368,7 +371,6 @@
                                     <div class="flex-shrink-0">
                                         <input type="file" name="{{ $key }}"
                                                accept=".pdf,.jpg,.jpeg,.png"
-                                               {{ $isRequired ? 'required' : '' }}
                                                class="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                                     </div>
                                 </div>

@@ -262,7 +262,7 @@ class PPDBController extends Controller
         $rules = [
             'nama_panggilan' => 'nullable|string|max:100',
             'nomor_induk_asal' => 'nullable|string|max:50',
-            'nisn' => 'nullable|string|max:20',
+            'nisn' => ['required', 'string', 'max:20'],
             'student_name' => 'required|string|max:255',
             'gender' => 'required|in:laki_laki,perempuan',
             'birth_place' => 'required|string|max:255',
@@ -310,16 +310,12 @@ class PPDBController extends Controller
         $existingFiles = $application->requirementFiles->keyBy('requirement_key');
 
         foreach (StudentRequirementFile::$requirements as $key => $req) {
-            if (!$req['required']) {
-                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png';
-            } elseif ($existingFiles->has($key)) {
-                $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png';
-            } else {
-                $rules[$key] = 'required|file|mimes:pdf,jpg,jpeg,png';
-            }
+            $rules[$key] = 'nullable|file|mimes:pdf,jpg,jpeg,png';
         }
 
-        $fileMessages = [];
+        $fileMessages = [
+            'nisn.required' => 'NISN wajib diisi.',
+        ];
         $fileReqKeys = array_keys(StudentRequirementFile::$requirements);
         $fileReqKeys[] = 'foto_3x4';
 
@@ -371,12 +367,12 @@ class PPDBController extends Controller
 
             $data['boarding_ready'] = (bool) $validated['boarding_ready'];
             $data['updated_by_parent_at'] = now();
-            $data['status_data'] = 'sudah_lengkap';
 
             $application->update($data);
         });
 
         $compressionService = app(FileCompressionService::class);
+        $newlyUploadedKeys = [];
 
         foreach (StudentRequirementFile::$requirements as $key => $req) {
             if (!$request->hasFile($key)) {
@@ -392,6 +388,7 @@ class PPDBController extends Controller
             }
 
             $existingFile = $existingFiles->get($key);
+            $newlyUploadedKeys[$key] = true;
 
             DB::transaction(function () use ($application, $key, $req, $result, $existingFile) {
                 if ($existingFile) {
@@ -420,6 +417,21 @@ class PPDBController extends Controller
                 }
             });
         }
+
+        $allRequiredHaveFiles = true;
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            if (!$req['required']) {
+                continue;
+            }
+            if (!$existingFiles->has($key) && !isset($newlyUploadedKeys[$key])) {
+                $allRequiredHaveFiles = false;
+                break;
+            }
+        }
+
+        $application->update([
+            'status_data' => $allRequiredHaveFiles ? 'sudah_lengkap' : 'belum_lengkap',
+        ]);
 
         return redirect()->route('spmb.info')->with('success', 'Data berhasil diperbarui. Terima kasih.');
     }
