@@ -48,7 +48,7 @@ class TeacherController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $validated['photo_path'] = $request->file('photo')->store('school/teachers', 'public');
+            $validated['photo_path'] = $request->file('photo')->store('teachers', 'public');
         }
 
         Teacher::create([
@@ -89,7 +89,7 @@ class TeacherController extends Controller
             if ($teacher->photo_path) {
                 Storage::disk('public')->delete($teacher->photo_path);
             }
-            $validated['photo_path'] = $request->file('photo')->store('school/teachers', 'public');
+            $validated['photo_path'] = $request->file('photo')->store('teachers', 'public');
         }
 
         $teacher->update($validated);

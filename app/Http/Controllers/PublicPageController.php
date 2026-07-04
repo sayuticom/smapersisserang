@@ -175,6 +175,7 @@ class PublicPageController extends Controller
                     'jabatan' => $structure->label,
                     'person_name' => $structure->person_name,
                     'person_display_name' => $structure->person?->name ?: $structure->person_name,
+                    'photo_url' => $this->organizationPhotoUrl($structure),
                     'deskripsi' => $structure->description,
                     'anggota' => $structure->members ?? [],
                     'card_type' => $structure->card_type,
@@ -188,6 +189,7 @@ class PublicPageController extends Controller
                         'jabatan' => $child->label,
                         'person_name' => $child->person_name,
                         'person_display_name' => $child->person?->name ?: $child->person_name,
+                        'photo_url' => $this->organizationPhotoUrl($child),
                         'deskripsi' => $child->description,
                         'anggota' => $child->members ?? [],
                         'card_type' => $child->card_type,
@@ -200,6 +202,13 @@ class PublicPageController extends Controller
             ->all();
 
         return view('pages.struktur-organisasi', compact('schoolSetting', 'websitePage', 'organisasi'));
+    }
+
+    private function organizationPhotoUrl(OrganizationStructure $structure): ?string
+    {
+        $photoPath = $structure->person?->photo_path;
+
+        return $photoPath ? asset('storage/' . $photoPath) : null;
     }
 
     public function teachers()
