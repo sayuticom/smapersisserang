@@ -124,13 +124,13 @@
 
         {{-- Level 3: Waka, TU, Asrama, Unit Pendukung --}}
         @php
-            $children = collect($organisasi)->firstWhere('level', 2);
-            $bawahan = $children['children'] ?? [];
+            $kepalaSekolah = collect($organisasi)->firstWhere('level', 2);
+            $unitDiBawahKepalaSekolah = $kepalaSekolah['children'] ?? [];
         @endphp
 
-        @if(count($bawahan))
+        @if(count($unitDiBawahKepalaSekolah))
             <div class="mt-2 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                @foreach($bawahan as $bawah)
+                @foreach($unitDiBawahKepalaSekolah as $bawah)
                     <div class="group rounded-xl border border-emerald-100 bg-white p-5 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg">
                         <div class="mb-3 flex items-center gap-3">
                             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#0F6B3A]/10 text-[#0F6B3A]">

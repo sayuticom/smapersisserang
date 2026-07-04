@@ -153,6 +153,10 @@ class PublicPageController extends Controller
             $schoolSetting = null;
         }
 
+        // EDIT DATA ORGANIGRAM DI SINI
+        // Ubah nama jabatan, deskripsi, dan daftar anggota sesuai kebutuhan.
+        // Gunakan key 'jabatan' untuk nama posisi, 'deskripsi' untuk keterangan singkat,
+        // dan 'anggota' untuk daftar unit/orang di bawah jabatan tersebut.
         $organisasi = [
             [
                 'level' => 1,
