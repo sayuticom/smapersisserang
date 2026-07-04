@@ -145,6 +145,82 @@ class PublicPageController extends Controller
         return view('pages.faq', compact('schoolSetting', 'faqs'));
     }
 
+    public function strukturOrganisasi()
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        $organisasi = [
+            [
+                'level' => 1,
+                'jabatan' => 'Pembina / Pimpinan Persis',
+                'deskripsi' => 'Dewan Pembina Pondok Pesantren dan Madrasah Persatuan Islam',
+            ],
+            [
+                'level' => 1,
+                'jabatan' => 'Bidang Pendidikan / Majelis Pendidikan',
+                'deskripsi' => 'Majelis Pendidikan Persatuan Islam Cabang Serang',
+            ],
+            [
+                'level' => 2,
+                'jabatan' => 'Kepala SMA Persis Serang',
+                'deskripsi' => 'Pimpinan tertinggi sekolah',
+                'children' => [
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Wakil Kepala Sekolah Bidang Kurikulum',
+                        'singkatan' => 'Waka Kurikulum',
+                        'anggota' => ['Koordinator Pembelajaran', 'Guru Mata Pelajaran', 'Wali Kelas'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Wakil Kepala Sekolah Bidang Kesiswaan',
+                        'singkatan' => 'Waka Kesiswaan',
+                        'anggota' => ['Pembina OSIS / IPP', 'Pembina Ekstrakurikuler', 'Bimbingan Konseling', 'Tim Kedisiplinan Santri'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Wakil Kepala Sekolah Bidang Sarana dan Prasarana',
+                        'singkatan' => 'Waka Sarpras',
+                        'anggota' => ['Penanggung Jawab Ruang Kelas', 'Penanggung Jawab Laboratorium / Komputer', 'Penanggung Jawab Asrama', 'Penanggung Jawab Inventaris'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Wakil Kepala Sekolah Bidang Humas dan Kerja Sama',
+                        'singkatan' => 'Waka Humas',
+                        'anggota' => ['Hubungan Orang Tua Santri', 'Kerja Sama Lembaga', 'Publikasi dan Media Sekolah', 'SPMB / PPDB'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Kepala Asrama / Boarding School',
+                        'singkatan' => 'Kepala Asrama',
+                        'anggota' => ['Murobi Ikhwan', 'Murobi Akhwat', 'Koordinator Piket Asrama', 'Koordinator Makan Santri', 'Koordinator Kebersihan dan Keamanan Asrama'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Tata Usaha',
+                        'anggota' => ['Administrasi Sekolah', 'Keuangan', 'Operator Sekolah', 'Arsip dan Dokumen'],
+                    ],
+                    [
+                        'level' => 3,
+                        'jabatan' => 'Unit Pendukung',
+                        'anggota' => ['Perpustakaan', 'Laboratorium Komputer', 'UKS', 'Keamanan', 'Kebersihan'],
+                    ],
+                ],
+            ],
+            [
+                'level' => 2,
+                'jabatan' => 'Komite Sekolah',
+                'deskripsi' => 'Badan mandiri yang mewadahi peran serta masyarakat',
+            ],
+        ];
+
+        return view('pages.struktur-organisasi', compact('schoolSetting', 'organisasi'));
+    }
+
     public function teachers()
     {
         try {
