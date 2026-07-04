@@ -163,6 +163,10 @@
                        class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                         {{ $contactActionLabel }}
                     </button>
+                    <a href="{{ route('donasi-pendidikan') }}"
+                       class="inline-flex items-center justify-center rounded-xl border border-emerald-100/50 bg-emerald-950/50 px-7 py-4 text-sm font-bold text-emerald-50 transition hover:bg-white/10">
+                        Donasi Pendidikan
+                    </a>
                 </div>
 
                 @if($currentAdmissionYear && $currentAdmissionYear->status === 'almost_full')

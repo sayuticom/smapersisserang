@@ -204,6 +204,17 @@ class PublicPageController extends Controller
         return view('pages.struktur-organisasi', compact('schoolSetting', 'websitePage', 'organisasi'));
     }
 
+    public function donasiPendidikan()
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        return view('pages.donasi-pendidikan', compact('schoolSetting'));
+    }
+
     private function organizationPhotoUrl(OrganizationStructure $structure): ?string
     {
         $photoPath = $structure->person?->photo_path;

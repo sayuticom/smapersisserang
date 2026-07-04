@@ -103,6 +103,10 @@
                            class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
                             Konsultasi SPMB
                         </button>
+                        <a href="{{ route('donasi-pendidikan') }}"
+                           class="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/80 bg-emerald-950/30 px-7 py-3 text-sm font-semibold text-amber-200 backdrop-blur transition hover:bg-white/15 sm:w-auto">
+                            Donasi Pendidikan
+                        </a>
                     </div>
                 </div>
 

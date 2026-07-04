@@ -158,6 +158,7 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
     Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
     Route::get('/struktur-organisasi', [PublicPageController::class, 'strukturOrganisasi'])->name('public.struktur-organisasi');
+    Route::get('/donasi-pendidikan', [PublicPageController::class, 'donasiPendidikan'])->name('donasi-pendidikan');
     Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
     Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 

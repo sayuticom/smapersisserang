@@ -104,6 +104,7 @@
                     <option value="public.boarding" {{ old('route_name', $selectedRoute) === 'public.boarding' ? 'selected' : '' }}>Boarding (/boarding-school)</option>
                     <option value="public.teachers" {{ old('route_name', $selectedRoute) === 'public.teachers' ? 'selected' : '' }}>Guru (/guru)</option>
                     <option value="ppdb.info" {{ old('route_name', $selectedRoute) === 'ppdb.info' ? 'selected' : '' }}>SPMB (/ppdb)</option>
+                    <option value="donasi-pendidikan" {{ old('route_name', $selectedRoute) === 'donasi-pendidikan' ? 'selected' : '' }}>Donasi Pendidikan (/donasi-pendidikan)</option>
                     <option value="contact" {{ old('route_name', $selectedRoute) === 'contact' ? 'selected' : '' }}>Kontak (/#kontak)</option>
                     <option value="public.gallery" {{ old('route_name', $selectedRoute) === 'public.gallery' ? 'selected' : '' }}>Galeri (/galeri)</option>
                     <option value="public.figures" {{ old('route_name', $selectedRoute) === 'public.figures' ? 'selected' : '' }}>Tokoh (/tokoh-pembina)</option>
