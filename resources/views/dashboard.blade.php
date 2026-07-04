@@ -185,6 +185,19 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
                         <p class="text-xs text-gray-500 mt-0.5">Lihat halaman depan website</p>
                     </div>
                 </a>
+
+                <a href="{{ route('public.struktur-organisasi') }}"
+                   class="flex items-center gap-4 bg-white rounded-xl border border-gray-200 p-4 hover:border-teal-300 hover:shadow-md transition-all group">
+                    <div class="w-11 h-11 bg-teal-50 rounded-lg flex items-center justify-center group-hover:bg-teal-100 transition-colors flex-shrink-0">
+                        <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h6M9 12h6m-6 6h6M5 6h.01M5 12h.01M5 18h.01M19 6h.01M19 12h.01M19 18h.01"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">Struktur Organisasi</h4>
+                        <p class="text-xs text-gray-500 mt-0.5">Isi struktur organisasi saat ini masih diedit dari kode di PublicPageController.</p>
+                    </div>
+                </a>
             </div>
         </div>
 

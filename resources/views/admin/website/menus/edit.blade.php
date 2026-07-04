@@ -99,6 +99,7 @@
                     <option value="">Pilih halaman...</option>
                     <option value="home" {{ old('route_name', $selectedRoute) === 'home' ? 'selected' : '' }}>Beranda (/)</option>
                     <option value="public.profile" {{ old('route_name', $selectedRoute) === 'public.profile' ? 'selected' : '' }}>Profil (/profil)</option>
+                    <option value="public.struktur-organisasi" {{ old('route_name', $selectedRoute) === 'public.struktur-organisasi' ? 'selected' : '' }}>Struktur Organisasi (/struktur-organisasi)</option>
                     <option value="public.program" {{ old('route_name', $selectedRoute) === 'public.program' ? 'selected' : '' }}>Program (/program)</option>
                     <option value="public.boarding" {{ old('route_name', $selectedRoute) === 'public.boarding' ? 'selected' : '' }}>Boarding (/boarding-school)</option>
                     <option value="public.teachers" {{ old('route_name', $selectedRoute) === 'public.teachers' ? 'selected' : '' }}>Guru (/guru)</option>
