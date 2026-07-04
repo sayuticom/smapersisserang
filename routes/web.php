@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\GalleryCategoryController;
 use App\Http\Controllers\Admin\NavigationMenuController;
+use App\Http\Controllers\Admin\OrganizationStructureController;
 use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\WebsitePageController;
@@ -297,6 +298,11 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::put('/{navigationMenu}', [NavigationMenuController::class, 'update'])->name('update');
         Route::patch('/{navigationMenu}/toggle', [NavigationMenuController::class, 'toggle'])->name('toggle');
     });
+
+    Route::put('organization-structures/page', [OrganizationStructureController::class, 'updatePage'])
+        ->name('organization-structures.page.update');
+    Route::resource('organization-structures', OrganizationStructureController::class)
+        ->except(['show']);
 
     Route::name('website.values.')->prefix('website/nilai-utama')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SchoolValueController::class, 'index'])->name('index');

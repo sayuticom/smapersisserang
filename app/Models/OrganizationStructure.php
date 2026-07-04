@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class OrganizationStructure extends Model
+{
+    protected $fillable = [
+        'structure_key',
+        'label',
+        'description',
+        'members',
+        'parent_key',
+        'sort_order',
+        'level',
+        'card_type',
+        'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'members' => 'array',
+            'is_active' => 'boolean',
+            'sort_order' => 'integer',
+            'level' => 'integer',
+        ];
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+}

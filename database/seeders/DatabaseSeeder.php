@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             SchoolValueSeeder::class,
             WebsitePageSeeder::class,
             NavigationMenuSeeder::class,
+            OrganizationStructureSeeder::class,
             SchoolSubjectSeeder::class,
             AdmissionYearsTableSeeder::class,
             AdmissionProgramsTableSeeder::class,

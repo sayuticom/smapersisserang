@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Faq;
 use App\Models\GalleryCategory;
+use App\Models\OrganizationStructure;
 use App\Models\SchoolFigure;
 use App\Models\SchoolImage;
 use App\Models\SchoolSetting;
@@ -149,80 +150,51 @@ class PublicPageController extends Controller
     {
         try {
             $schoolSetting = SchoolSetting::current();
+            $websitePage = WebsitePage::key('struktur-organisasi');
         } catch (\Exception $e) {
             $schoolSetting = null;
+            $websitePage = null;
         }
 
-        // EDIT DATA ORGANIGRAM DI SINI
-        // Ubah nama jabatan, deskripsi, dan daftar anggota sesuai kebutuhan.
-        // Gunakan key 'jabatan' untuk nama posisi, 'deskripsi' untuk keterangan singkat,
-        // dan 'anggota' untuk daftar unit/orang di bawah jabatan tersebut.
-        $organisasi = [
-            [
-                'level' => 1,
-                'jabatan' => 'Pembina / Pimpinan Persis',
-                'deskripsi' => 'Dewan Pembina Pondok Pesantren dan Madrasah Persatuan Islam',
-            ],
-            [
-                'level' => 1,
-                'jabatan' => 'Bidang Pendidikan / Majelis Pendidikan',
-                'deskripsi' => 'Majelis Pendidikan Persatuan Islam Cabang Serang',
-            ],
-            [
-                'level' => 2,
-                'jabatan' => 'Kepala SMA Persis Serang',
-                'deskripsi' => 'Pimpinan tertinggi sekolah',
-                'children' => [
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Wakil Kepala Sekolah Bidang Kurikulum',
-                        'singkatan' => 'Waka Kurikulum',
-                        'anggota' => ['Koordinator Pembelajaran', 'Guru Mata Pelajaran', 'Wali Kelas'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Wakil Kepala Sekolah Bidang Kesiswaan',
-                        'singkatan' => 'Waka Kesiswaan',
-                        'anggota' => ['Pembina OSIS / IPP', 'Pembina Ekstrakurikuler', 'Bimbingan Konseling', 'Tim Kedisiplinan Santri'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Wakil Kepala Sekolah Bidang Sarana dan Prasarana',
-                        'singkatan' => 'Waka Sarpras',
-                        'anggota' => ['Penanggung Jawab Ruang Kelas', 'Penanggung Jawab Laboratorium / Komputer', 'Penanggung Jawab Asrama', 'Penanggung Jawab Inventaris'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Wakil Kepala Sekolah Bidang Humas dan Kerja Sama',
-                        'singkatan' => 'Waka Humas',
-                        'anggota' => ['Hubungan Orang Tua Santri', 'Kerja Sama Lembaga', 'Publikasi dan Media Sekolah', 'SPMB / PPDB'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Kepala Asrama / Boarding School',
-                        'singkatan' => 'Kepala Asrama',
-                        'anggota' => ['Murobi Ikhwan', 'Murobi Akhwat', 'Koordinator Piket Asrama', 'Koordinator Makan Santri', 'Koordinator Kebersihan dan Keamanan Asrama'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Tata Usaha',
-                        'anggota' => ['Administrasi Sekolah', 'Keuangan', 'Operator Sekolah', 'Arsip dan Dokumen'],
-                    ],
-                    [
-                        'level' => 3,
-                        'jabatan' => 'Unit Pendukung',
-                        'anggota' => ['Perpustakaan', 'Laboratorium Komputer', 'UKS', 'Keamanan', 'Kebersihan'],
-                    ],
-                ],
-            ],
-            [
-                'level' => 2,
-                'jabatan' => 'Komite Sekolah',
-                'deskripsi' => 'Badan mandiri yang mewadahi peran serta masyarakat',
-            ],
-        ];
+        $organizationStructures = OrganizationStructure::active()
+            ->orderBy('level')
+            ->orderBy('sort_order')
+            ->get();
 
-        return view('pages.struktur-organisasi', compact('schoolSetting', 'organisasi'));
+        $childrenByParent = $organizationStructures
+            ->whereNotNull('parent_key')
+            ->groupBy('parent_key');
+
+        $organisasi = $organizationStructures
+            ->whereNull('parent_key')
+            ->map(function ($structure) use ($childrenByParent) {
+                $item = [
+                    'key' => $structure->structure_key,
+                    'level' => $structure->level,
+                    'jabatan' => $structure->label,
+                    'deskripsi' => $structure->description,
+                    'anggota' => $structure->members ?? [],
+                    'card_type' => $structure->card_type,
+                ];
+
+                $children = $childrenByParent->get($structure->structure_key, collect());
+                if ($children->isNotEmpty()) {
+                    $item['children'] = $children->map(fn($child) => [
+                        'key' => $child->structure_key,
+                        'level' => $child->level,
+                        'jabatan' => $child->label,
+                        'deskripsi' => $child->description,
+                        'anggota' => $child->members ?? [],
+                        'card_type' => $child->card_type,
+                    ])->values()->all();
+                }
+
+                return $item;
+            })
+            ->values()
+            ->all();
+
+        return view('pages.struktur-organisasi', compact('schoolSetting', 'websitePage', 'organisasi'));
     }
 
     public function teachers()

@@ -75,6 +75,14 @@ class WebsitePageSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'page_key' => 'struktur-organisasi',
+                'title' => 'Struktur Organisasi',
+                'subtitle' => 'Bagan Organisasi SMA Persis Serang',
+                'content' => 'Struktur organisasi SMA Persis Serang disusun untuk mendukung pengelolaan sekolah berbasis pendidikan, pembinaan akhlak, dan sistem boarding school. Melalui pembagian tugas yang jelas, setiap bidang dapat bekerja secara tertib, terarah, dan bertanggung jawab.',
+                'meta_description' => 'Struktur organisasi SMA Persis Serang.',
+                'is_active' => true,
+            ],
+            [
                 'page_key' => 'contact',
                 'title' => 'Kontak',
                 'subtitle' => 'Hubungi kami untuk informasi lebih lanjut',

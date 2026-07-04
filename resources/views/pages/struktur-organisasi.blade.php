@@ -5,10 +5,19 @@
 @section('content')
 
 @php
-    $pageTitle = 'Struktur Organisasi';
+    $pageTitle = $websitePage->title ?? 'Struktur Organisasi';
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
     $heroBg = $schoolSetting?->building_image_path ? asset('storage/' . $schoolSetting->building_image_path) : null;
     $displayName = $schoolSetting->school_name ?? 'SMA Persis Serang';
+    $sectionTitle = $websitePage->subtitle ?? 'Bagan Organisasi ' . $displayName;
+    $introText = $websitePage->content ?? 'Struktur organisasi SMA Persis Serang disusun untuk mendukung pengelolaan sekolah berbasis pendidikan, pembinaan akhlak, dan sistem boarding school. Melalui pembagian tugas yang jelas, setiap bidang dapat bekerja secara tertib, terarah, dan bertanggung jawab.';
+    $topLevelItems = collect($organisasi)->where('level', 1);
+    $secondLevelItems = collect($organisasi)->where('level', 2);
+    $kepalaSekolah = collect($organisasi)->firstWhere('key', 'kepala-sekolah') ?? collect($organisasi)->firstWhere('level', 2);
+    $unitDiBawahKepalaSekolah = $kepalaSekolah['children'] ?? [];
+    $activeLevels = collect($organisasi)->pluck('level')->unique()->count();
+    $totalUnits = collect($unitDiBawahKepalaSekolah)->count();
+    $totalMembers = collect($unitDiBawahKepalaSekolah)->sum(fn($unit) => count($unit['anggota'] ?? []));
 @endphp
 
 <section class="relative isolate min-h-[400px] overflow-hidden bg-[#052E1F] lg:min-h-[500px]">
@@ -32,7 +41,7 @@
                 </div>
 
                 <h1 class="mt-6 font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-                    Struktur Organisasi
+                    {{ $pageTitle }}
                 </h1>
                 <p class="mt-4 max-w-2xl text-lg font-semibold text-amber-300 sm:text-xl">
                     {{ $displayName }}
@@ -46,9 +55,9 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-3xl text-center">
             <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">STRUKTUR ORGANISASI</p>
-            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">Bagan Organisasi {{ $displayName }}</h2>
+            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">{{ $sectionTitle }}</h2>
             <p class="mt-4 text-lg leading-8 text-emerald-900/70">
-                Struktur organisasi SMA Persis Serang disusun untuk mendukung pengelolaan sekolah berbasis pendidikan, pembinaan akhlak, dan sistem boarding school. Melalui pembagian tugas yang jelas, setiap bidang dapat bekerja secara tertib, terarah, dan bertanggung jawab.
+                {{ $introText }}
             </p>
         </div>
     </div>
@@ -57,10 +66,15 @@
 <section class="bg-white py-16 lg:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
+        @if(empty($organisasi))
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-8 text-center">
+                <h3 class="font-serif text-2xl font-bold text-[#052E1F]">Data struktur organisasi belum tersedia.</h3>
+                <p class="mt-3 text-sm leading-6 text-emerald-900/70">Silakan lengkapi data struktur organisasi melalui dashboard admin.</p>
+            </div>
+        @else
         {{-- Level 1: Pembina and Bidang Pendidikan --}}
         <div class="grid gap-6 sm:grid-cols-2">
-            @foreach($organisasi as $item)
-                @if($item['level'] === 1)
+            @foreach($topLevelItems as $item)
                     <div class="group rounded-2xl border-2 border-[#D4A017]/40 bg-gradient-to-br from-[#052E1F] to-[#0F6B3A] p-6 text-center shadow-lg shadow-emerald-950/15 transition hover:-translate-y-1 hover:shadow-xl">
                         <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#D4A017]/20 text-amber-300">
                             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,21 +86,21 @@
                             <p class="mt-2 text-sm leading-relaxed text-emerald-100/80">{{ $item['deskripsi'] }}</p>
                         @endif
                     </div>
-                @endif
             @endforeach
         </div>
 
         {{-- Vertical connector line --}}
-        <div class="flex justify-center py-4">
-            <div class="h-8 w-0.5 bg-gradient-to-b from-[#D4A017] to-[#0F6B3A]"></div>
-        </div>
+        @if($topLevelItems->isNotEmpty() && $secondLevelItems->isNotEmpty())
+            <div class="flex justify-center py-4">
+                <div class="h-8 w-0.5 bg-gradient-to-b from-[#D4A017] to-[#0F6B3A]"></div>
+            </div>
+        @endif
 
         {{-- Level 2: Kepala Sekolah and Komite Sekolah --}}
         <div class="grid gap-6 sm:grid-cols-2">
-            @foreach($organisasi as $item)
-                @if($item['level'] === 2)
+            @foreach($secondLevelItems as $item)
                     @php
-                        $isKepsek = str_contains($item['jabatan'], 'Kepala SMA');
+                        $isKepsek = ($item['card_type'] ?? null) === 'principal' || str_contains($item['jabatan'], 'Kepala SMA');
                     @endphp
                     <div class="{{ $isKepsek ? 'sm:col-span-1' : '' }} rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-white to-emerald-50 p-6 text-center shadow-lg shadow-emerald-950/10 transition hover:-translate-y-1 hover:shadow-xl {{ $isKepsek ? 'ring-2 ring-[#D4A017]/40' : 'ring-1 ring-amber-200' }}">
                         @if($isKepsek)
@@ -110,24 +124,20 @@
                             <p class="mt-2 text-sm leading-relaxed text-gray-500">{{ $item['deskripsi'] }}</p>
                         @endif
                     </div>
-                @endif
             @endforeach
         </div>
 
         {{-- Branch connector lines --}}
-        <div class="relative py-4">
-            <div class="mx-auto hidden h-8 w-0.5 bg-gradient-to-b from-[#0F6B3A] to-[#0F6B3A] sm:block"></div>
-            <div class="relative hidden sm:block">
-                <div class="absolute left-[12.5%] right-[12.5%] top-0 h-0.5 bg-[#0F6B3A]/30"></div>
+        @if(count($unitDiBawahKepalaSekolah))
+            <div class="relative py-4">
+                <div class="mx-auto hidden h-8 w-0.5 bg-gradient-to-b from-[#0F6B3A] to-[#0F6B3A] sm:block"></div>
+                <div class="relative hidden sm:block">
+                    <div class="absolute left-[12.5%] right-[12.5%] top-0 h-0.5 bg-[#0F6B3A]/30"></div>
+                </div>
             </div>
-        </div>
+        @endif
 
         {{-- Level 3: Waka, TU, Asrama, Unit Pendukung --}}
-        @php
-            $kepalaSekolah = collect($organisasi)->firstWhere('level', 2);
-            $unitDiBawahKepalaSekolah = $kepalaSekolah['children'] ?? [];
-        @endphp
-
         @if(count($unitDiBawahKepalaSekolah))
             <div class="mt-2 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($unitDiBawahKepalaSekolah as $bawah)
@@ -153,6 +163,7 @@
                     </div>
                 @endforeach
             </div>
+        @endif
         @endif
 
     </div>
@@ -185,15 +196,15 @@
                     </div>
                     <div class="mt-6 grid grid-cols-3 gap-4 text-center">
                         <div class="rounded-lg bg-white/10 p-3">
-                            <p class="text-2xl font-bold text-amber-300">3</p>
+                            <p class="text-2xl font-bold text-amber-300">{{ $activeLevels ?: 0 }}</p>
                             <p class="text-xs text-emerald-100/80">Tingkat<br>Kepengurusan</p>
                         </div>
                         <div class="rounded-lg bg-white/10 p-3">
-                            <p class="text-2xl font-bold text-amber-300">7</p>
+                            <p class="text-2xl font-bold text-amber-300">{{ $totalUnits }}</p>
                             <p class="text-xs text-emerald-100/80">Unit di Bawah<br>Kepala Sekolah</p>
                         </div>
                         <div class="rounded-lg bg-white/10 p-3">
-                            <p class="text-2xl font-bold text-amber-300">30+</p>
+                            <p class="text-2xl font-bold text-amber-300">{{ $totalMembers }}</p>
                             <p class="text-xs text-emerald-100/80">Personil<br>Terlibat</p>
                         </div>
                     </div>
