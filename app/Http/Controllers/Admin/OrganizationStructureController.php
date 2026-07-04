@@ -116,6 +116,7 @@ class OrganizationStructureController extends Controller
                 Rule::unique('organization_structures', 'structure_key')->ignore($organizationStructure),
             ],
             'label' => 'required|string|max:255',
+            'person_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'members_text' => 'nullable|string',
             'parent_key' => 'nullable|string|max:100',

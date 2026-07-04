@@ -9,6 +9,7 @@ class OrganizationStructure extends Model
     protected $fillable = [
         'structure_key',
         'label',
+        'person_name',
         'description',
         'members',
         'parent_key',

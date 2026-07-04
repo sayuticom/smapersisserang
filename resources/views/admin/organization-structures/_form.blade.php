@@ -21,6 +21,14 @@
 </div>
 
 <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pejabat / Penanggung Jawab</label>
+    <input type="text" name="person_name" value="{{ old('person_name', $organizationStructure->person_name) }}"
+           placeholder="Contoh: Ust. Ahmad Sayuti, S.Pd."
+           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
+    @error('person_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+</div>
+
+<div>
     <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
     <textarea name="description" rows="3"
               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">{{ old('description', $organizationStructure->description) }}</textarea>

@@ -75,7 +75,12 @@
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3 text-center text-gray-500">{{ $structure->sort_order }}</td>
                                 <td class="px-4 py-3 text-center text-gray-500">{{ $structure->level }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $structure->label }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-gray-900">{{ $structure->label }}</div>
+                                    @if($structure->person_name)
+                                        <div class="mt-1 text-xs font-medium text-[#0F6B3A]">{{ $structure->person_name }}</div>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-gray-500">{{ $structure->structure_key }}</td>
                                 <td class="px-4 py-3 text-gray-500">{{ $structure->parent_key ?? '-' }}</td>
                                 <td class="px-4 py-3 text-center">
