@@ -1,5 +1,6 @@
 @php
     $selectedParent = old('parent_key', $organizationStructure->parent_key);
+    $selectedPersonId = old('person_id', $organizationStructure->person_id);
     $isActive = old('is_active', $organizationStructure->exists ? $organizationStructure->is_active : true);
 @endphp
 
@@ -20,12 +21,32 @@
     </div>
 </div>
 
-<div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pejabat / Penanggung Jawab</label>
-    <input type="text" name="person_name" value="{{ old('person_name', $organizationStructure->person_name) }}"
-           placeholder="Contoh: Ust. Ahmad Sayuti, S.Pd."
-           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
-    @error('person_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Pejabat / Penanggung Jawab dari Data Guru</label>
+        <select name="person_id"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
+            <option value="">-- Belum dipilih --</option>
+            @foreach($people as $person)
+                @php
+                    $personDetail = $person->subject ?: $person->position;
+                @endphp
+                <option value="{{ $person->id }}" {{ (string) $selectedPersonId === (string) $person->id ? 'selected' : '' }}>
+                    {{ $person->name }}{{ $personDetail ? ' - ' . $personDetail : '' }}
+                </option>
+            @endforeach
+        </select>
+        @error('person_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Manual / Fallback</label>
+        <input type="text" name="person_name" value="{{ old('person_name', $organizationStructure->person_name) }}"
+               placeholder="Contoh: Ust. Ahmad Sayuti, S.Pd."
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">
+        <p class="text-xs text-gray-400 mt-1">Diisi hanya jika nama belum ada di data guru/tendik.</p>
+        @error('person_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+    </div>
 </div>
 
 <div>

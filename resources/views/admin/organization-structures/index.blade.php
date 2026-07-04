@@ -77,8 +77,12 @@
                                 <td class="px-4 py-3 text-center text-gray-500">{{ $structure->level }}</td>
                                 <td class="px-4 py-3">
                                     <div class="font-medium text-gray-900">{{ $structure->label }}</div>
-                                    @if($structure->person_name)
+                                    @if($structure->person)
+                                        <div class="mt-1 text-xs font-medium text-[#0F6B3A]">{{ $structure->person->name }}</div>
+                                    @elseif($structure->person_name)
                                         <div class="mt-1 text-xs font-medium text-[#0F6B3A]">{{ $structure->person_name }}</div>
+                                    @else
+                                        <div class="mt-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Belum diisi</div>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-gray-500">{{ $structure->structure_key }}</td>

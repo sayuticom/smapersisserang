@@ -156,7 +156,8 @@ class PublicPageController extends Controller
             $websitePage = null;
         }
 
-        $organizationStructures = OrganizationStructure::active()
+        $organizationStructures = OrganizationStructure::with('person')
+            ->active()
             ->orderBy('level')
             ->orderBy('sort_order')
             ->get();
@@ -173,6 +174,7 @@ class PublicPageController extends Controller
                     'level' => $structure->level,
                     'jabatan' => $structure->label,
                     'person_name' => $structure->person_name,
+                    'person_display_name' => $structure->person?->name ?: $structure->person_name,
                     'deskripsi' => $structure->description,
                     'anggota' => $structure->members ?? [],
                     'card_type' => $structure->card_type,
@@ -185,6 +187,7 @@ class PublicPageController extends Controller
                         'level' => $child->level,
                         'jabatan' => $child->label,
                         'person_name' => $child->person_name,
+                        'person_display_name' => $child->person?->name ?: $child->person_name,
                         'deskripsi' => $child->description,
                         'anggota' => $child->members ?? [],
                         'card_type' => $child->card_type,

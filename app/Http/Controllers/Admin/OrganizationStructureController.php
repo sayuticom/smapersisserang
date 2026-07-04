@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\OrganizationStructure;
+use App\Models\Teacher;
 use App\Models\WebsitePage;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -12,7 +13,8 @@ class OrganizationStructureController extends Controller
 {
     public function index()
     {
-        $structures = OrganizationStructure::orderBy('level')
+        $structures = OrganizationStructure::with('person')
+            ->orderBy('level')
             ->orderBy('sort_order')
             ->orderBy('label')
             ->get();
@@ -61,10 +63,11 @@ class OrganizationStructureController extends Controller
             'is_active' => true,
         ]);
         $parentOptions = $this->parentOptions();
+        $people = $this->peopleOptions();
         $membersText = '';
 
         return view('admin.organization-structures.create', compact(
-            'organizationStructure', 'parentOptions', 'membersText'
+            'organizationStructure', 'parentOptions', 'people', 'membersText'
         ));
     }
 
@@ -81,10 +84,11 @@ class OrganizationStructureController extends Controller
     public function edit(OrganizationStructure $organizationStructure)
     {
         $parentOptions = $this->parentOptions($organizationStructure);
+        $people = $this->peopleOptions();
         $membersText = implode(PHP_EOL, $organizationStructure->members ?? []);
 
         return view('admin.organization-structures.edit', compact(
-            'organizationStructure', 'parentOptions', 'membersText'
+            'organizationStructure', 'parentOptions', 'people', 'membersText'
         ));
     }
 
@@ -116,6 +120,7 @@ class OrganizationStructureController extends Controller
                 Rule::unique('organization_structures', 'structure_key')->ignore($organizationStructure),
             ],
             'label' => 'required|string|max:255',
+            'person_id' => 'nullable|exists:teachers,id',
             'person_name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'members_text' => 'nullable|string',
@@ -145,6 +150,13 @@ class OrganizationStructureController extends Controller
             })
             ->orderBy('level')
             ->orderBy('sort_order')
+            ->get();
+    }
+
+    private function peopleOptions()
+    {
+        return Teacher::where('is_active', true)
+            ->orderBy('name')
             ->get();
     }
 }

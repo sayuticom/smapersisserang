@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrganizationStructure extends Model
 {
@@ -10,6 +11,7 @@ class OrganizationStructure extends Model
         'structure_key',
         'label',
         'person_name',
+        'person_id',
         'description',
         'members',
         'parent_key',
@@ -32,5 +34,10 @@ class OrganizationStructure extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'person_id');
     }
 }

@@ -82,8 +82,8 @@
                             </svg>
                         </div>
                         <h3 class="text-lg font-bold text-white">{{ $item['jabatan'] }}</h3>
-                        @if($item['person_name'] ?? null)
-                            <p class="mt-1 text-sm font-semibold text-amber-300">{{ $item['person_name'] }}</p>
+                        @if($item['person_display_name'] ?? null)
+                            <p class="mt-1 text-sm font-semibold text-amber-300">{{ $item['person_display_name'] }}</p>
                         @endif
                         @if($item['deskripsi'] ?? null)
                             <p class="mt-2 text-sm leading-relaxed text-emerald-100/80">{{ $item['deskripsi'] }}</p>
@@ -123,8 +123,8 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-bold {{ $isKepsek ? 'text-[#052E1F]' : 'text-gray-800' }}">{{ $item['jabatan'] }}</h3>
-                        @if($item['person_name'] ?? null)
-                            <p class="mt-1 text-sm font-semibold text-[#0F6B3A]">{{ $item['person_name'] }}</p>
+                        @if($item['person_display_name'] ?? null)
+                            <p class="mt-1 text-sm font-semibold text-[#0F6B3A]">{{ $item['person_display_name'] }}</p>
                         @endif
                         @if($item['deskripsi'] ?? null)
                             <p class="mt-2 text-sm leading-relaxed text-gray-500">{{ $item['deskripsi'] }}</p>
@@ -156,8 +156,8 @@
                             </div>
                             <h4 class="text-sm font-bold text-[#052E1F] leading-tight">{{ $bawah['jabatan'] }}</h4>
                         </div>
-                        @if($bawah['person_name'] ?? null)
-                            <p class="mb-3 text-sm font-semibold text-[#0F6B3A]">{{ $bawah['person_name'] }}</p>
+                        @if($bawah['person_display_name'] ?? null)
+                            <p class="mb-3 text-sm font-semibold text-[#0F6B3A]">{{ $bawah['person_display_name'] }}</p>
                         @endif
                         @if($bawah['anggota'] ?? null)
                             <ul class="space-y-1.5 border-t border-emerald-50 pt-3">
