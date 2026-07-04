@@ -3,8 +3,8 @@
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
     $heroBg = $schoolSetting?->building_image_path ? asset('storage/' . $schoolSetting->building_image_path) : null;
-    $waUrl = 'https://wa.me/628966123456?text=Assalamu%27alaikum%2C%20saya%20ingin%20berdonasi%20untuk%20program%20pendidikan%20dan%20makan%20santri%20SMA%20Persis%20Serang';
-    $shareText = 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 628966123456.';
+    $waUrl = 'https://wa.me/6289661234569?text=Assalamu%27alaikum%2C%20saya%20ingin%20berdonasi%20untuk%20program%20pendidikan%20dan%20makan%20santri%20SMA%20Persis%20Serang';
+    $shareText = 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 6289661234569.';
     $shareUrl = 'https://wa.me/?text=' . urlencode($shareText . ' ' . route('donasi-pendidikan'));
     $donationItems = [
         ['title' => 'Beras', 'description' => 'Mendukung kebutuhan pokok makan harian santri.'],
