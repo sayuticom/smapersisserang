@@ -44,6 +44,8 @@ class PublicProgressController extends Controller
               ->orWhere('path', 'like', '%/ppdb%');
         })->count();
 
+        $donasiVisits = VisitorLog::where('path', '/donasi-pendidikan')->count();
+
         $topPages = VisitorLog::selectRaw('path, url, count(*) as total, max(visited_at) as last_visited')
             ->where('path', 'NOT LIKE', '/progress%')
             ->where('path', 'NOT LIKE', '%dashboard%')
@@ -112,6 +114,7 @@ class PublicProgressController extends Controller
             'currentYear', 'counts', 'quota', 'terisi', 'sisa', 'total', 'menunggu',
             'visitorToday', 'visitorTodayUnique', 'visitor7Days', 'visitor7DaysUnique',
             'visitor30Days', 'visitor30DaysUnique', 'totalVisits', 'spmbVisits',
+            'donasiVisits',
             'topPages', 'topReferrers', 'deviceStats',
             'totalLakiLaki', 'totalPerempuan',
             'students', 'statusLabels',

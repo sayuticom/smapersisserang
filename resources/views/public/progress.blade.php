@@ -126,7 +126,7 @@
 
         <div>
             <h3 class="text-[11px] sm:text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2 sm:mb-3">Statistik Kunjungan Website</h3>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
                 <div class="bg-white rounded-xl border border-indigo-200 shadow-sm p-3 sm:p-4">
                     <p class="text-[10px] sm:text-xs font-medium text-slate-500">Hari Ini</p>
                     <p class="text-lg sm:text-xl md:text-2xl font-bold text-indigo-700 mt-1">{{ $visitorToday }}</p>
@@ -150,6 +150,11 @@
                     <p class="text-[10px] sm:text-xs font-medium text-slate-500">Kunjungan SPMB</p>
                     <p class="text-lg sm:text-xl md:text-2xl font-bold text-purple-700 mt-1">{{ $spmbVisits }}</p>
                     <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">/spmb & /ppdb</p>
+                </div>
+                <div class="bg-white rounded-xl border border-fuchsia-200 shadow-sm p-3 sm:p-4">
+                    <p class="text-[10px] sm:text-xs font-medium text-slate-500">Kunjungan Donasi Pendidikan</p>
+                    <p class="text-lg sm:text-xl md:text-2xl font-bold text-fuchsia-700 mt-1">{{ $donasiVisits }}</p>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5">/donasi-pendidikan</p>
                 </div>
             </div>
         </div>

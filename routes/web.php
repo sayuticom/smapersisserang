@@ -100,6 +100,8 @@ Route::get('/dashboard', function () {
           ->orWhere('path', 'like', '%/ppdb%');
     })->count();
 
+    $donasiVisits = VisitorLog::where('path', '/donasi-pendidikan')->count();
+
     $topPages = VisitorLog::selectRaw('path, url, count(*) as total, max(visited_at) as last_visited')
         ->where('path', 'NOT LIKE', '/progress%')
         ->where('path', 'NOT LIKE', '%dashboard%')
@@ -142,6 +144,7 @@ Route::get('/dashboard', function () {
         'currentYear', 'counts', 'quota', 'terisi', 'sisa', 'total', 'menunggu',
         'visitorToday', 'visitorTodayUnique', 'visitor7Days', 'visitor7DaysUnique',
         'visitor30Days', 'visitor30DaysUnique', 'totalVisits', 'spmbVisits',
+        'donasiVisits',
         'topPages', 'topReferrers', 'deviceStats',
     ));
 })->middleware(['auth', 'verified'])->name('dashboard');

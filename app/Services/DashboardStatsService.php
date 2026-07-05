@@ -46,6 +46,7 @@ class DashboardStatsService
                 $q->where('path', 'like', '%/spmb%')
                   ->orWhere('path', 'like', '%/ppdb%');
             })->count(),
+            'donasiVisits' => VisitorLog::where('path', '/donasi-pendidikan')->count(),
         ];
     }
 
