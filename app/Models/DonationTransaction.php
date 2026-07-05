@@ -33,6 +33,11 @@ class DonationTransaction extends Model
         ];
     }
 
+    public function getDonorNameAttribute($value): string
+    {
+        return $value ?: 'Hamba Allah';
+    }
+
     public function isPaid(): bool
     {
         return in_array($this->status, ['paid', 'settlement', 'capture']);

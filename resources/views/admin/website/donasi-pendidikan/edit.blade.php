@@ -142,6 +142,14 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Payload QRIS Statis Merchant</label>
+                <textarea name="donation_qris_payload" rows="4"
+                          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">{{ old('donation_qris_payload', $setting->donation_qris_payload) }}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Tempel kode payload QRIS statis merchant resmi. Payload ini dipakai untuk membuat QRIS nominal otomatis. Jangan diisi dengan gambar, tapi isi teks QRIS hasil scan.</p>
+                @error('donation_qris_payload') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Teks Ajakan</label>
                 <textarea name="invitation_text" rows="4"
                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-[#0F6B3A] focus:border-[#0F6B3A]">{{ old('invitation_text', $setting->invitation_text) }}</textarea>

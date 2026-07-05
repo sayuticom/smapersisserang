@@ -5,9 +5,12 @@ use App\Http\Controllers\Admin\NavigationMenuController;
 use App\Http\Controllers\Admin\OrganizationStructureController;
 use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
+use App\Http\Controllers\Admin\FosterStudentController;
+use App\Http\Controllers\Admin\DonationTransactionController;
 use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
 use App\Http\Controllers\Admin\WebsiteSettingController;
+use App\Http\Controllers\FosterParentController;
 use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
@@ -158,12 +161,22 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/tokoh-pembina', [PublicPageController::class, 'figures'])->name('public.figures');
     Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
     Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
-    Route::get('/struktur-organisasi', [PublicPageController::class, 'strukturOrganisasi'])->name('public.struktur-organisasi');
+    Route::get('/struktur-organisasi', function () {
+        return redirect()->route('public.teachers', ['tab' => 'struktur'], 301);
+    })->name('public.struktur-organisasi');
     Route::get('/donasi-pendidikan', [PublicPageController::class, 'donasiPendidikan'])->name('donasi-pendidikan');
     Route::get('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'formDonatur'])->name('donasi-pendidikan.form-donatur');
-    Route::post('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'submitDonatur'])->name('donasi-pendidikan.form-donatur.submit');
+    Route::post('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'submitDonatur'])
+        ->middleware('throttle:5,10')
+        ->name('donasi-pendidikan.form-donatur.submit');
     Route::get('/donasi-pendidikan/pembayaran/{order_id}', [PublicPageController::class, 'payment'])->name('donasi-pendidikan.payment');
+    Route::post('/donasi-pendidikan/qris/preview', [PublicPageController::class, 'previewQrisInline'])->name('donasi-pendidikan.qris.preview');
     Route::get('/donasi-pendidikan/qris', [PublicPageController::class, 'qris'])->name('donasi-pendidikan.qris');
+    Route::get('/donasi-pendidikan/qris/download', [PublicPageController::class, 'downloadQris'])->name('donasi-pendidikan.qris.download');
+
+    Route::get('/orang-tua-asuh', [FosterParentController::class, 'index'])->name('orang-tua-asuh');
+    Route::post('/orang-tua-asuh/qris/preview', [FosterParentController::class, 'qrisPreview'])->name('orang-tua-asuh.qris.preview');
+    Route::post('/orang-tua-asuh/submit', [FosterParentController::class, 'submit'])->name('orang-tua-asuh.submit');
     Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
     Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 
@@ -227,6 +240,24 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         ->name('website.donasi-pendidikan.edit');
     Route::put('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'update'])
         ->name('website.donasi-pendidikan.update');
+
+    Route::name('donasi-transactions.')->prefix('donasi-transactions')->group(function () {
+        Route::get('/', [DonationTransactionController::class, 'index'])->name('index');
+        Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
+        Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+    });
+
+    Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')->group(function () {
+        Route::get('/', [FosterStudentController::class, 'index'])->name('index');
+        Route::get('/create', [FosterStudentController::class, 'create'])->name('create');
+        Route::post('/', [FosterStudentController::class, 'store'])->name('store');
+        Route::get('/{fosterStudent}/edit', [FosterStudentController::class, 'edit'])->name('edit');
+        Route::put('/{fosterStudent}', [FosterStudentController::class, 'update'])->name('update');
+        Route::delete('/{fosterStudent}', [FosterStudentController::class, 'destroy'])->name('destroy');
+        Route::get('/submissions', [FosterStudentController::class, 'submissions'])->name('submissions');
+        Route::patch('/submissions/{submission}/mark-paid', [FosterStudentController::class, 'markPaid'])->name('submissions.mark-paid');
+        Route::patch('/submissions/{submission}/mark-cancelled', [FosterStudentController::class, 'markCancelled'])->name('submissions.mark-cancelled');
+    });
 
     Route::name('website.media.')->prefix('website/media')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'index'])->name('index');

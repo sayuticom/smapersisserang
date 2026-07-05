@@ -30,32 +30,37 @@
 
         <nav class="flex items-center space-x-1">
             @foreach($publicMenuItems as $menu)
-                @php $children = $menu->children()->active()->orderBy('sort_order')->get(); @endphp
-                @if($children->isNotEmpty())
-                    <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" @click.outside="open = false" type="button"
-                                class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors {{ $desktopTextClass }}"
-                                :aria-expanded="open">
-                            {{ $menu->label }}
-                            <svg class="h-3.5 w-3.5 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div x-show="open" x-transition @click.outside="open = false"
-                             class="absolute right-0 z-50 mt-3 w-56 rounded-xl border border-amber-100 bg-white py-2 shadow-xl shadow-emerald-950/10">
-                            @foreach($children as $child)
-                                <a href="{{ $child->url() }}"
-                                   class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-[#0F6B3A]">
-                                    {{ $child->label }}
-                                </a>
-                            @endforeach
+                @php
+                    $children = $menu->children()->active()->orderBy('sort_order')->get();
+                    $isStruktur = $menu->route_name === 'public.struktur-organisasi';
+                @endphp
+                @if(!$isStruktur)
+                    @if($children->isNotEmpty())
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" @click.outside="open = false" type="button"
+                                    class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors {{ $desktopTextClass }}"
+                                    :aria-expanded="open">
+                                {{ $menu->label }}
+                                <svg class="h-3.5 w-3.5 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-transition @click.outside="open = false"
+                                 class="absolute right-0 z-50 mt-3 w-56 rounded-xl border border-amber-100 bg-white py-2 shadow-xl shadow-emerald-950/10">
+                                @foreach($children as $child)
+                                    <a href="{{ $child->url() }}"
+                                       class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-[#0F6B3A]">
+                                        {{ $child->label }}
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
-                @else
-                    <a href="{{ $menu->url() }}"
-                       class="rounded-lg px-3 py-2 text-sm font-semibold transition-colors {{ url()->current() === $menu->url() ? $desktopActiveClass : $desktopTextClass }}">
-                        {{ $menu->label }}
-                    </a>
+                    @else
+                        <a href="{{ $menu->url() }}"
+                           class="rounded-lg px-3 py-2 text-sm font-semibold transition-colors {{ url()->current() === $menu->url() ? $desktopActiveClass : $desktopTextClass }}">
+                            {{ $menu->label }}
+                        </a>
+                    @endif
                 @endif
             @endforeach
 
@@ -97,30 +102,35 @@
              class="border-t border-white/10 bg-emerald-950 shadow-lg">
             <div class="space-y-1 px-4 py-2">
                 @foreach($publicMenuItems as $menu)
-                    @php $children = $menu->children()->active()->orderBy('sort_order')->get(); @endphp
-                    @if($children->isNotEmpty())
-                        <div x-data="{ open: false }">
-                            <button @click="open = !open" type="button"
-                                    class="flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-emerald-50 hover:bg-white/10">
-                                <span>{{ $menu->label }}</span>
-                                <svg class="h-4 w-4 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <div x-show="open" class="ml-4 space-y-1 pb-2">
-                                @foreach($children as $child)
-                                    <a href="{{ $child->url() }}"
-                                       class="block rounded-lg px-4 py-2 text-sm text-emerald-100 hover:bg-white/10">
-                                        {{ $child->label }}
-                                    </a>
-                                @endforeach
+                    @php
+                        $children = $menu->children()->active()->orderBy('sort_order')->get();
+                        $isStruktur = $menu->route_name === 'public.struktur-organisasi';
+                    @endphp
+                    @if(!$isStruktur)
+                        @if($children->isNotEmpty())
+                            <div x-data="{ open: false }">
+                                <button @click="open = !open" type="button"
+                                        class="flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-emerald-50 hover:bg-white/10">
+                                    <span>{{ $menu->label }}</span>
+                                    <svg class="h-4 w-4 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <div x-show="open" class="ml-4 space-y-1 pb-2">
+                                    @foreach($children as $child)
+                                        <a href="{{ $child->url() }}"
+                                           class="block rounded-lg px-4 py-2 text-sm text-emerald-100 hover:bg-white/10">
+                                            {{ $child->label }}
+                                        </a>
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
-                    @else
-                        <a href="{{ $menu->url() }}"
-                           class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-50 hover:bg-white/10">
-                            {{ $menu->label }}
-                        </a>
+                        @else
+                            <a href="{{ $menu->url() }}"
+                               class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-50 hover:bg-white/10">
+                                {{ $menu->label }}
+                            </a>
+                        @endif
                     @endif
                 @endforeach
 

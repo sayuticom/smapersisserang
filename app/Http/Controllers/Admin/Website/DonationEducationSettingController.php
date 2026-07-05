@@ -39,6 +39,7 @@ class DonationEducationSettingController extends Controller
             'remove_section_image' => 'nullable|boolean',
             'donation_qris_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'remove_donation_qris_image' => 'nullable|boolean',
+            'donation_qris_payload' => ['nullable', 'string', 'max:5000'],
             'donation_items_text' => 'nullable|string',
             'invitation_text' => 'nullable|string',
             'whatsapp_number' => 'nullable|string|max:50',
@@ -107,6 +108,7 @@ class DonationEducationSettingController extends Controller
             'whatsapp_message' => 'Assalamu\'alaikum, saya ingin berdonasi untuk program pendidikan dan makan santri SMA Persis Serang',
             'share_button_text' => 'Sebarkan Informasi Kebaikan Ini',
             'share_message' => 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 6289661234569.',
+            'donation_qris_payload' => null,
             'is_active' => true,
         ];
     }

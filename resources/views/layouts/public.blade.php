@@ -68,7 +68,7 @@
         </main>
 
         @include('layouts.partials.public-footer')
-        @if (!request()->routeIs('spmb.update-data*'))
+        @if (!request()->routeIs('spmb.update-data*') && !request()->routeIs('donasi-pendidikan.form-donatur'))
             <x-ai-chat-widget />
         @endif
         @stack('scripts')

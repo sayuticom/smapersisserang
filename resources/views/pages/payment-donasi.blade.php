@@ -36,7 +36,7 @@
                     </tr>
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Nama</td>
-                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $transaction->donor_name }}</td>
+                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $transaction->donor_name ?: 'Hamba Allah' }}</td>
                     </tr>
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Jenis Dukungan</td>

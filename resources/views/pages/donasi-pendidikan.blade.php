@@ -6,8 +6,8 @@
         ? asset('storage/' . $setting->hero_image)
         : null;
     $sectionImage = $setting?->section_image ? asset('storage/' . $setting->section_image) : null;
-    $heroTitle = $setting?->hero_title ?: 'Donasi Pendidikan & Orang Tua Asuh Santri';
-    $heroSubtitle = $setting?->hero_subtitle ?: 'Bersama membantu kebutuhan pendidikan, makan, asrama, dan pembinaan santri SMA Persis Serang yang sedang menempuh pendidikan secara gratis.';
+    $heroTitle = $setting?->hero_title ?: 'Donasi Pendidikan & Makan Santri';
+    $heroSubtitle = $setting?->hero_subtitle ?: 'Bersama mendukung pendidikan gratis, kebutuhan makan, asrama, dan pembinaan santri SMA Persis Serang.';
     $hadithText = $setting?->hadith_text ?: 'Barangsiapa menempuh jalan untuk mencari ilmu, Allah akan mudahkan baginya jalan menuju surga.';
     $hadithSource = $setting?->hadith_source ?: 'HR. Muslim';
     $introTitle = $setting?->intro_title ?: 'Menopang Pendidikan dan Kebutuhan Harian Santri';
@@ -91,7 +91,7 @@
                 </div>
 
                 <p class="mx-auto mt-8 max-w-2xl text-base leading-7 text-emerald-100/90 lg:mx-0">
-                    Jadilah bagian dari <strong class="text-amber-300">Program Orang Tua Asuh Santri</strong>. Bantuan Bapak/Ibu akan mendukung makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, dan pembinaan akhlak para santri.
+                    Bantuan Bapak/Ibu akan digunakan untuk kebutuhan makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, dan pembinaan akhlak para santri.
                 </p>
 
                 <div class="mt-6 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
@@ -100,7 +100,14 @@
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Menjadi Donatur / Orang Tua Asuh
+                        Donasi Sekarang
+                    </a>
+                    <a href="{{ route('orang-tua-asuh') }}"
+                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-400/60 bg-emerald-950/40 px-7 py-4 text-sm font-bold text-emerald-100 shadow-lg shadow-emerald-900/20 backdrop-blur transition hover:bg-emerald-900/50 hover:border-emerald-300/80 sm:w-auto">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Orang Tua Asuh
                     </a>
                     <a href="{{ $waUrl }}" target="_blank" rel="noopener"
                        class="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500 sm:w-auto">
@@ -118,25 +125,7 @@
     </div>
 </section>
 
-<section class="bg-white py-16 lg:py-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-            <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">PROGRAM UNGGULAN</p>
-            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">Program Orang Tua Asuh Santri</h2>
-        </div>
-        <div class="mx-auto mt-8 max-w-4xl space-y-5 text-center text-lg leading-8 text-emerald-900/75">
-            <p>
-                Program Orang Tua Asuh Santri SMA Persis Serang adalah gerakan kepedulian untuk membantu kebutuhan pendidikan, makan, asrama, dan pembinaan murid yang sedang menempuh pendidikan secara gratis.
-            </p>
-            <p>
-                Melalui program ini, setiap donatur dapat berperan sebagai orang tua asuh bagi para santri/murid yang membutuhkan dukungan. Bantuan yang diberikan akan digunakan untuk kebutuhan makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, serta kegiatan pembinaan akhlak dan karakter.
-            </p>
-            <p class="font-semibold text-[#0F6B3A]">
-                Dengan menjadi bagian dari program ini, Bapak/Ibu tidak hanya membantu biaya hidup seorang anak, tetapi juga ikut membuka jalan masa depan bagi generasi muda yang ingin belajar, tumbuh, dan mengabdi untuk umat.
-            </p>
-        </div>
-    </div>
-</section>
+
 
 <section class="bg-[#FBF7EF] py-16 lg:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

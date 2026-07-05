@@ -117,7 +117,23 @@
                         <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.website.donasi-pendidikan.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.761 0-5-1.12-5-2.5S9.239 3 12 3s5 1.12 5 2.5S14.761 8 12 8zm-5 2v5.5C7 16.88 9.239 18 12 18s5-1.12 5-2.5V10m-10 3c0 1.38 2.239 2.5 5 2.5s5-1.12 5-2.5"/>
                         </svg>
-                        Donasi Pendidikan
+                        Pengaturan Donasi
+                    </a>
+
+                    <a href="{{ route('admin.donasi-transactions.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.donasi-transactions.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.donasi-transactions.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        Donasi Masuk
+                    </a>
+
+                    <a href="{{ route('admin.orang-tua-asuh.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Orang Tua Asuh
                     </a>
 
                     <a href="{{ route('admin.website.media.index') }}"

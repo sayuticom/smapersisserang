@@ -23,6 +23,7 @@ class DonationEducationSetting extends Model
         'share_button_text',
         'share_message',
         'donation_qris_image',
+        'donation_qris_payload',
         'is_active',
     ];
 

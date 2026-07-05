@@ -2,7 +2,9 @@
 
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
-    $qrisImage = $setting?->donation_qris_image ? Storage::url($setting->donation_qris_image) : null;
+    $qrisImageUrl = $setting?->donation_qris_image
+        ? \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image)
+        : null;
     $nominalFormatted = 'Rp' . number_format($donationData['amount'], 0, ',', '.');
 @endphp
 
@@ -23,7 +25,7 @@
                 <table class="w-full text-sm">
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Nama</td>
-                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donationData['donor_name'] }}</td>
+                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donationData['donor_name'] ?: 'Hamba Allah' }}</td>
                     </tr>
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Nomor WhatsApp</td>
@@ -47,10 +49,40 @@
             </div>
 
             <div class="mt-8 text-center">
-                @if($qrisImage)
+                @if($hasQrisPayload && $dynamicQrisBase64)
                     <div class="mx-auto max-w-xs">
-                        <img src="{{ $qrisImage }}" alt="QRIS Donasi {{ $schoolName }}"
+                        <img src="{{ $dynamicQrisBase64 }}"
+                             alt="QRIS Donasi {{ $schoolName }} - {{ $nominalFormatted }}"
                              class="w-full rounded-2xl border bg-white p-3 shadow-lg">
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap justify-center gap-3">
+                        <a href="{{ route('donasi-pendidikan.qris.download') }}"
+                           class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-yellow-300 hover:to-amber-400">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Download QRIS
+                        </a>
+                    </div>
+                @elseif($qrisImageUrl)
+                    <div class="mx-auto max-w-xs">
+                        <img src="{{ $qrisImageUrl }}" alt="QRIS Donasi {{ $schoolName }}"
+                             class="w-full rounded-2xl border bg-white p-3 shadow-lg">
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap justify-center gap-3">
+                        <a href="{{ $qrisImageUrl }}" download
+                           class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-yellow-300 hover:to-amber-400">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Download QRIS
+                        </a>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-sm text-gray-600">
+                        Nominal belum otomatis. Silakan isi nominal secara manual pada aplikasi pembayaran.
                     </div>
                 @else
                     <div class="mx-auto max-w-sm rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-8 text-center">
@@ -61,11 +93,13 @@
                 @endif
             </div>
 
+            @if($hasQrisPayload)
             <div class="mt-6 rounded-xl border border-amber-100 bg-amber-50/50 p-5 text-sm leading-6 text-gray-700">
                 <p>
-                    Silakan scan QRIS berikut melalui aplikasi mobile banking atau e-wallet Bapak/Ibu. Setelah melakukan pembayaran, mohon konfirmasi melalui WhatsApp dengan mengirimkan bukti transfer.
+                    Jika Bapak/Ibu membuka halaman ini melalui HP yang sama dengan aplikasi pembayaran, silakan tekan <strong>Download QRIS</strong> terlebih dahulu, lalu gunakan fitur upload QRIS di mobile banking atau e-wallet. Atau tekan lama gambar QRIS, lalu pilih simpan.
                 </p>
             </div>
+            @endif
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <a href="{{ $confirmWaUrl }}" target="_blank" rel="noopener"
@@ -75,9 +109,9 @@
                     </svg>
                     Konfirmasi via WhatsApp
                 </a>
-                <a href="{{ route('donasi-pendidikan') }}"
+                <a href="{{ route('donasi-pendidikan.form-donatur') }}"
                    class="inline-flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 sm:w-auto">
-                    Kembali ke Halaman Donasi
+                    Kembali ke Form
                 </a>
             </div>
         </div>
