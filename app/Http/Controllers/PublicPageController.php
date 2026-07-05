@@ -17,7 +17,7 @@ use App\Models\WebsitePage;
 use App\Services\QrisDynamicService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class PublicPageController extends Controller
 {
@@ -294,78 +294,44 @@ class PublicPageController extends Controller
             'allow_future_donation_contact' => 'nullable|boolean',
         ]);
 
-        $data['name'] = trim($data['name'] ?? '') ?: null;
-        $data['whatsapp'] = trim($data['whatsapp'] ?? '') ?: null;
-
-        // Jika tidak diizinkan dihubungi, hapus nomor WA
-        if (!$request->boolean('allow_future_donation_contact')) {
-            $data['whatsapp'] = null;
-        }
-
-        $amount = $data['amount'] === 'lainnya' && $data['custom_amount']
-            ? (int) str_replace(['.', ','], '', $data['custom_amount'])
-            : (int) $data['amount'];
+        $amount = $this->resolveDonationAmount($data['amount'] ?? null, $data['custom_amount'] ?? null);
 
         if ($amount < 10000) {
             return back()->withErrors(['amount' => 'Minimal donasi Rp10.000'])->withInput();
         }
 
-        // Generate nomor referensi: DON-YYYYMMDD-XXXX
-        $orderId = 'DON-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
-
-        // Simpan ke database dengan status pending
-        $transaction = DonationTransaction::create([
-            'order_id' => $orderId,
-            'donor_name' => $data['name'],
-            'donor_whatsapp' => $data['whatsapp'],
-            'support_type' => 'Donasi Pendidikan & Makan Santri',
-            'amount' => $amount,
-            'note' => $data['note'] ?? null,
-            'payment_gateway' => 'manual',
-            'status' => 'pending',
-        ]);
-
-        session(['donation_data' => [
-            'donor_name' => $data['name'],
-            'donor_whatsapp' => $data['whatsapp'],
-            'support_type' => 'Donasi Pendidikan & Makan Santri',
-            'amount' => $amount,
-            'note' => $data['note'] ?? null,
-            'allow_future_donation_contact' => $request->boolean('allow_future_donation_contact'),
-            'order_id' => $orderId,
-        ]]);
-
+        // Form publik tidak lagi membuat transaksi. Data resmi dibuat admin setelah verifikasi mutasi.
         return redirect()->route('donasi-pendidikan.form-donatur')
-            ->with('success', 'Data donasi berhasil disimpan. Nomor referensi: ' . $orderId . '. Silakan lakukan pembayaran melalui QRIS di bawah.');
+            ->with('success', 'Silakan lanjutkan pembayaran melalui QRIS, lalu konfirmasi via WhatsApp. Data donasi belum disimpan sampai admin melakukan verifikasi.');
     }
 
     public function previewQrisInline(Request $request, QrisDynamicService $qrisService)
     {
         $data = $request->validate([
             'donor_name' => ['nullable', 'string', 'max:100'],
-            'donor_whatsapp' => ['nullable', 'string', 'max:30'],
+            'donor_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]*$/'],
             'amount' => ['nullable', 'string', 'max:50'],
-            'custom_amount' => ['nullable', 'numeric', 'min:1000', 'max:50000000'],
+            'custom_amount' => ['nullable', 'string', 'max:50'],
+            'unique_code' => ['nullable', 'integer', 'min:1', 'max:999'],
             'note' => ['nullable', 'string', 'max:500'],
             'allow_future_donation_contact' => ['nullable', 'boolean'],
         ]);
 
-        $amount = 0;
+        $amount = $this->resolveDonationAmount($data['amount'] ?? null, $data['custom_amount'] ?? null);
 
-        if (($data['amount'] ?? null) && $data['amount'] !== 'lainnya') {
-            $amount = (int) $data['amount'];
-        } elseif (($data['amount'] ?? null) === 'lainnya' && ($data['custom_amount'] ?? null)) {
-            $amount = (int) $data['custom_amount'];
-        }
-
-        if ($amount < 1000 || $amount > 50000000) {
+        if ($amount < 10000 || $amount > 50000000) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pilih nominal donasi terlebih dahulu.',
+                'message' => 'Pilih nominal donasi minimal Rp10.000 terlebih dahulu.',
             ]);
         }
 
-        $setting = DonationEducationSetting::first();
+        $uniqueCode = (int) ($data['unique_code'] ?? random_int(1, 999));
+        $uniqueCode = max(1, min(999, $uniqueCode));
+        $uniqueCodeFormatted = str_pad((string) $uniqueCode, 3, '0', STR_PAD_LEFT);
+        $totalTransfer = $amount + $uniqueCode;
+
+        $setting = DonationEducationSetting::activeSetting();
 
         $qrisImage = null;
         $isDynamic = false;
@@ -373,7 +339,7 @@ class PublicPageController extends Controller
 
         if ($setting?->donation_qris_payload) {
             try {
-                $qrisImage = $qrisService->generateBase64($setting->donation_qris_payload, $amount);
+                $qrisImage = $qrisService->generateBase64($setting->donation_qris_payload, $totalTransfer);
                 $isDynamic = true;
             } catch (\Exception $e) {
                 $qrisImage = null;
@@ -387,22 +353,26 @@ class PublicPageController extends Controller
 
         $waNumber = preg_replace('/[^0-9]/', '', $setting?->whatsapp_number ?: '6289661234569');
 
-        $donorName = $data['donor_name'] ?: 'Hamba Allah';
-        $donorWhatsapp = $data['donor_whatsapp'] ?: '-';
+        $donorName = trim($data['donor_name'] ?? '') ?: 'Hamba Allah';
         $allowContact = $request->boolean('allow_future_donation_contact');
         $allowContactText = $allowContact ? 'Ya' : 'Tidak';
+        $donorWhatsapp = $allowContact ? trim($data['donor_whatsapp'] ?? '') : '';
+        $donorWhatsapp = $donorWhatsapp !== '' ? $donorWhatsapp : '-';
+        $note = trim($data['note'] ?? '') ?: '-';
+        $transferDate = now()->timezone(config('app.timezone'))->format('d/m/Y');
 
-        $confirmMessage = "Assalamu'alaikum, saya sudah melakukan donasi untuk SMA Persis Serang.\n\n"
-            . "Nama: {$donorName}\n"
-            . "Nomor WA: {$donorWhatsapp}\n"
-            . "Nominal: Rp" . number_format($amount, 0, ',', '.') . "\n";
-
-        if ($data['note'] ?? null) {
-            $confirmMessage .= "Catatan: {$data['note']}\n";
-        }
-
-        $confirmMessage .= "Persetujuan dihubungi lagi: {$allowContactText}\n\n"
-            . "Saya lampirkan bukti pembayaran. Terima kasih.";
+        $confirmMessage = "Assalamu'alaikum Admin SMA Persis Serang.\n\n"
+            . "Saya sudah melakukan donasi pendidikan.\n\n"
+            . "Nama Donatur: {$donorName}\n"
+            . "Bersedia Dihubungi: {$allowContactText}\n"
+            . "Nomor WhatsApp: {$donorWhatsapp}\n"
+            . "Nominal Donasi: Rp" . number_format($amount, 0, ',', '.') . "\n"
+            . "Kode Unik: {$uniqueCodeFormatted}\n"
+            . "Total Transfer: Rp" . number_format($totalTransfer, 0, ',', '.') . "\n"
+            . "Tanggal Transfer: {$transferDate}\n"
+            . "Catatan: {$note}\n\n"
+            . "Mohon dicek dan dibuatkan bukti penerimaan donasi.\n\n"
+            . "Terima kasih.";
 
         $confirmWaUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($confirmMessage);
 
@@ -421,15 +391,21 @@ class PublicPageController extends Controller
             'is_dynamic' => $isDynamic,
             'static_fallback' => $staticFallback,
             'amount_formatted' => 'Rp' . number_format($amount, 0, ',', '.'),
-            'amount_raw' => $amount,
+            'amount_raw' => $totalTransfer,
+            'nominal_raw' => $amount,
+            'unique_code' => $uniqueCodeFormatted,
+            'unique_code_raw' => $uniqueCode,
+            'total_transfer_formatted' => 'Rp' . number_format($totalTransfer, 0, ',', '.'),
+            'total_transfer_raw' => $totalTransfer,
+            'transfer_date' => $transferDate,
             'whatsapp_url' => $confirmWaUrl,
             'merchant_name' => $merchantName,
             'merchant_city' => $merchantCity,
             'summary' => [
                 'donor_name' => $donorName,
-                'donor_whatsapp' => $donorWhatsapp,
-                'note' => $data['note'] ?? null,
                 'allow_future_donation_contact' => $allowContact,
+                'donor_whatsapp' => $donorWhatsapp,
+                'note' => $note,
             ],
         ];
 
@@ -440,6 +416,19 @@ class PublicPageController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    private function resolveDonationAmount(?string $amount, ?string $customAmount): int
+    {
+        if ($amount && $amount !== 'lainnya') {
+            return (int) preg_replace('/[^0-9]/', '', $amount);
+        }
+
+        if ($amount === 'lainnya' && $customAmount) {
+            return (int) preg_replace('/[^0-9]/', '', $customAmount);
+        }
+
+        return 0;
     }
 
     public function payment($order_id)
@@ -608,26 +597,88 @@ class PublicPageController extends Controller
             try {
                 $pngBinary = $qrisService->generatePngBinary($setting->donation_qris_payload, $amount);
 
-                $filename = 'qris-donasi-sma-persis-serang-' . $amount . '.png';
+                $filename = 'qris-donasi-sma-persis-serang.png';
 
                 return response($pngBinary, 200, [
                     'Content-Type' => 'image/png',
                     'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    'Content-Length' => strlen($pngBinary),
                 ]);
             } catch (\Exception $e) {
-                return redirect()->route('donasi-pendidikan.form-donatur')
-                    ->with('error', 'Gagal generate QRIS. Silakan coba lagi.');
+                if (!$setting?->donation_qris_image) {
+                    return redirect()->route('donasi-pendidikan.form-donatur')
+                        ->with('error', 'Gagal generate QRIS. Silakan coba lagi.');
+                }
             }
         }
 
         if ($setting?->donation_qris_image) {
-            $imageUrl = \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image);
+            try {
+                $pngBinary = $this->optimizedQrisImageBinary($setting->donation_qris_image);
 
-            return redirect()->away($imageUrl);
+                return response($pngBinary, 200, [
+                    'Content-Type' => 'image/png',
+                    'Content-Disposition' => 'attachment; filename="qris-donasi-sma-persis-serang.png"',
+                    'Content-Length' => strlen($pngBinary),
+                ]);
+            } catch (\Exception $e) {
+                return redirect()->route('donasi-pendidikan.form-donatur')
+                    ->with('error', 'Gagal menyiapkan file QRIS. Silakan coba lagi.');
+            }
         }
 
         return redirect()->route('donasi-pendidikan.form-donatur')
             ->with('error', 'QRIS belum tersedia.');
+    }
+
+    private function optimizedQrisImageBinary(string $path): string
+    {
+        if (!Storage::disk('public')->exists($path)) {
+            throw new \RuntimeException('File QRIS tidak ditemukan.');
+        }
+
+        $originalBinary = Storage::disk('public')->get($path);
+        $source = imagecreatefromstring($originalBinary);
+
+        if (!$source) {
+            throw new \RuntimeException('Format gambar QRIS tidak valid.');
+        }
+
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+        $targetWidths = [800, 700, 600, 500];
+        $lastBinary = null;
+
+        foreach ($targetWidths as $maxWidth) {
+            $scale = min(1, $maxWidth / max(1, $sourceWidth));
+            $targetWidth = max(1, (int) round($sourceWidth * $scale));
+            $targetHeight = max(1, (int) round($sourceHeight * $scale));
+
+            $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+            $white = imagecolorallocate($canvas, 255, 255, 255);
+            imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, $white);
+            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+
+            ob_start();
+            imagepng($canvas, null, 9);
+            $binary = (string) ob_get_clean();
+            imagedestroy($canvas);
+
+            $lastBinary = $binary;
+
+            if (strlen($binary) <= 500 * 1024) {
+                imagedestroy($source);
+                return $binary;
+            }
+        }
+
+        imagedestroy($source);
+
+        if ($lastBinary === null) {
+            throw new \RuntimeException('Gagal mengoptimasi QRIS.');
+        }
+
+        return $lastBinary;
     }
 
     private function organizationPhotoUrl(OrganizationStructure $structure): ?string

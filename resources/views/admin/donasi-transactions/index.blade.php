@@ -5,10 +5,16 @@
                 <h2 class="text-2xl font-bold text-gray-900">Donasi Masuk</h2>
                 <p class="text-gray-500 mt-1">Daftar transaksi donasi pendidikan & makan santri.</p>
             </div>
-            <a href="{{ route('admin.website.donasi-pendidikan.edit') }}"
-               class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                &larr; Pengaturan Donasi
-            </a>
+            <div class="flex flex-col gap-2 sm:flex-row">
+                <a href="{{ route('admin.donasi-transactions.create-receipt') }}"
+                   class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800">
+                    Buat Bukti Penerimaan
+                </a>
+                <a href="{{ route('admin.website.donasi-pendidikan.edit') }}"
+                   class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                    &larr; Pengaturan Donasi
+                </a>
+            </div>
         </div>
 
         <div class="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">

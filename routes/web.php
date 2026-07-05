@@ -244,6 +244,10 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
 
     Route::name('donasi-transactions.')->prefix('donasi-transactions')->group(function () {
         Route::get('/', [DonationTransactionController::class, 'index'])->name('index');
+        Route::get('/buat-bukti-penerimaan', [DonationTransactionController::class, 'createReceipt'])->name('create-receipt');
+        Route::post('/buat-bukti-penerimaan/parse', [DonationTransactionController::class, 'parseReceipt'])->name('parse-receipt');
+        Route::post('/buat-bukti-penerimaan', [DonationTransactionController::class, 'storeReceipt'])->name('store-receipt');
+        Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
         Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
         Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
     });

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DonationRegularDonor;
 use App\Models\DonationTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class DonationTransactionController extends Controller
 {
@@ -17,6 +20,111 @@ class DonationTransactionController extends Controller
         $totalCancelled = DonationTransaction::where('status', 'cancelled')->count();
 
         return view('admin.donasi-transactions.index', compact('transactions', 'totalPaid', 'totalPending', 'totalCancelled'));
+    }
+
+    public function createReceipt()
+    {
+        return view('admin.donasi-transactions.create', [
+            'parsed' => session('parsed_donation_confirmation', []),
+            'rawMessage' => session('raw_donation_confirmation', ''),
+        ]);
+    }
+
+    public function parseReceipt(Request $request)
+    {
+        $data = $request->validate([
+            'confirmation_message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $parsed = $this->parseConfirmationMessage($data['confirmation_message']);
+
+        return redirect()->route('admin.donasi-transactions.create-receipt')
+            ->with('parsed_donation_confirmation', $parsed)
+            ->with('raw_donation_confirmation', $data['confirmation_message'])
+            ->with('success', 'Data pesan WhatsApp berhasil dibaca. Silakan cek dan sesuaikan jika perlu.');
+    }
+
+    public function storeReceipt(Request $request)
+    {
+        $data = $request->validate([
+            'donor_name' => ['required', 'string', 'max:100'],
+            'allow_future_donation_contact' => ['nullable', 'string', 'max:10'],
+            'donor_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]*$/'],
+            'nominal_amount' => ['required', 'string', 'max:50'],
+            'unique_code' => ['required', 'string', 'max:3'],
+            'total_transfer' => ['required', 'string', 'max:50'],
+            'transfer_date' => ['nullable', 'string', 'max:50'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'confirmation_message' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $nominalAmount = $this->moneyToInteger($data['nominal_amount']);
+        $totalTransfer = $this->moneyToInteger($data['total_transfer']);
+        $uniqueCode = str_pad((string) ((int) preg_replace('/[^0-9]/', '', $data['unique_code'])), 3, '0', STR_PAD_LEFT);
+        $allowContact = strtolower(trim($data['allow_future_donation_contact'] ?? 'Tidak')) === 'ya';
+        $donorWhatsapp = $allowContact ? trim($data['donor_whatsapp'] ?? '') : '';
+        $donorWhatsapp = $donorWhatsapp !== '' ? $donorWhatsapp : '-';
+        $normalizedWhatsapp = $this->normalizeWhatsappNumber($donorWhatsapp);
+
+        if ($nominalAmount < 10000) {
+            return back()->withErrors(['nominal_amount' => 'Nominal donasi minimal Rp10.000.'])->withInput();
+        }
+
+        if ((int) $uniqueCode < 1 || (int) $uniqueCode > 999) {
+            return back()->withErrors(['unique_code' => 'Kode unik harus 001 sampai 999.'])->withInput();
+        }
+
+        if ($totalTransfer !== $nominalAmount + (int) $uniqueCode) {
+            return back()->withErrors(['total_transfer' => 'Total transfer harus sama dengan nominal donasi ditambah kode unik.'])->withInput();
+        }
+
+        $noteLines = [
+            'Bersedia Dihubungi: ' . ($allowContact ? 'Ya' : 'Tidak'),
+            'Nomor WhatsApp: ' . $donorWhatsapp,
+            'Kode Unik: ' . $uniqueCode,
+            'Total Transfer: Rp' . number_format($totalTransfer, 0, ',', '.'),
+            'Tanggal Transfer: ' . ($data['transfer_date'] ?: '-'),
+        ];
+
+        if (trim($data['note'] ?? '') && trim($data['note']) !== '-') {
+            $noteLines[] = 'Catatan Donatur: ' . trim($data['note']);
+        }
+
+        if (trim($data['confirmation_message'] ?? '')) {
+            $noteLines[] = 'Pesan WA: ' . trim($data['confirmation_message']);
+        }
+
+        $transaction = DonationTransaction::create([
+            'order_id' => $this->generateOrderId(),
+            'donor_name' => trim($data['donor_name']) ?: 'Hamba Allah',
+            'donor_whatsapp' => $donorWhatsapp,
+            'support_type' => 'Donasi Pendidikan & Makan Santri',
+            'amount' => $nominalAmount,
+            'note' => implode("\n", $noteLines),
+            'payment_gateway' => 'manual-qris',
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        $regularDonorMessage = null;
+
+        if ($allowContact && $normalizedWhatsapp) {
+            $regularDonorMessage = $this->upsertRegularDonor($transaction, $normalizedWhatsapp);
+        } elseif ($allowContact) {
+            $regularDonorMessage = 'Donatur bersedia dihubungi, tetapi nomor WhatsApp kosong sehingga tidak disimpan sebagai donatur tetap.';
+        }
+
+        return redirect()->route('admin.donasi-transactions.show', $transaction)
+            ->with('success', 'Bukti penerimaan donasi berhasil diterbitkan. Referensi: ' . $transaction->order_id)
+            ->with('regular_donor_message', $regularDonorMessage);
+    }
+
+    public function show(DonationTransaction $transaction)
+    {
+        $receipt = $this->receiptData($transaction);
+        $whatsappUrl = $this->donorReceiptWhatsappUrl($transaction, $receipt);
+
+        return view('admin.donasi-transactions.show', compact('transaction', 'receipt', 'whatsappUrl'));
     }
 
     public function markPaid(DonationTransaction $transaction)
@@ -34,5 +142,147 @@ class DonationTransactionController extends Controller
         $transaction->update(['status' => 'cancelled']);
 
         return back()->with('success', 'Donasi ditandai sebagai Dibatalkan.');
+    }
+
+    private function parseConfirmationMessage(string $message): array
+    {
+        return [
+            'donor_name' => $this->extractLabel($message, 'Nama Donatur') ?: 'Hamba Allah',
+            'allow_future_donation_contact' => $this->extractLabel($message, 'Bersedia Dihubungi') ?: 'Tidak',
+            'donor_whatsapp' => $this->extractLabel($message, 'Nomor WhatsApp') ?: '-',
+            'nominal_amount' => $this->extractLabel($message, 'Nominal Donasi') ?: '',
+            'unique_code' => $this->extractLabel($message, 'Kode Unik') ?: '',
+            'total_transfer' => $this->extractLabel($message, 'Total Transfer') ?: '',
+            'transfer_date' => $this->extractLabel($message, 'Tanggal Transfer') ?: now()->format('d/m/Y'),
+            'note' => $this->extractLabel($message, 'Catatan') ?: '-',
+        ];
+    }
+
+    private function extractLabel(string $message, string $label): ?string
+    {
+        if (preg_match('/^' . preg_quote($label, '/') . '\s*:\s*(.+)$/mi', $message, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    private function moneyToInteger(string $value): int
+    {
+        return (int) preg_replace('/[^0-9]/', '', $value);
+    }
+
+    private function receiptData(DonationTransaction $transaction): array
+    {
+        $noteData = $this->parseNoteLines($transaction->note ?? '');
+
+        return [
+            'receipt_number' => $transaction->order_id,
+            'received_at' => $transaction->paid_at ?? $transaction->created_at,
+            'donor_name' => $transaction->donor_name ?: 'Hamba Allah',
+            'donor_whatsapp' => $transaction->donor_whatsapp ?: '-',
+            'nominal_amount' => (int) $transaction->amount,
+            'unique_code' => $noteData['Kode Unik'] ?? '-',
+            'total_transfer' => $this->moneyToInteger($noteData['Total Transfer'] ?? (string) $transaction->amount),
+            'transfer_date' => $noteData['Tanggal Transfer'] ?? optional($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y'),
+            'note' => $noteData['Catatan Donatur'] ?? '-',
+            'allow_contact' => $noteData['Bersedia Dihubungi'] ?? '-',
+            'status' => $transaction->status,
+        ];
+    }
+
+    private function parseNoteLines(string $note): array
+    {
+        $data = [];
+
+        foreach (preg_split('/\r\n|\r|\n/', $note) as $line) {
+            if (!str_contains($line, ':')) {
+                continue;
+            }
+
+            [$key, $value] = explode(':', $line, 2);
+            $data[trim($key)] = trim($value);
+        }
+
+        return $data;
+    }
+
+    private function donorReceiptWhatsappUrl(DonationTransaction $transaction, array $receipt): ?string
+    {
+        $number = $this->normalizeWhatsappNumber($receipt['donor_whatsapp'] ?? $transaction->donor_whatsapp);
+
+        if (!$number) {
+            return null;
+        }
+
+        $message = "Assalamu'alaikum {$receipt['donor_name']}.\n\n"
+            . "Terima kasih, donasi pendidikan untuk SMA Persis Serang sudah kami terima.\n\n"
+            . "Nomor Bukti: {$receipt['receipt_number']}\n"
+            . "Nama Donatur: {$receipt['donor_name']}\n"
+            . "Nominal Donasi: Rp" . number_format($receipt['nominal_amount'], 0, ',', '.') . "\n"
+            . "Total Transfer: Rp" . number_format($receipt['total_transfer'], 0, ',', '.') . "\n"
+            . "Tanggal: " . $receipt['received_at']->format('d/m/Y') . "\n\n"
+            . "Semoga Allah membalas dengan pahala terbaik dan menjadikan donasi ini sebagai amal jariyah.\n\n"
+            . "Aamiin.\n\n"
+            . "SMA Persis Serang";
+
+        return 'https://wa.me/' . $number . '?text=' . urlencode($message);
+    }
+
+    private function normalizeWhatsappNumber(?string $number): ?string
+    {
+        $clean = preg_replace('/[^0-9]/', '', (string) $number);
+
+        if (!$clean || $clean === '-') {
+            return null;
+        }
+
+        if (str_starts_with($clean, '0')) {
+            return '62' . substr($clean, 1);
+        }
+
+        if (str_starts_with($clean, '8')) {
+            return '62' . $clean;
+        }
+
+        return $clean;
+    }
+
+    private function upsertRegularDonor(DonationTransaction $transaction, string $normalizedWhatsapp): ?string
+    {
+        if (!Schema::hasTable('donation_regular_donors')) {
+            return 'Tabel donatur tetap belum tersedia. Jalankan migration sebelum data donatur tetap dapat disimpan.';
+        }
+
+        $donor = DonationRegularDonor::firstOrNew(['whatsapp_number' => $normalizedWhatsapp]);
+        $isNew = !$donor->exists;
+
+        $donor->fill([
+            'name' => $transaction->donor_name ?: 'Hamba Allah',
+            'is_active' => true,
+            'source' => 'donasi_pendidikan',
+            'last_donation_at' => $transaction->paid_at ?? now(),
+        ]);
+
+        if ($isNew || !$donor->first_donation_at) {
+            $donor->first_donation_at = $transaction->paid_at ?? now();
+        }
+
+        $donor->total_donations_count = (int) $donor->total_donations_count + 1;
+        $donor->total_donations_amount = (int) $donor->total_donations_amount + (int) $transaction->amount;
+        $donor->save();
+
+        return $isNew
+            ? 'Donatur tetap baru berhasil disimpan.'
+            : 'Data donatur tetap berhasil diperbarui.';
+    }
+
+    private function generateOrderId(): string
+    {
+        do {
+            $orderId = 'DON-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+        } while (DonationTransaction::where('order_id', $orderId)->exists());
+
+        return $orderId;
     }
 }
