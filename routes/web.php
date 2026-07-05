@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\NavigationMenuController;
 use App\Http\Controllers\Admin\OrganizationStructureController;
 use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
+use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
 use App\Http\Controllers\Admin\WebsiteSettingController;
 use App\Http\Controllers\PPDBController;
@@ -159,6 +160,10 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
     Route::get('/struktur-organisasi', [PublicPageController::class, 'strukturOrganisasi'])->name('public.struktur-organisasi');
     Route::get('/donasi-pendidikan', [PublicPageController::class, 'donasiPendidikan'])->name('donasi-pendidikan');
+    Route::get('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'formDonatur'])->name('donasi-pendidikan.form-donatur');
+    Route::post('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'submitDonatur'])->name('donasi-pendidikan.form-donatur.submit');
+    Route::get('/donasi-pendidikan/pembayaran/{order_id}', [PublicPageController::class, 'payment'])->name('donasi-pendidikan.payment');
+    Route::get('/donasi-pendidikan/qris', [PublicPageController::class, 'qris'])->name('donasi-pendidikan.qris');
     Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
     Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 
@@ -171,6 +176,8 @@ Route::middleware('track.visitor')->group(function () {
         Route::get('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusForm'])->name('status.form');
         Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
     });
+
+    Route::post('/midtrans/donation/notification', [PublicPageController::class, 'midtransNotification'])->withoutMiddleware([\App\Http\Middleware\TrackVisitorMiddleware::class])->name('midtrans.donation.notification');
 
     Route::post('/ai-chat/send', [\App\Http\Controllers\Public\AiChatController::class, 'send'])
         ->middleware('throttle:10,1')
@@ -215,6 +222,11 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::put('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'update'])->name('update');
         Route::post('/generate-token', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'generateToken'])->name('public-dashboard-token.generate');
     });
+
+    Route::get('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'edit'])
+        ->name('website.donasi-pendidikan.edit');
+    Route::put('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'update'])
+        ->name('website.donasi-pendidikan.update');
 
     Route::name('website.media.')->prefix('website/media')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'index'])->name('index');

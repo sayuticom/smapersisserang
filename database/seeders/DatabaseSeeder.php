@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             WebsitePageSeeder::class,
             NavigationMenuSeeder::class,
             OrganizationStructureSeeder::class,
+            DonationEducationSettingSeeder::class,
             SchoolSubjectSeeder::class,
             AdmissionYearsTableSeeder::class,
             AdmissionProgramsTableSeeder::class,

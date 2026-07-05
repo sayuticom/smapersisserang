@@ -2,11 +2,25 @@
 
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
-    $heroBg = $schoolSetting?->building_image_path ? asset('storage/' . $schoolSetting->building_image_path) : null;
-    $waUrl = 'https://wa.me/6289661234569?text=Assalamu%27alaikum%2C%20saya%20ingin%20berdonasi%20untuk%20program%20pendidikan%20dan%20makan%20santri%20SMA%20Persis%20Serang';
-    $shareText = 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 6289661234569.';
+    $heroBg = $setting?->hero_image
+        ? asset('storage/' . $setting->hero_image)
+        : null;
+    $sectionImage = $setting?->section_image ? asset('storage/' . $setting->section_image) : null;
+    $heroTitle = $setting?->hero_title ?: 'Donasi Pendidikan & Orang Tua Asuh Santri';
+    $heroSubtitle = $setting?->hero_subtitle ?: 'Bersama membantu kebutuhan pendidikan, makan, asrama, dan pembinaan santri SMA Persis Serang yang sedang menempuh pendidikan secara gratis.';
+    $hadithText = $setting?->hadith_text ?: 'Barangsiapa menempuh jalan untuk mencari ilmu, Allah akan mudahkan baginya jalan menuju surga.';
+    $hadithSource = $setting?->hadith_source ?: 'HR. Muslim';
+    $introTitle = $setting?->intro_title ?: 'Menopang Pendidikan dan Kebutuhan Harian Santri';
+    $introText = $setting?->intro_text ?: 'SMA Persis Serang berikhtiar menghadirkan pendidikan yang terjangkau, bahkan menggratiskan biaya pendidikan dan biaya makan asrama bagi anak-anak yang membutuhkan. Program ini menjadi kesempatan bagi kaum muslimin untuk ikut menyuburkan ladang pahala melalui sedekah dan infak pendidikan.';
+    $invitationText = $setting?->invitation_text ?: 'Yang memiliki beras, bisa menitipkan berasnya. Yang memiliki telur, bisa menitipkan telurnya. Yang memiliki sayuran, bisa menitipkan sayurannya. Apabila diperlukan, insyaAllah kami siap menjemput donasi ke tempat Bapak/Ibu/Saudara/i.';
+    $whatsappNumber = preg_replace('/[^0-9]/', '', $setting?->whatsapp_number ?: '6289661234569');
+    $whatsappButtonText = $setting?->whatsapp_button_text ?: 'Hubungi WA SMA Persis Serang';
+    $whatsappMessage = $setting?->whatsapp_message ?: 'Assalamu\'alaikum, saya ingin berdonasi untuk program pendidikan dan makan santri SMA Persis Serang';
+    $shareButtonText = $setting?->share_button_text ?: 'Sebarkan Informasi Kebaikan Ini';
+    $shareText = $setting?->share_message ?: 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 6289661234569.';
+    $waUrl = 'https://wa.me/' . $whatsappNumber . '?text=' . urlencode($whatsappMessage);
     $shareUrl = 'https://wa.me/?text=' . urlencode($shareText . ' ' . route('donasi-pendidikan'));
-    $donationItems = [
+    $defaultDonationItems = [
         ['title' => 'Beras', 'description' => 'Mendukung kebutuhan pokok makan harian santri.'],
         ['title' => 'Telur', 'description' => 'Sumber protein untuk menu makan santri.'],
         ['title' => 'Sayuran', 'description' => 'Membantu pemenuhan gizi dan menu sehat.'],
@@ -15,51 +29,166 @@
         ['title' => 'Donasi uang', 'description' => 'Disalurkan untuk pendidikan dan makan santri.'],
         ['title' => 'Kebutuhan dapur/asrama lainnya', 'description' => 'Dapat dikonsultasikan langsung dengan pihak sekolah.'],
     ];
+    $donationItems = collect($setting?->donation_items ?: [])
+        ->map(function ($item) {
+            if (is_array($item)) {
+                return [
+                    'title' => $item['title'] ?? '',
+                    'description' => $item['description'] ?? 'Dapat disalurkan untuk mendukung pendidikan dan makan santri.',
+                ];
+            }
+
+            return [
+                'title' => $item,
+                'description' => 'Dapat disalurkan untuk mendukung pendidikan dan makan santri.',
+            ];
+        })
+        ->filter(fn($item) => trim($item['title']) !== '')
+        ->values()
+        ->all();
+
+    if (empty($donationItems)) {
+        $donationItems = $defaultDonationItems;
+    }
 @endphp
 
-@section('title', 'Donasi Pendidikan & Makan Santri - ' . $schoolName)
+@section('title', $heroTitle . ' - ' . $schoolName)
 
 @section('content')
 
-<section class="relative isolate overflow-hidden bg-[#052E1F]">
-    @if($heroBg)
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ $heroBg }}')"></div>
-    @else
-        <div class="absolute inset-0 bg-gradient-to-br from-[#052E1F] via-[#063f2a] to-[#0F6B3A]"></div>
-        <div class="absolute inset-0 opacity-[0.08]"
-             style="background-image: linear-gradient(135deg, rgba(255,255,255,.45) 1px, transparent 1px); background-size: 42px 42px;"></div>
-    @endif
-    <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-emerald-950/80 to-emerald-900/50"></div>
+<section class="relative isolate overflow-hidden bg-gradient-to-br from-[#052E1F] via-[#0A4F2B] to-[#0F6B3A]">
+    <div class="absolute inset-0 opacity-[0.06]"
+         style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
 
-    <div class="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-28 sm:px-6 lg:px-8 lg:pb-20 lg:pt-32">
-        <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur">
-                <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-                LADANG AMAL JARIYAH
-            </div>
-            <h1 class="mt-6 font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-                Donasi Pendidikan &amp; Makan Santri
-            </h1>
-            <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl">
-                Bersama mendukung pendidikan gratis dan kebutuhan makan santri SMA Persis Serang.
-            </p>
+    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
 
-            <div class="mt-8 rounded-2xl border border-amber-300/30 bg-white/10 p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur">
-                <p class="text-lg font-semibold leading-8">
-                    “Barangsiapa menempuh jalan untuk mencari ilmu, Allah akan mudahkan baginya jalan menuju surga.”
+        <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+
+            @if($heroBg)
+                <div class="flex justify-center">
+                    <img src="{{ $heroBg }}" alt="{{ $heroTitle }}" class="w-full max-w-md lg:max-w-lg aspect-square object-cover rounded-3xl shadow-2xl border border-amber-300/30">
+                </div>
+            @endif
+
+            <div class="text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
+                    <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                    LADANG AMAL JARIYAH
+                </div>
+                <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
+                    {{ $heroTitle }}
+                </h1>
+                <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
+                    {{ $heroSubtitle }}
                 </p>
-                <p class="mt-2 text-sm font-medium text-amber-300">HR. Muslim</p>
+
+                <div class="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-300/30 bg-white/10 p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur lg:mx-0">
+                    <p class="text-lg font-semibold leading-8">
+                        “{{ $hadithText }}”
+                    </p>
+                    <p class="mt-2 text-sm font-medium text-amber-300">{{ $hadithSource }}</p>
+                </div>
+
+                <p class="mx-auto mt-8 max-w-2xl text-base leading-7 text-emerald-100/90 lg:mx-0">
+                    Jadilah bagian dari <strong class="text-amber-300">Program Orang Tua Asuh Santri</strong>. Bantuan Bapak/Ibu akan mendukung makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, dan pembinaan akhlak para santri.
+                </p>
+
+                <div class="mt-6 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+                    <a href="{{ route('donasi-pendidikan.form-donatur') }}"
+                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F6B3A] px-7 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-[#0A4F2B] sm:w-auto">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Menjadi Donatur / Orang Tua Asuh
+                    </a>
+                    <a href="{{ $waUrl }}" target="_blank" rel="noopener"
+                       class="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500 sm:w-auto">
+                        {{ $whatsappButtonText }}
+                    </a>
+                    <a href="{{ $shareUrl }}" target="_blank" rel="noopener"
+                       class="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10 sm:w-auto">
+                        {{ $shareButtonText }}
+                    </a>
+                </div>
             </div>
 
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a href="{{ $waUrl }}" target="_blank" rel="noopener"
-                   class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
-                    Hubungi WA SMA Persis Serang
-                </a>
-                <a href="{{ $shareUrl }}" target="_blank" rel="noopener"
-                   class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
-                    Sebarkan Informasi Kebaikan Ini
-                </a>
+        </div>
+
+    </div>
+</section>
+
+<section class="bg-white py-16 lg:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl text-center">
+            <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">PROGRAM UNGGULAN</p>
+            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">Program Orang Tua Asuh Santri</h2>
+        </div>
+        <div class="mx-auto mt-8 max-w-4xl space-y-5 text-center text-lg leading-8 text-emerald-900/75">
+            <p>
+                Program Orang Tua Asuh Santri SMA Persis Serang adalah gerakan kepedulian untuk membantu kebutuhan pendidikan, makan, asrama, dan pembinaan murid yang sedang menempuh pendidikan secara gratis.
+            </p>
+            <p>
+                Melalui program ini, setiap donatur dapat berperan sebagai orang tua asuh bagi para santri/murid yang membutuhkan dukungan. Bantuan yang diberikan akan digunakan untuk kebutuhan makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, serta kegiatan pembinaan akhlak dan karakter.
+            </p>
+            <p class="font-semibold text-[#0F6B3A]">
+                Dengan menjadi bagian dari program ini, Bapak/Ibu tidak hanya membantu biaya hidup seorang anak, tetapi juga ikut membuka jalan masa depan bagi generasi muda yang ingin belajar, tumbuh, dan mengabdi untuk umat.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="bg-[#FBF7EF] py-16 lg:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-3xl text-center">
+            <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">BENTUK DUKUNGAN</p>
+            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">Apa Saja yang Bisa Didukung?</h2>
+        </div>
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-[#052E1F]">Makan Harian Santri</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600">Mendukung kebutuhan gizi dan asupan makan sehari-hari santri di asrama.</p>
+            </div>
+            <div class="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-[#052E1F]">Pendidikan Gratis</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600">Menanggung biaya SPP dan operasional belajar santri yang tidak mampu.</p>
+            </div>
+            <div class="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-[#052E1F]">Perlengkapan Sekolah</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600">Menyediakan buku, alat tulis, seragam, dan perlengkapan belajar lainnya.</p>
+            </div>
+            <div class="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-[#052E1F]">Perlengkapan Asrama</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600">Membantu kebutuhan kasur, lemari, perlengkapan mandi, dan kebutuhan asrama.</p>
+            </div>
+            <div class="group rounded-2xl border border-emerald-100 bg-white p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg sm:col-span-2 lg:col-span-1">
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-[#052E1F]">Pembinaan Akhlak & Karakter</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600">Mendukung kegiatan kajian, mentoring, dan pembinaan karakter santri.</p>
             </div>
         </div>
     </div>
@@ -70,11 +199,16 @@
         <div>
             <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">Tentang Program</p>
             <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">
-                Menopang Pendidikan dan Kebutuhan Harian Santri
+                {{ $introTitle }}
             </h2>
+            @if($sectionImage)
+                <div class="mt-8 overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-xl shadow-emerald-950/10">
+                    <img src="{{ $sectionImage }}" alt="{{ $introTitle }}" class="aspect-[4/3] w-full object-cover">
+                </div>
+            @endif
         </div>
         <p class="text-lg leading-8 text-emerald-900/75">
-            SMA Persis Serang berikhtiar menghadirkan pendidikan yang terjangkau, bahkan menggratiskan biaya pendidikan dan biaya makan asrama bagi anak-anak yang membutuhkan. Program ini menjadi kesempatan bagi kaum muslimin untuk ikut menyuburkan ladang pahala melalui sedekah dan infak pendidikan.
+            {{ $introText }}
         </p>
     </div>
 </section>
@@ -106,7 +240,7 @@
     <div class="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-amber-200 bg-white p-8 shadow-lg shadow-emerald-950/5 lg:p-12">
             <p class="text-lg leading-9 text-emerald-900/75">
-                Yang memiliki beras, bisa menitipkan berasnya. Yang memiliki telur, bisa menitipkan telurnya. Yang memiliki sayuran, bisa menitipkan sayurannya. Apabila diperlukan, insyaAllah kami siap menjemput donasi ke tempat Bapak/Ibu/Saudara/i.
+                {{ $invitationText }}
             </p>
         </div>
     </div>
@@ -122,11 +256,11 @@
         <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <a href="{{ $waUrl }}" target="_blank" rel="noopener"
                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
-                Hubungi WA SMA Persis Serang
+                {{ $whatsappButtonText }}
             </a>
             <a href="{{ $shareUrl }}" target="_blank" rel="noopener"
                class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
-                Sebarkan Informasi Kebaikan Ini
+                {{ $shareButtonText }}
             </a>
         </div>
     </div>

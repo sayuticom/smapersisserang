@@ -112,6 +112,14 @@
                         Pengaturan Website
                     </a>
 
+                    <a href="{{ route('admin.website.donasi-pendidikan.edit') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.website.donasi-pendidikan.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.website.donasi-pendidikan.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.761 0-5-1.12-5-2.5S9.239 3 12 3s5 1.12 5 2.5S14.761 8 12 8zm-5 2v5.5C7 16.88 9.239 18 12 18s5-1.12 5-2.5V10m-10 3c0 1.38 2.239 2.5 5 2.5s5-1.12 5-2.5"/>
+                        </svg>
+                        Donasi Pendidikan
+                    </a>
+
                     <a href="{{ route('admin.website.media.index') }}"
                        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.website.media.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                         <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.website.media.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => \App\Http\Middleware\EnsureUserIsSuperadmin::class,
             'track.visitor' => \App\Http\Middleware\TrackVisitorMiddleware::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'midtrans/donation/notification',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
