@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\FosterStudentController;
 use App\Http\Controllers\Admin\DonationTransactionController;
+use App\Http\Controllers\Admin\SarprasController;
 use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
 use App\Http\Controllers\Admin\WebsiteSettingController;
@@ -250,6 +251,46 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
         Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
         Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+    });
+
+    Route::name('sarpras.')->prefix('sarpras')->group(function () {
+        Route::get('/', [SarprasController::class, 'dashboard'])->name('dashboard');
+
+        Route::get('/aset', [SarprasController::class, 'assetsIndex'])->name('assets.index');
+        Route::get('/aset/create', [SarprasController::class, 'assetsCreate'])->name('assets.create');
+        Route::post('/aset', [SarprasController::class, 'assetsStore'])->name('assets.store');
+        Route::get('/aset/{asset}', [SarprasController::class, 'assetsShow'])->name('assets.show');
+        Route::get('/aset/{asset}/edit', [SarprasController::class, 'assetsEdit'])->name('assets.edit');
+        Route::put('/aset/{asset}', [SarprasController::class, 'assetsUpdate'])->name('assets.update');
+        Route::delete('/aset/{asset}', [SarprasController::class, 'assetsDestroy'])->name('assets.destroy');
+
+        Route::get('/ruangan', [SarprasController::class, 'roomsIndex'])->name('rooms.index');
+        Route::get('/ruangan/create', [SarprasController::class, 'roomsCreate'])->name('rooms.create');
+        Route::post('/ruangan', [SarprasController::class, 'roomsStore'])->name('rooms.store');
+        Route::get('/ruangan/{room}/edit', [SarprasController::class, 'roomsEdit'])->name('rooms.edit');
+        Route::put('/ruangan/{room}', [SarprasController::class, 'roomsUpdate'])->name('rooms.update');
+        Route::delete('/ruangan/{room}', [SarprasController::class, 'roomsDestroy'])->name('rooms.destroy');
+
+        Route::get('/kebutuhan', [SarprasController::class, 'needsIndex'])->name('needs.index');
+        Route::get('/kebutuhan/create', [SarprasController::class, 'needsCreate'])->name('needs.create');
+        Route::post('/kebutuhan', [SarprasController::class, 'needsStore'])->name('needs.store');
+        Route::get('/kebutuhan/{need}/edit', [SarprasController::class, 'needsEdit'])->name('needs.edit');
+        Route::put('/kebutuhan/{need}', [SarprasController::class, 'needsUpdate'])->name('needs.update');
+        Route::delete('/kebutuhan/{need}', [SarprasController::class, 'needsDestroy'])->name('needs.destroy');
+
+        Route::get('/perbaikan', [SarprasController::class, 'maintenancesIndex'])->name('maintenances.index');
+        Route::get('/perbaikan/create', [SarprasController::class, 'maintenancesCreate'])->name('maintenances.create');
+        Route::post('/perbaikan', [SarprasController::class, 'maintenancesStore'])->name('maintenances.store');
+        Route::get('/perbaikan/{maintenance}/edit', [SarprasController::class, 'maintenancesEdit'])->name('maintenances.edit');
+        Route::put('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesUpdate'])->name('maintenances.update');
+        Route::delete('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesDestroy'])->name('maintenances.destroy');
+
+        Route::get('/pengadaan', [SarprasController::class, 'procurementsIndex'])->name('procurements.index');
+        Route::get('/pengadaan/create', [SarprasController::class, 'procurementsCreate'])->name('procurements.create');
+        Route::post('/pengadaan', [SarprasController::class, 'procurementsStore'])->name('procurements.store');
+        Route::get('/pengadaan/{procurement}/edit', [SarprasController::class, 'procurementsEdit'])->name('procurements.edit');
+        Route::put('/pengadaan/{procurement}', [SarprasController::class, 'procurementsUpdate'])->name('procurements.update');
+        Route::delete('/pengadaan/{procurement}', [SarprasController::class, 'procurementsDestroy'])->name('procurements.destroy');
     });
 
     Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')->group(function () {
