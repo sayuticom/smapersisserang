@@ -188,9 +188,9 @@
                         Pengadaan Barang
                     </a>
 
-                    <a href="{{ route('admin.sarpras.dashboard') }}"
-                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.sarpras.dashboard') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.sarpras.dashboard') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('admin.sarpras.laporan') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.sarpras.laporan') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.sarpras.laporan') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         Laporan Sarpras

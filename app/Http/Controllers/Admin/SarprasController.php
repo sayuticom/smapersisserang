@@ -525,4 +525,43 @@ class SarprasController extends Controller
         return redirect()->route('admin.sarpras.procurements.index')
             ->with('success', 'Pengadaan berhasil dihapus.');
     }
+
+    // ─── LAPORAN ───────────────────────────────────────────────────────────
+
+    public function laporan()
+    {
+        $totalAssets = SarprasAsset::count();
+        $totalRooms = SarprasRoom::count();
+        $totalNeeds = SarprasNeed::count();
+        $totalMaintenances = SarprasMaintenance::count();
+        $totalProcurements = SarprasProcurement::count();
+
+        $assetsByCondition = SarprasAsset::selectRaw('`condition`, count(*) as total')
+            ->groupBy('condition')->pluck('total', 'condition');
+
+        $assetsByCategory = SarprasAsset::selectRaw('category, count(*) as total')
+            ->groupBy('category')->pluck('total', 'category');
+
+        $roomsByCondition = SarprasRoom::selectRaw('`condition`, count(*) as total')
+            ->groupBy('condition')->pluck('total', 'condition');
+
+        $needsByStatus = SarprasNeed::selectRaw('status, count(*) as total')
+            ->groupBy('status')->pluck('total', 'status');
+
+        $maintenancesByStatus = SarprasMaintenance::selectRaw('status, count(*) as total')
+            ->groupBy('status')->pluck('total', 'status');
+
+        $procurementsByStatus = SarprasProcurement::selectRaw('status, count(*) as total')
+            ->groupBy('status')->pluck('total', 'status');
+
+        $recentProcurements = SarprasProcurement::latest()->take(10)->get();
+        $recentMaintenances = SarprasMaintenance::with('asset')->latest()->take(10)->get();
+
+        return view('admin.sarpras.laporan', compact(
+            'totalAssets', 'totalRooms', 'totalNeeds', 'totalMaintenances', 'totalProcurements',
+            'assetsByCondition', 'assetsByCategory', 'roomsByCondition',
+            'needsByStatus', 'maintenancesByStatus', 'procurementsByStatus',
+            'recentProcurements', 'recentMaintenances'
+        ));
+    }
 }

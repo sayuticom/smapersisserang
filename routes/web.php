@@ -291,6 +291,8 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/pengadaan/{procurement}/edit', [SarprasController::class, 'procurementsEdit'])->name('procurements.edit');
         Route::put('/pengadaan/{procurement}', [SarprasController::class, 'procurementsUpdate'])->name('procurements.update');
         Route::delete('/pengadaan/{procurement}', [SarprasController::class, 'procurementsDestroy'])->name('procurements.destroy');
+
+        Route::get('/laporan', [SarprasController::class, 'laporan'])->name('laporan');
     });
 
     Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')->group(function () {
