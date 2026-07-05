@@ -145,7 +145,7 @@
                 <div class="flex flex-col gap-3 pt-2 sm:flex-row">
                     <button type="submit"
                             class="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500 sm:w-auto">
-                        Kirim via WhatsApp
+                        Lanjut ke QRIS Donasi
                     </button>
                     <a href="{{ route('donasi-pendidikan') }}"
                        class="inline-flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 sm:w-auto">

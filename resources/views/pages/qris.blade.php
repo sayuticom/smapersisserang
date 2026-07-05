@@ -3,6 +3,7 @@
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
     $qrisImage = $setting?->donation_qris_image ? Storage::url($setting->donation_qris_image) : null;
+    $nominalFormatted = 'Rp' . number_format($donationData['amount'], 0, ',', '.');
 @endphp
 
 @section('title', 'Pembayaran via QRIS - ' . $schoolName)
@@ -22,20 +23,24 @@
                 <table class="w-full text-sm">
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Nama</td>
-                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donatur['name'] }}</td>
+                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donationData['donor_name'] }}</td>
+                    </tr>
+                    <tr>
+                        <td class="py-1.5 pr-4 font-medium text-gray-500">Nomor WhatsApp</td>
+                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donationData['donor_whatsapp'] }}</td>
                     </tr>
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Jenis Dukungan</td>
-                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donatur['donation_type_label'] }}</td>
+                        <td class="py-1.5 font-semibold text-[#052E1F]">{{ $donationData['support_type'] }}</td>
                     </tr>
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Nominal</td>
-                        <td class="py-1.5 font-semibold text-[#0F6B3A]">{{ $donatur['nominal'] }}</td>
+                        <td class="py-1.5 font-semibold text-[#0F6B3A]">{{ $nominalFormatted }}</td>
                     </tr>
-                    @if($donatur['note'] ?? null)
+                    @if($donationData['note'] ?? null)
                     <tr>
                         <td class="py-1.5 pr-4 font-medium text-gray-500">Catatan</td>
-                        <td class="py-1.5 text-gray-600">{{ $donatur['note'] }}</td>
+                        <td class="py-1.5 text-gray-600">{{ $donationData['note'] }}</td>
                     </tr>
                     @endif
                 </table>

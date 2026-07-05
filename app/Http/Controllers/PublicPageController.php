@@ -260,14 +260,6 @@ class PublicPageController extends Controller
 
     public function submitDonatur(Request $request)
     {
-        try {
-            $schoolSetting = SchoolSetting::current();
-        } catch (\Exception $e) {
-            $schoolSetting = null;
-        }
-
-        $setting = DonationEducationSetting::activeSetting();
-
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'whatsapp' => 'required|string|max:30',
@@ -293,58 +285,15 @@ class PublicPageController extends Controller
             return back()->withErrors(['amount' => 'Minimal donasi Rp1.000'])->withInput();
         }
 
-        $orderId = 'DONASI-' . now()->format('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
-
-        $transaction = DonationTransaction::create([
-            'order_id' => $orderId,
+        session()->flash('donation_data', [
             'donor_name' => $data['name'],
             'donor_whatsapp' => $data['whatsapp'],
             'support_type' => $donationTypeLabels[$data['donation_type']],
             'amount' => $amount,
             'note' => $data['note'] ?? null,
-            'status' => 'pending',
         ]);
 
-        \Midtrans\Config::$serverKey = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('midtrans.is_production');
-        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
-        \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
-
-        $params = [
-            'transaction_details' => [
-                'order_id' => $transaction->order_id,
-                'gross_amount' => $transaction->amount,
-            ],
-            'customer_details' => [
-                'first_name' => $transaction->donor_name,
-                'phone' => $transaction->donor_whatsapp,
-            ],
-            'item_details' => [
-                [
-                    'id' => 'DONASI',
-                    'price' => $transaction->amount,
-                    'quantity' => 1,
-                    'name' => 'Donasi ' . $transaction->support_type,
-                ],
-            ],
-            'custom_field1' => 'Donasi Pendidikan SMA Persis Serang',
-            'custom_field2' => $transaction->support_type,
-        ];
-
-        try {
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
-
-            $transaction->update([
-                'snap_token' => $snapToken,
-            ]);
-
-            return redirect()->route('donasi-pendidikan.payment', ['order_id' => $transaction->order_id]);
-        } catch (\Exception $e) {
-            $transaction->update(['status' => 'failure']);
-
-            return redirect()->route('donasi-pendidikan.form-donatur')
-                ->with('error', 'Gagal terhubung ke gateway pembayaran. Silakan coba lagi atau hubungi admin.');
-        }
+        return redirect()->route('donasi-pendidikan.qris');
     }
 
     public function payment($order_id)
@@ -446,9 +395,9 @@ class PublicPageController extends Controller
 
         $setting = DonationEducationSetting::activeSetting();
 
-        $donatur = $request->session()->get('donatur_data');
+        $donationData = $request->session()->get('donation_data');
 
-        if (!$donatur) {
+        if (!$donationData) {
             return redirect()->route('donasi-pendidikan.form-donatur')
                 ->with('error', 'Silakan isi form donatur terlebih dahulu.');
         }
@@ -456,20 +405,20 @@ class PublicPageController extends Controller
         $waNumber = preg_replace('/[^0-9]/', '', $setting?->whatsapp_number ?: '6289661234569');
 
         $confirmMessage = "Assalamu'alaikum, saya sudah melakukan donasi untuk Program Orang Tua Asuh Santri SMA Persis Serang.\n\n"
-            . "Nama: {$donatur['name']}\n"
-            . "Nomor WA: {$donatur['whatsapp']}\n"
-            . "Jenis Dukungan: {$donatur['donation_type_label']}\n"
-            . "Nominal: {$donatur['nominal']}\n";
+            . "Nama: {$donationData['donor_name']}\n"
+            . "Nomor WA: {$donationData['donor_whatsapp']}\n"
+            . "Jenis Dukungan: {$donationData['support_type']}\n"
+            . "Nominal: Rp" . number_format($donationData['amount'], 0, ',', '.') . "\n";
 
-        if ($donatur['note'] ?? null) {
-            $confirmMessage .= "Catatan: {$donatur['note']}\n";
+        if ($donationData['note'] ?? null) {
+            $confirmMessage .= "Catatan: {$donationData['note']}\n";
         }
 
         $confirmMessage .= "\nSaya lampirkan bukti pembayaran. Terima kasih.";
 
         $confirmWaUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($confirmMessage);
 
-        return view('pages.qris', compact('schoolSetting', 'setting', 'donatur', 'confirmWaUrl'));
+        return view('pages.qris', compact('schoolSetting', 'setting', 'donationData', 'confirmWaUrl'));
     }
 
     private function organizationPhotoUrl(OrganizationStructure $structure): ?string
