@@ -175,8 +175,9 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/donasi-pendidikan/qris/download', [PublicPageController::class, 'downloadQris'])->name('donasi-pendidikan.qris.download');
 
     Route::get('/orang-tua-asuh', [FosterParentController::class, 'index'])->name('orang-tua-asuh');
-    Route::post('/orang-tua-asuh/qris/preview', [FosterParentController::class, 'qrisPreview'])->name('orang-tua-asuh.qris.preview');
-    Route::post('/orang-tua-asuh/submit', [FosterParentController::class, 'submit'])->name('orang-tua-asuh.submit');
+    Route::post('/orang-tua-asuh/submit', [FosterParentController::class, 'submit'])
+        ->middleware('throttle:5,10')
+        ->name('orang-tua-asuh.submit');
     Route::get('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'edit'])->name('public.teachers.edit-token');
     Route::put('/guru/edit/{token}', [\App\Http\Controllers\PublicTeacherProfileController::class, 'update'])->name('public.teachers.update-token');
 
@@ -249,14 +250,9 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
 
     Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')->group(function () {
         Route::get('/', [FosterStudentController::class, 'index'])->name('index');
-        Route::get('/create', [FosterStudentController::class, 'create'])->name('create');
-        Route::post('/', [FosterStudentController::class, 'store'])->name('store');
-        Route::get('/{fosterStudent}/edit', [FosterStudentController::class, 'edit'])->name('edit');
-        Route::put('/{fosterStudent}', [FosterStudentController::class, 'update'])->name('update');
-        Route::delete('/{fosterStudent}', [FosterStudentController::class, 'destroy'])->name('destroy');
-        Route::get('/submissions', [FosterStudentController::class, 'submissions'])->name('submissions');
-        Route::patch('/submissions/{submission}/mark-paid', [FosterStudentController::class, 'markPaid'])->name('submissions.mark-paid');
-        Route::patch('/submissions/{submission}/mark-cancelled', [FosterStudentController::class, 'markCancelled'])->name('submissions.mark-cancelled');
+        Route::get('/{submission}', [FosterStudentController::class, 'show'])->name('show');
+        Route::patch('/{submission}/status', [FosterStudentController::class, 'updateStatus'])->name('update-status');
+        Route::delete('/{submission}', [FosterStudentController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('website.media.')->prefix('website/media')->group(function () {

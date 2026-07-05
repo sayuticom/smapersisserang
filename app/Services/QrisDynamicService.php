@@ -13,12 +13,32 @@ class QrisDynamicService
 {
     public function removeCrc(string $payload): string
     {
-        return preg_replace('/6304[A-Fa-f0-9]{4}$/', '', trim($payload));
+        $cleaned = trim($payload);
+        $result = preg_replace('/6304[A-Fa-f0-9]{4}$/', '', $cleaned);
+        return $result !== null ? $result : $cleaned;
     }
 
     public function removeExistingAmount(string $payload): string
     {
-        return preg_replace('/54\d{2}\d+/', '', $payload);
+        $result = '';
+        $len = strlen($payload);
+        $i = 0;
+
+        while ($i + 4 <= $len) {
+            $tag = substr($payload, $i, 2);
+            $valueLen = (int) substr($payload, $i + 2, 2);
+            $segmentLen = 4 + $valueLen;
+
+            if ($tag === '54') {
+                $i += $segmentLen;
+                continue;
+            }
+
+            $result .= substr($payload, $i, $segmentLen);
+            $i += $segmentLen;
+        }
+
+        return $result;
     }
 
     public function injectAmount(string $payload, int $amount): string
@@ -54,7 +74,7 @@ class QrisDynamicService
             }
         }
 
-        return strtoupper(dechex($crc));
+        return strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
     }
 
     public function generatePayload(string $basePayload, int $amount): string

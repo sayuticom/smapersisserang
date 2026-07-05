@@ -7,29 +7,29 @@ use Illuminate\Database\Eloquent\Model;
 class FosterParentSubmission extends Model
 {
     protected $fillable = [
-        'foster_student_id',
+        'student_id',
         'donor_name',
         'donor_phone',
         'amount',
+        'custom_amount',
         'commitment_duration',
         'note',
-        'qris_payload',
-        'payment_status',
+        'status',
     ];
 
-    public function fosterStudent()
+    public function student()
     {
-        return $this->belongsTo(FosterStudent::class);
+        return $this->belongsTo(StudentApplication::class, 'student_id');
     }
 
     public function scopePending($query)
     {
-        return $query->where('payment_status', 'pending');
+        return $query->where('status', 'pending');
     }
 
-    public function scopePaid($query)
+    public function scopeActive($query)
     {
-        return $query->where('payment_status', 'paid');
+        return $query->where('status', 'aktif');
     }
 
     public function getDonorNameAttribute($value): string
@@ -39,6 +39,17 @@ class FosterParentSubmission extends Model
 
     public function getAmountFormattedAttribute(): string
     {
-        return 'Rp' . number_format($this->amount, 0, ',', '.');
+        return $this->amount ? 'Rp' . number_format($this->amount, 0, ',', '.') : 'Belum ditentukan';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Menunggu',
+            'dihubungi' => 'Perlu Dihubungi',
+            'aktif' => 'Aktif',
+            'batal' => 'Batal',
+            default => $this->status,
+        };
     }
 }

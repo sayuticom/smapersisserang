@@ -1,464 +1,209 @@
-@extends('layouts.public')
-
 @php
-    $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
-    $whatsappNumber = preg_replace('/[^0-9]/', '', $setting?->whatsapp_number ?: '6289661234569');
+    $heroBg = $schoolSetting?->hero_image_path
+        ? asset('storage/' . $schoolSetting->hero_image_path)
+        : 'https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=1920&q=80';
 @endphp
 
-@section('title', 'Program Orang Tua Asuh Santri - ' . $schoolName)
+<x-guest-layout>
+    <x-slot name="title">Orang Tua Asuh - SMA Persis Serang</x-slot>
 
-@section('content')
-
-<x-slot:header>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-</x-slot:header>
-
-<section class="relative isolate overflow-hidden bg-gradient-to-br from-[#052E1F] via-[#0A4F2B] to-[#0F6B3A]">
-    <div class="absolute inset-0 opacity-[0.06]"
-         style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
-    <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
-
-    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24 text-center">
-        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
-            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-            PROGRAM ORANG TUA ASUH
+    <!-- Hero Section -->
+    <section class="relative min-h-[70vh] flex items-center" style="background: linear-gradient(135deg, #0F6B3A 0%, #0A4F2B 50%, #0F6B3A 100%);">
+        <div class="absolute inset-0 overflow-hidden">
+            <img src="{{ $heroBg }}" alt="Background" class="w-full h-full object-cover opacity-20">
         </div>
-        <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-            Program Orang Tua Asuh Santri
-        </h1>
-        <p class="mx-auto mt-5 max-w-3xl text-lg leading-8 text-emerald-100/90">
-            Program Orang Tua Asuh Santri adalah gerakan kepedulian untuk membantu kebutuhan pendidikan, makan, asrama, dan pembinaan murid SMA Persis Serang yang sedang menempuh pendidikan secara gratis.
-        </p>
-        <div class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <a href="{{ $waUrl }}" target="_blank" rel="noopener"
-               class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
-                Hubungi WA SMA Persis Serang
-            </a>
-        </div>
-    </div>
-</section>
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(15,107,58,0.95) 0%, rgba(10,79,43,0.9) 100%);"></div>
 
-<section class="bg-white py-16 lg:py-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-4xl">
-            <h2 class="font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl text-center">Tentang Program</h2>
-            <div class="mt-8 space-y-5 text-lg leading-8 text-emerald-900/75">
-                <p>
-                    <strong class="text-[#0F6B3A]">Program Orang Tua Asuh Santri</strong> adalah gerakan kepedulian untuk membantu kebutuhan pendidikan, makan, asrama, dan pembinaan murid SMA Persis Serang yang sedang menempuh pendidikan secara gratis.
-                </p>
-                <p>
-                    Donatur dapat menjadi <strong class="text-[#0F6B3A]">orang tua asuh</strong> bagi satu atau beberapa murid. Bantuan yang diberikan digunakan untuk makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, dan pembinaan akhlak.
-                </p>
-                <p>
-                    Donatur boleh memilih murid tertentu, atau menyerahkan kepada pihak sekolah untuk menentukan murid yang paling membutuhkan.
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="daftar-murid" class="bg-[#FBF7EF] py-16 lg:py-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-3xl text-center">
-            <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">CALON ANAK ASUH</p>
-            <h2 class="mt-3 font-serif text-3xl font-bold text-[#052E1F] sm:text-4xl">Pilih Anak Asuh</h2>
-            <p class="mt-3 text-lg leading-8 text-emerald-900/75">
-                Berikut adalah murid-murid yang siap mendapatkan orang tua asuh.
-            </p>
-        </div>
-
-        @if($students->isEmpty())
-            <div class="mt-10 mx-auto max-w-2xl text-center">
-                <div class="rounded-2xl border border-amber-200 bg-white p-8 shadow-lg shadow-emerald-950/5">
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-                        <svg class="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                        </svg>
-                    </div>
-                    <p class="mt-4 text-lg font-semibold text-emerald-900">
-                        Data anak asuh sedang disiapkan
-                    </p>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Bapak/Ibu tetap dapat mendaftar sebagai Orang Tua Asuh dan pilihan anak asuh akan dibantu oleh pihak sekolah.
-                    </p>
-                </div>
-            </div>
-        @else
-            <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                @foreach($students as $student)
-                    <div class="group rounded-2xl border border-emerald-100 bg-white p-5 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg flex flex-col">
-                        <div class="flex-shrink-0">
-                            @if($student->photo_url)
-                                <img src="{{ $student->photo_url }}" alt="{{ $student->name }}"
-                                     class="w-full aspect-[4/5] object-cover rounded-xl">
-                            @else
-                                <div class="w-full aspect-[4/5] rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center">
-                                    <svg class="h-16 w-16 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h18a7 7 0 00-7-7z"/>
-                                    </svg>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="mt-4 flex-1 flex flex-col">
-                            <div class="flex items-start justify-between gap-2">
-                                <h3 class="text-base font-bold text-[#052E1F]">{{ $student->name }}</h3>
-                                @if($student->is_priority)
-                                    <span class="shrink-0 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Prioritas</span>
-                                @endif
-                            </div>
-                            <div class="mt-2 space-y-1 text-sm text-gray-600">
-                                <p>{{ $student->gender }} &middot; {{ $student->class_name }}</p>
-                                @if($student->origin)
-                                    <p>Asal: {{ $student->origin }}</p>
-                                @endif
-                            </div>
-                            @if($student->need_description)
-                                <p class="mt-2 text-sm text-gray-500 line-clamp-2">{{ $student->need_description }}</p>
-                            @endif
-                            <div class="mt-3">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                    {{ $student->foster_status === 'available' ? 'bg-green-100 text-green-700' : '' }}
-                                    {{ $student->foster_status === 'assigned' ? 'bg-blue-100 text-blue-700' : '' }}
-                                    {{ $student->foster_status === 'inactive' ? 'bg-gray-100 text-gray-600' : '' }}">
-                                    {{ $student->foster_status_label }}
-                                </span>
-                            </div>
-                            <div class="mt-auto pt-4">
-                                @if($student->foster_status === 'available')
-                                    <a href="#form-pendaftaran"
-                                       @click.prevent="selectStudent({{ $student->id }}, '{{ $student->name }}')"
-                                       class="inline-flex w-full items-center justify-center rounded-lg bg-[#0F6B3A] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0A4F2B]">
-                                        Pilih sebagai Anak Asuh
-                                    </a>
-                                @elseif($student->foster_status === 'assigned')
-                                    <span class="inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed">
-                                        Sudah Ada Orang Tua Asuh
-                                    </span>
-                                @else
-                                    <span class="inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed">
-                                        Tidak Tersedia
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="mt-10 text-center">
-            <button @click="serahkanKeSekolah()"
-                    class="inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-[#0F6B3A]/40 px-6 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:border-[#0F6B3A] hover:bg-[#0F6B3A]/5">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-sm mb-6">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
                 </svg>
-                Saya serahkan pilihan anak asuh kepada pihak sekolah
-            </button>
-        </div>
-    </div>
-</section>
-
-<section id="form-pendaftaran" class="bg-white py-16 lg:py-20"
-         x-data="fosterForm()"
-         x-show="formOpen"
-         x-cloak>
-    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-lg shadow-emerald-950/5 lg:p-10">
-            <div class="text-center">
-                <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">FORMULIR PENDAFTARAN</p>
-                <h2 class="mt-3 font-serif text-2xl font-bold text-[#052E1F] lg:text-3xl">Daftar sebagai Orang Tua Asuh</h2>
+                Program Sosial
             </div>
 
-            <template x-if="selectedStudentName">
-                <div class="mt-6 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-center">
-                    <p class="text-sm text-gray-500">Anak Asuh yang Dipilih</p>
-                    <p class="mt-1 text-lg font-bold text-[#052E1F]" x-text="selectedStudentName"></p>
-                </div>
-            </template>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+                Jadi <span class="text-emerald-300">Orang Tua Asuh</span>
+                <br>untuk Santri Kurang Mampu
+            </h1>
 
-            <template x-if="!selectedStudentName && formOpen">
-                <div class="mt-6 rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-center">
-                    <p class="text-sm font-medium text-amber-700">
-                        Pilihan anak asuh akan ditentukan oleh pihak sekolah.
-                    </p>
-                </div>
-            </template>
+            <p class="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Bantu biaya pendidikan dan kebutuhan sehari-hari santri kami yang kurang mampu.
+                Satu langkah kecil Anda bisa mengubah masa depan mereka.
+            </p>
 
-            <form class="mt-6 space-y-5">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#form-ota"
+                   class="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#0F6B3A] font-semibold rounded-xl shadow-xl hover:bg-emerald-50 transition-all duration-300 text-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    Menjadi Orang Tua Asuh
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-20 bg-white">
+        <div class="max-w-5xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-14">Bagaimana Cara Kerjanya?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-[#0F6B3A]">1</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Isi Form Pendaftaran</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Lengkapi data diri dan pilih calon anak asuh yang ingin Anda dukung.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-[#0F6B3A]">2</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Konfirmasi via WhatsApp</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Tim kami akan menghubungi Anda untuk konfirmasi dan informasi lebih lanjut.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-[#0F6B3A]">3</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Mulai Program Asuh</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Salurkan donasi Anda secara berkala dan pantau perkembangan anak asuh.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Form Section -->
+    <section id="form-ota" class="py-20 bg-slate-50">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900 mb-3">Daftar Menjadi Orang Tua Asuh</h2>
+                <p class="text-gray-500">Isi form di bawah untuk memulai program Orang Tua Asuh.</p>
+            </div>
+
+            @if(session('success'))
+                <div class="mb-6 px-5 py-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-center">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-6 px-5 py-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('orang-tua-asuh.submit') }}"
+                  class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-5">
+                @csrf
+
+                <input type="text" name="website_url" class="hidden" tabindex="-1" autocomplete="off">
+                <input type="hidden" name="form_started_at" x-ref="formStartedAt" value="">
+
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Nama Donatur <span class="text-gray-400">(opsional)</span></label>
-                    <input type="text" x-model="form.donor_name" maxlength="100"
-                           class="mt-1.5 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#0F6B3A] focus:ring-[#0F6B3A]">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap <span class="text-gray-400 text-xs">(opsional)</span></label>
+                    <input type="text" name="donor_name" value="{{ old('donor_name') }}"
+                           class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
+                           placeholder="cth: Ahmad Fauzi">
+                    @error('donor_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Nomor WhatsApp <span class="text-gray-400">(opsional)</span></label>
-                    <input type="text" x-model="form.donor_phone" maxlength="30"
-                           class="mt-1.5 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#0F6B3A] focus:ring-[#0F6B3A]">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Nomor WhatsApp <span class="text-red-500">*</span></label>
+                    <input type="tel" name="donor_phone" value="{{ old('donor_phone') }}" required
+                           class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
+                           placeholder="cth: 08123456789">
+                    @error('donor_phone') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Nominal Bantuan per Bulan <span class="text-red-500">*</span></label>
-                    <div class="mt-1.5 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                        <template x-for="nom in nominalPresets" :key="nom.value">
-                            <button type="button" @click="setNominal(nom.value)"
-                                    :class="form.amount === nom.value ? 'bg-[#0F6B3A] text-white border-[#0F6B3A]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#0F6B3A]'"
-                                    class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition">
-                                <span x-text="nom.label"></span>
-                            </button>
-                        </template>
-                        <button type="button" @click="setNominal('lainnya')"
-                                :class="form.amount === 'lainnya' ? 'bg-[#0F6B3A] text-white border-[#0F6B3A]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#0F6B3A]'"
-                                class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Pilih Anak Asuh <span class="text-gray-400 text-xs">(opsional)</span></label>
+                    <select name="student_id"
+                            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow">
+                        <option value="">— Serahkan ke Sekolah —</option>
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
+                                {{ $student->student_name }} — {{ $student->gender }} — {{ $student->diterima_di_kelas }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1.5">Kosongkan jika ingin sekolah yang menentukan.</p>
+                    @error('student_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nominal Donasi per Bulan <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-2" x-data="{ amount: '{{ old('amount', '100000') }}' }">
+                        @php
+                            $presets = [
+                                '100000'  => 'Rp100.000',
+                                '250000'  => 'Rp250.000',
+                                '500000'  => 'Rp500.000',
+                                '1000000' => 'Rp1.000.000',
+                            ];
+                        @endphp
+                        @foreach($presets as $val => $label)
+                            <label class="flex items-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-medium cursor-pointer transition-all duration-200"
+                                   :class="amount === '{{ $val }}' ? 'border-[#0F6B3A] bg-emerald-50 text-[#0F6B3A]' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'">
+                                <input type="radio" name="amount" value="{{ $val }}"
+                                       x-model="amount"
+                                       class="sr-only">
+                                {{ $label }}
+                            </label>
+                        @endforeach
+                        <label class="flex items-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-medium cursor-pointer transition-all duration-200"
+                               :class="amount === 'lainnya' ? 'border-[#0F6B3A] bg-emerald-50 text-[#0F6B3A]' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'">
+                            <input type="radio" name="amount" value="lainnya"
+                                   x-model="amount"
+                                   class="sr-only">
                             Lainnya
-                        </button>
+                        </label>
                     </div>
-                    <div x-show="form.amount === 'lainnya'" x-cloak class="mt-2">
-                        <input type="text" x-model="form.customAmount" x-on:input.debounce="previewQris()" maxlength="12"
-                               placeholder="Masukkan nominal"
-                               class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#0F6B3A] focus:ring-[#0F6B3A]">
-                    </div>
+                    @error('amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div x-show="$el.querySelector('[name=amount]:checked')?.value === 'lainnya'">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Nominal Lainnya (Rp)</label>
+                    <input type="text" name="custom_amount" value="{{ old('custom_amount') }}"
+                           inputmode="numeric"
+                           class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
+                           placeholder="cth: 750000">
+                    @error('custom_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Durasi Komitmen <span class="text-red-500">*</span></label>
-                    <div class="mt-1.5 grid grid-cols-3 gap-2 sm:grid-cols-5">
-                        <template x-for="dur in durationOptions" :key="dur.value">
-                            <button type="button" @click="form.commitment_duration = dur.value"
-                                    :class="form.commitment_duration === dur.value ? 'bg-[#0F6B3A] text-white border-[#0F6B3A]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#0F6B3A]'"
-                                    class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition">
-                                <span x-text="dur.label"></span>
-                            </button>
-                        </template>
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Komitmen Donasi <span class="text-red-500">*</span></label>
+                    <select name="commitment_duration" required
+                            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow">
+                        <option value="">— Pilih Durasi —</option>
+                        <option value="1 bulan" {{ old('commitment_duration') === '1 bulan' ? 'selected' : '' }}>1 Bulan</option>
+                        <option value="3 bulan" {{ old('commitment_duration') === '3 bulan' ? 'selected' : '' }}>3 Bulan</option>
+                        <option value="6 bulan" {{ old('commitment_duration') === '6 bulan' ? 'selected' : '' }}>6 Bulan</option>
+                        <option value="12 bulan" {{ old('commitment_duration') === '12 bulan' ? 'selected' : '' }}>12 Bulan (1 Tahun)</option>
+                        <option value="Belum ditentukan" {{ old('commitment_duration') === 'Belum ditentukan' ? 'selected' : '' }}>Belum Ditentukan</option>
+                    </select>
+                    @error('commitment_duration') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Catatan <span class="text-gray-400">(opsional)</span></label>
-                    <textarea x-model="form.note" rows="3" maxlength="500"
-                              class="mt-1.5 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-[#0F6B3A] focus:ring-[#0F6B3A]"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Catatan <span class="text-gray-400 text-xs">(opsional)</span></label>
+                    <textarea name="note" rows="3"
+                              class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
+                              placeholder="Ada yang ingin disampaikan?">{{ old('note') }}</textarea>
+                    @error('note') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
+
+                <button type="submit"
+                        class="w-full py-3.5 bg-[#0F6B3A] text-white font-semibold rounded-xl hover:bg-[#0A4F2B] transition-colors text-base">
+                    Kirim Pengajuan
+                </button>
             </form>
-
-            <div class="mt-6">
-                <template x-if="isLoading">
-                    <div class="flex items-center justify-center py-8">
-                        <svg class="h-8 w-8 animate-spin text-[#0F6B3A]" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                </template>
-
-                <template x-if="qrisError && !isLoading">
-                    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-center">
-                        <p class="text-sm text-red-600" x-text="qrisError"></p>
-                    </div>
-                </template>
-
-                <template x-if="previewData && !isLoading && !qrisError">
-                    <div>
-                        <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                            <table class="w-full text-sm">
-                                <tr>
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Nama</td>
-                                    <td class="py-1 font-semibold text-[#052E1F]" x-text="previewData.summary.donor_name"></td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Nomor WhatsApp</td>
-                                    <td class="py-1 font-semibold text-[#052E1F]" x-text="previewData.summary.donor_phone"></td>
-                                </tr>
-                                <tr x-show="previewData.summary.student_name">
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Anak Asuh</td>
-                                    <td class="py-1 font-semibold text-[#052E1F]" x-text="previewData.summary.student_name"></td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Nominal</td>
-                                    <td class="py-1 font-semibold text-[#0F6B3A]" x-text="previewData.amount_formatted"></td>
-                                </tr>
-                                <tr>
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Durasi Komitmen</td>
-                                    <td class="py-1 font-semibold text-[#052E1F]" x-text="previewData.summary.commitment_duration"></td>
-                                </tr>
-                                <tr x-show="previewData.summary.note">
-                                    <td class="py-1 pr-4 font-medium text-gray-500">Catatan</td>
-                                    <td class="py-1 font-semibold text-[#052E1F]" x-text="previewData.summary.note"></td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <div class="mt-6 flex justify-center">
-                            <div class="rounded-2xl border border-emerald-100 bg-white p-4 shadow-lg shadow-emerald-950/5">
-                                <img :src="previewData.qris_image" alt="QRIS Donasi" class="h-64 w-64 object-contain">
-                            </div>
-                        </div>
-
-                        <div class="mt-4 text-center">
-                            <p class="text-xs text-gray-500">
-                                <template x-if="previewData.is_dynamic">Scan QRIS di atas menggunakan aplikasi pembayaran.</template>
-                                <template x-if="previewData.static_fallback">Silakan masukkan nominal <strong x-text="previewData.amount_formatted"></strong> secara manual di aplikasi pembayaran.</template>
-                            </p>
-                        </div>
-
-                        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                            <a :href="`/donasi-pendidikan/qris/download?amount=${previewData.amount_raw}`"
-                               target="_blank"
-                               class="inline-flex items-center justify-center rounded-xl border border-[#0F6B3A] px-6 py-3 text-sm font-bold text-[#0F6B3A] transition hover:bg-[#0F6B3A] hover:text-white">
-                                <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                </svg>
-                                Download QRIS
-                            </a>
-                        </div>
-                    </div>
-                </template>
-
-                <template x-if="!previewData && !isLoading && !qrisError && hasValidAmount()">
-                    <div class="flex items-center justify-center py-8">
-                        <p class="text-sm text-gray-500">Menampilkan QRIS...</p>
-                    </div>
-                </template>
-            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-@push('scripts')
-<script>
-function fosterForm() {
-    return {
-        formOpen: false,
-        fosterStudentId: null,
-        selectedStudentName: null,
-        form: {
-            donor_name: '',
-            donor_phone: '',
-            amount: '',
-            customAmount: '',
-            commitment_duration: '',
-            note: '',
-        },
-        isLoading: false,
-        qrisError: null,
-        previewData: null,
-        nominalPresets: [
-            { value: '50000', label: 'Rp50.000' },
-            { value: '100000', label: 'Rp100.000' },
-            { value: '150000', label: 'Rp150.000' },
-            { value: '200000', label: 'Rp200.000' },
-            { value: '300000', label: 'Rp300.000' },
-            { value: '500000', label: 'Rp500.000' },
-            { value: '750000', label: 'Rp750.000' },
-            { value: '1000000', label: 'Rp1.000.000' },
-        ],
-        durationOptions: [
-            { value: '1 bulan', label: '1 Bulan' },
-            { value: '3 bulan', label: '3 Bulan' },
-            { value: '6 bulan', label: '6 Bulan' },
-            { value: '1 tahun', label: '1 Tahun' },
-            { value: 'lainnya', label: 'Lainnya' },
-        ],
-
-        init() {
-            this.$watch('form.amount', () => {
-                if (this.form.amount && this.form.amount !== 'lainnya') {
-                    this.previewQris();
-                }
-            });
-            this.$watch('form.customAmount', () => {
-                if (this.form.amount === 'lainnya') {
-                    this.previewQris();
-                }
-            });
-        },
-
-        selectStudent(id, name) {
-            this.fosterStudentId = id;
-            this.selectedStudentName = name;
-            this.formOpen = true;
-            this.previewData = null;
-            this.qrisError = null;
-            if (this.form.amount) {
-                this.previewQris();
-            }
-            setTimeout(() => {
-                document.getElementById('form-pendaftaran')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        },
-
-        serahkanKeSekolah() {
-            this.fosterStudentId = null;
-            this.selectedStudentName = null;
-            this.formOpen = true;
-            this.previewData = null;
-            this.qrisError = null;
-            if (this.form.amount) {
-                this.previewQris();
-            }
-            setTimeout(() => {
-                document.getElementById('form-pendaftaran')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        },
-
-        setNominal(value) {
-            this.form.amount = value;
-            if (value !== 'lainnya') {
-                this.form.customAmount = '';
-            }
-        },
-
-        hasValidAmount() {
-            if (this.form.amount && this.form.amount !== 'lainnya') return true;
-            if (this.form.amount === 'lainnya' && this.form.customAmount) return true;
-            return false;
-        },
-
-        previewQris() {
-            const amount = this.form.amount === 'lainnya' ? this.form.customAmount : this.form.amount;
-            if (!amount) return;
-
-            this.isLoading = true;
-            this.qrisError = null;
-            this.previewData = null;
-
-            const payload = new URLSearchParams();
-            if (this.fosterStudentId) payload.append('foster_student_id', this.fosterStudentId);
-            payload.append('donor_name', this.form.donor_name);
-            payload.append('donor_phone', this.form.donor_phone);
-            payload.append('amount', this.form.amount);
-            if (this.form.amount === 'lainnya' && this.form.customAmount) {
-                payload.append('custom_amount', this.form.customAmount);
-            }
-            payload.append('commitment_duration', this.form.commitment_duration);
-            payload.append('note', this.form.note);
-
-            fetch('{{ route("orang-tua-asuh.qris.preview") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-                body: payload,
-            })
-            .then(r => r.json())
-            .then(data => {
-                this.isLoading = false;
-                if (data.success) {
-                    this.previewData = data;
-                } else {
-                    this.qrisError = data.message || 'Gagal membuat QRIS';
-                }
-            })
-            .catch(err => {
-                this.isLoading = false;
-                this.qrisError = 'Terjadi kesalahan. Silakan coba lagi.';
-            });
-        },
-    };
-}
-</script>
-@endpush
-
-@endsection
+    <script>
+        document.querySelector('[name=form_started_at]').value = new Date().toISOString();
+    </script>
+</x-guest-layout>
