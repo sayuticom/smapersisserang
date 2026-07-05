@@ -406,6 +406,15 @@ class PublicPageController extends Controller
 
         $confirmWaUrl = 'https://wa.me/' . $waNumber . '?text=' . urlencode($confirmMessage);
 
+        try {
+            $schoolSetting = SchoolSetting::current();
+            $merchantName = $schoolSetting?->school_name ? strtoupper($schoolSetting->school_name) . ', CURUG' : 'SMA PERSIS SERANG, CURUG';
+            $merchantCity = 'SERANG';
+        } catch (\Exception $e) {
+            $merchantName = 'SMA PERSIS SERANG, CURUG';
+            $merchantCity = 'SERANG';
+        }
+
         $response = [
             'success' => (bool) $qrisImage,
             'qris_image' => $qrisImage,
@@ -414,6 +423,8 @@ class PublicPageController extends Controller
             'amount_formatted' => 'Rp' . number_format($amount, 0, ',', '.'),
             'amount_raw' => $amount,
             'whatsapp_url' => $confirmWaUrl,
+            'merchant_name' => $merchantName,
+            'merchant_city' => $merchantCity,
             'summary' => [
                 'donor_name' => $donorName,
                 'donor_whatsapp' => $donorWhatsapp,

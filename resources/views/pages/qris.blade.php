@@ -2,6 +2,8 @@
 
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
+    $merchantName = $schoolSetting->school_name ? strtoupper($schoolSetting->school_name) . ', CURUG' : 'SMA PERSIS SERANG, CURUG';
+    $merchantCity = 'SERANG';
     $qrisImageUrl = $setting?->donation_qris_image
         ? \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image)
         : null;
@@ -51,6 +53,10 @@
             <div class="mt-8 text-center">
                 @if($hasQrisPayload && $dynamicQrisBase64)
                     <div class="mx-auto max-w-xs">
+                        <div class="mb-3 text-center leading-snug">
+                            <div class="text-sm font-bold text-gray-900">{{ $merchantName }}</div>
+                            <div class="text-xs text-gray-400">{{ $merchantCity }}</div>
+                        </div>
                         <img src="{{ $dynamicQrisBase64 }}"
                              alt="QRIS Donasi {{ $schoolName }} - {{ $nominalFormatted }}"
                              class="w-full rounded-2xl border bg-white p-3 shadow-lg">
@@ -67,6 +73,10 @@
                     </div>
                 @elseif($qrisImageUrl)
                     <div class="mx-auto max-w-xs">
+                        <div class="mb-3 text-center leading-snug">
+                            <div class="text-sm font-bold text-gray-900">{{ $merchantName }}</div>
+                            <div class="text-xs text-gray-400">{{ $merchantCity }}</div>
+                        </div>
                         <img src="{{ $qrisImageUrl }}" alt="QRIS Donasi {{ $schoolName }}"
                              class="w-full rounded-2xl border bg-white p-3 shadow-lg">
                     </div>

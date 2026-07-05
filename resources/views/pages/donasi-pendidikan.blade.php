@@ -2,6 +2,9 @@
 
 @php
     $schoolName = $schoolSetting->school_name ?? 'SMA Persis Serang';
+    $donationHeroImage = $setting?->hero_image
+        ? asset('storage/' . $setting->hero_image)
+        : ($schoolSetting?->meta_image ? asset('storage/' . $schoolSetting->meta_image) : asset('images/og-sma-persis-serang.jpg'));
     $heroBg = $setting?->hero_image
         ? asset('storage/' . $setting->hero_image)
         : null;
@@ -53,6 +56,24 @@
 @endphp
 
 @section('title', $heroTitle . ' - ' . $schoolName)
+
+@section('meta')
+    <meta name="description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
+
+    <meta property="og:title" content="Donasi Pendidikan & Orang Tua Asuh Santri - SMA Persis Serang">
+    <meta property="og:description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $donationHeroImage }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Donasi Pendidikan & Orang Tua Asuh Santri - SMA Persis Serang">
+    <meta name="twitter:description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
+    <meta name="twitter:image" content="{{ $donationHeroImage }}">
+@endsection
 
 @section('content')
 

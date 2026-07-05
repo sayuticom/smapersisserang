@@ -140,8 +140,12 @@
                     </table>
 
                     <div class="text-center">
-                        <template x-if="previewData.qris_image && previewData.is_dynamic">
+                        <template x-if="previewData.qris_image">
                             <div class="mx-auto max-w-xs">
+                                <div class="mb-3 text-center leading-snug">
+                                    <div class="text-sm font-bold text-gray-900" x-text="previewData.merchant_name || 'SMA PERSIS SERANG, CURUG'"></div>
+                                    <div class="text-xs text-gray-400" x-text="previewData.merchant_city || 'SERANG'"></div>
+                                </div>
                                 <img :src="previewData.qris_image"
                                      alt="QRIS Donasi"
                                      class="w-full rounded-2xl border bg-white p-3 shadow-lg">
@@ -151,6 +155,10 @@
                         <template x-if="previewData.qris_image && previewData.static_fallback">
                             <div>
                                 <div class="mx-auto max-w-xs">
+                                    <div class="mb-3 text-center leading-snug">
+                                        <div class="text-sm font-bold text-gray-900" x-text="previewData.merchant_name || 'SMA PERSIS SERANG, CURUG'"></div>
+                                        <div class="text-xs text-gray-400" x-text="previewData.merchant_city || 'SERANG'"></div>
+                                    </div>
                                     <img :src="previewData.qris_image"
                                          alt="QRIS Donasi"
                                          class="w-full rounded-2xl border bg-white p-3 shadow-lg">
