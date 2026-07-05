@@ -10,25 +10,40 @@
                    class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800">
                     Buat Bukti Penerimaan
                 </a>
-                <a href="{{ route('admin.website.donasi-pendidikan.edit') }}"
-                   class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                    &larr; Pengaturan Donasi
-                </a>
             </div>
         </div>
 
-        <div class="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Terkonfirmasi</p>
-                <p class="mt-1 text-2xl font-bold text-emerald-700">Rp{{ number_format($totalPaid, 0, ',', '.') }}</p>
+        <form method="GET" action="{{ route('admin.donasi-transactions.index') }}"
+              class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(260px,1fr)_auto_auto_auto] lg:items-end">
+                <div class="col-span-1">
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Tanggal</label>
+                    <input type="date" name="date" value="{{ request('date') }}"
+                           class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <button type="submit" name="filter_type" value="date"
+                        class="mt-5 h-11 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800 md:mt-0">
+                    Filter Tanggal
+                </button>
+                <button type="submit" name="filter_type" value="month"
+                        class="h-11 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800">
+                    Filter Bulan
+                </button>
+                <a href="{{ route('admin.donasi-transactions.index') }}"
+                   class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    Reset
+                </a>
             </div>
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Menunggu</p>
-                <p class="mt-1 text-2xl font-bold text-amber-700">{{ $totalPending }} transaksi</p>
+        </form>
+
+        <div class="mb-4 grid grid-cols-2 gap-3 md:gap-4">
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 md:p-5">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 md:text-xs">Total Donasi Masuk</p>
+                <p class="mt-2 text-xl font-bold text-emerald-800 md:text-2xl">Rp{{ number_format($totalDonations, 0, ',', '.') }}</p>
             </div>
-            <div class="rounded-xl border border-red-200 bg-red-50 p-4">
-                <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Dibatalkan</p>
-                <p class="mt-1 text-2xl font-bold text-red-700">{{ $totalCancelled }} transaksi</p>
+            <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 md:p-5">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-yellow-700 md:text-xs">Jumlah Transaksi</p>
+                <p class="mt-2 text-xl font-bold text-yellow-800 md:text-2xl">{{ $totalTransactions }} transaksi</p>
             </div>
         </div>
 
@@ -38,85 +53,110 @@
             </div>
         @endif
 
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th class="text-left px-4 py-3 font-semibold text-slate-600">Referensi</th>
-                            <th class="text-left px-4 py-3 font-semibold text-slate-600">Tanggal</th>
-                            <th class="text-left px-4 py-3 font-semibold text-slate-600">Donatur</th>
-                            <th class="text-left px-4 py-3 font-semibold text-slate-600">Nominal</th>
-                            <th class="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
-                            <th class="text-right px-4 py-3 font-semibold text-slate-600">Aksi</th>
+        <div class="mt-4 hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-600">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-semibold">Referensi</th>
+                        <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
+                        <th class="px-4 py-3 text-left font-semibold">Donatur</th>
+                        <th class="px-4 py-3 text-left font-semibold">Nominal</th>
+                        <th class="px-4 py-3 text-right font-semibold">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($transactions as $transaction)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-4 font-mono text-xs text-slate-600">
+                                {{ $transaction->order_id ?? $transaction->reference ?? '-' }}
+                            </td>
+                            <td class="px-4 py-4 text-slate-700">
+                                {{ optional($transaction->created_at)->format('d/m/Y H:i') }}
+                            </td>
+                            <td class="px-4 py-4">
+                                <div class="font-semibold text-slate-900">
+                                    {{ $transaction->donor_name ?? '-' }}
+                                </div>
+                                @if($transaction->donor_whatsapp)
+                                    <div class="text-xs text-slate-500">
+                                        {{ $transaction->donor_whatsapp }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4 font-semibold text-slate-900">
+                                Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
+                                   title="Tampilkan Tanda Terima"
+                                   class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                    </svg>
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse($transactions as $tx)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">
-                                    {{ $tx->order_id }}
-                                </td>
-                                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
-                                    {{ $tx->created_at->format('d/m/Y H:i') }}
-                                </td>
-                                <td class="px-4 py-3 text-gray-900">
-                                    <div class="font-medium">{{ $tx->donor_name }}</div>
-                                    @if($tx->donor_whatsapp)
-                                        <div class="text-xs text-gray-400">{{ $tx->donor_whatsapp }}</div>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
-                                    Rp{{ number_format($tx->amount, 0, ',', '.') }}
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                        {{ $tx->status === 'pending' ? 'bg-amber-100 text-amber-700' : '' }}
-                                        {{ $tx->status === 'paid' ? 'bg-green-100 text-green-700' : '' }}
-                                        {{ $tx->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
-                                        {{ $tx->status === 'pending' ? 'Menunggu' : ($tx->status === 'paid' ? 'Lunas' : 'Dibatalkan') }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    @if($tx->status === 'pending')
-                                        <form action="{{ route('admin.donasi-transactions.mark-paid', $tx) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-sm font-medium text-green-600 hover:text-green-700"
-                                                    onclick="return confirm('Tandai donasi ini sebagai Lunas? Pastikan pembayaran sudah diverifikasi.')">Tandai Lunas</button>
-                                        </form>
-                                        <form action="{{ route('admin.donasi-transactions.mark-cancelled', $tx) }}" method="POST" class="inline ml-2">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700"
-                                                    onclick="return confirm('Batalkan donasi ini?')">Batal</button>
-                                        </form>
-                                    @elseif($tx->status === 'paid')
-                                        <span class="text-xs text-green-600 font-medium">
-                                            {{ $tx->paid_at ? 'Lunas ' . $tx->paid_at->format('d/m/Y') : '' }}
-                                        </span>
-                                    @else
-                                        <span class="text-xs text-gray-400">-</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @if($tx->note)
-                                <tr class="bg-slate-50">
-                                    <td colspan="6" class="px-4 py-2 text-xs text-gray-500">
-                                        Catatan: {{ $tx->note }}
-                                    </td>
-                                </tr>
-                            @endif
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-10 text-center text-gray-500">
-                                    Belum ada donasi masuk.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
+                                Belum ada data donasi masuk.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            @if($transactions->hasPages())
+                <div class="px-4 py-3 border-t border-slate-100">
+                    {{ $transactions->links() }}
+                </div>
+            @endif
+        </div>
+
+        <div class="mt-4 block md:hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full text-xs">
+                <thead class="bg-slate-50 text-slate-600">
+                    <tr>
+                        <th class="px-2 py-2 text-left font-semibold">Tgl</th>
+                        <th class="px-2 py-2 text-left font-semibold">Donatur</th>
+                        <th class="px-2 py-2 text-right font-semibold">Nominal</th>
+                        <th class="px-2 py-2 text-center font-semibold">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($transactions as $transaction)
+                        <tr>
+                            <td class="px-2 py-3 whitespace-nowrap text-slate-600">
+                                {{ optional($transaction->created_at)->format('d/m') }}
+                            </td>
+                            <td class="px-2 py-3">
+                                <div class="font-semibold text-slate-900">
+                                    {{ $transaction->donor_name ?? '-' }}
+                                </div>
+                            </td>
+                            <td class="px-2 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">
+                                Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
+                            </td>
+                            <td class="px-2 py-3 text-center">
+                                <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
+                                   title="Tampilkan Tanda Terima"
+                                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                    </svg>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-2 py-6 text-center text-xs text-slate-500">
+                                Belum ada data donasi.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
             @if($transactions->hasPages())
                 <div class="px-4 py-3 border-t border-slate-100">
                     {{ $transactions->links() }}

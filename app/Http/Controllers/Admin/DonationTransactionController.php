@@ -11,15 +11,31 @@ use Illuminate\Support\Str;
 
 class DonationTransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = DonationTransaction::orderBy('created_at', 'desc')->paginate(20);
+        $query = DonationTransaction::query();
 
-        $totalPaid = DonationTransaction::where('status', 'paid')->sum('amount');
-        $totalPending = DonationTransaction::where('status', 'pending')->count();
-        $totalCancelled = DonationTransaction::where('status', 'cancelled')->count();
+        if ($request->filled('date')) {
+            $date = \Carbon\Carbon::parse($request->date);
 
-        return view('admin.donasi-transactions.index', compact('transactions', 'totalPaid', 'totalPending', 'totalCancelled'));
+            if ($request->filter_type === 'month') {
+                $query->whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month);
+            } else {
+                $query->whereDate('created_at', $date->toDateString());
+            }
+        }
+
+        $summaryQuery = clone $query;
+
+        $transactions = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        $totalDonations = (clone $summaryQuery)->sum('amount');
+        $totalTransactions = (clone $summaryQuery)->count();
+
+        return view('admin.donasi-transactions.index', compact('transactions', 'totalDonations', 'totalTransactions'));
     }
 
     public function createReceipt()
@@ -123,8 +139,9 @@ class DonationTransactionController extends Controller
     {
         $receipt = $this->receiptData($transaction);
         $whatsappUrl = $this->donorReceiptWhatsappUrl($transaction, $receipt);
+        $schoolSetting = \App\Models\SchoolSetting::first();
 
-        return view('admin.donasi-transactions.show', compact('transaction', 'receipt', 'whatsappUrl'));
+        return view('admin.donasi-transactions.show', compact('transaction', 'receipt', 'whatsappUrl', 'schoolSetting'));
     }
 
     public function markPaid(DonationTransaction $transaction)
