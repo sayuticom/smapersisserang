@@ -100,6 +100,43 @@
                     </a>
 
                     <div class="pt-3 pb-1">
+                        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">KEUANGAN</p>
+                    </div>
+
+                    <a href="{{ route('admin.finance.dashboard') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.finance.dashboard') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.finance.dashboard') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        Dashboard Keuangan
+                    </a>
+
+                    <a href="{{ route('admin.finance.incomes.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ml-6 {{ request()->routeIs('admin.finance.incomes.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.finance.incomes.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
+                        </svg>
+                        Pemasukan
+                    </a>
+
+                    <a href="{{ route('admin.finance.expenses.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ml-6 {{ request()->routeIs('admin.finance.expenses.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.finance.expenses.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11l-3-3m0 0l-3 3m3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
+                        </svg>
+                        Pengeluaran
+                    </a>
+
+                    <a href="{{ route('admin.finance.report') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ml-6 {{ request()->routeIs('admin.finance.report') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.finance.report') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Laporan
+                    </a>
+
+                    <div class="pt-3 pb-1">
                         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">DONASI</p>
                     </div>
 

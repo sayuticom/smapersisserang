@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\FosterStudentController;
 use App\Http\Controllers\Admin\DonationTransactionController;
+use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\SarprasController;
 use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
@@ -273,6 +274,26 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')->group(function () {
         Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
         Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
+    });
+
+    Route::name('finance.')->prefix('finance')->group(function () {
+        Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+
+        Route::get('/pemasukan', [FinanceController::class, 'incomesIndex'])->name('incomes.index');
+        Route::get('/pemasukan/create', [FinanceController::class, 'incomesCreate'])->name('incomes.create');
+        Route::post('/pemasukan', [FinanceController::class, 'incomesStore'])->name('incomes.store');
+        Route::get('/pemasukan/{financeIncome}/edit', [FinanceController::class, 'incomesEdit'])->name('incomes.edit');
+        Route::put('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesUpdate'])->name('incomes.update');
+        Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
+
+        Route::get('/pengeluaran', [FinanceController::class, 'expensesIndex'])->name('expenses.index');
+        Route::get('/pengeluaran/create', [FinanceController::class, 'expensesCreate'])->name('expenses.create');
+        Route::post('/pengeluaran', [FinanceController::class, 'expensesStore'])->name('expenses.store');
+        Route::get('/pengeluaran/{financeExpense}/edit', [FinanceController::class, 'expensesEdit'])->name('expenses.edit');
+        Route::put('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesUpdate'])->name('expenses.update');
+        Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
+
+        Route::get('/laporan', [FinanceController::class, 'report'])->name('report');
     });
 
     Route::name('sarpras.')->prefix('sarpras')->group(function () {
