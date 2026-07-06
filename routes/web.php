@@ -215,6 +215,11 @@ Route::middleware('track.visitor')->group(function () {
         Route::post('/cek-status', [\App\Http\Controllers\PPDBController::class, 'statusCheck'])->name('status.check');
         Route::get('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'editData'])->name('update-data');
         Route::post('/perbarui-data/{token}', [\App\Http\Controllers\PPDBController::class, 'updateData'])->name('update-data.store');
+        Route::post('/perbarui-data/{token}/step/{step}', [\App\Http\Controllers\PPDBController::class, 'saveUpdateDataStep'])
+            ->whereNumber('step')
+            ->name('update-data.step');
+        Route::post('/perbarui-data/{token}/final-submit', [\App\Http\Controllers\PPDBController::class, 'finalSubmitUpdateData'])
+            ->name('update-data.final-submit');
     });
 });
 

@@ -238,6 +238,13 @@ class PPDBController extends Controller
             ]);
         }
 
+        if ($application->is_final_submitted) {
+            return view('ppdb.closed', [
+                'title' => 'Data Sudah Dikirim',
+                'message' => 'Data pembaruan sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.',
+            ]);
+        }
+
         $application->load(['admissionYear', 'admissionProgram', 'requirementFiles']);
 
         $agamaOptions = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
@@ -434,6 +441,284 @@ class PPDBController extends Controller
         ]);
 
         return redirect()->route('spmb.info')->with('success', 'Data berhasil diperbarui. Terima kasih.');
+    }
+
+    public function saveUpdateDataStep(Request $request, $token, int $step)
+    {
+        $application = StudentApplication::where('update_token', $token)->first();
+
+        if (!$application) {
+            return back()->with('error', 'Link pembaruan data tidak valid.');
+        }
+
+        if ($application->is_final_submitted) {
+            return back()->with('error', 'Data sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.');
+        }
+
+        if (!in_array($step, [1, 2, 3, 4], true)) {
+            abort(404);
+        }
+
+        if ($step === 4) {
+            $this->validateUpdateDataFiles($request);
+            try {
+                $this->storeUpdateDataRequirementFiles($request, $application);
+            } catch (\RuntimeException $e) {
+                return back()->with('error', $e->getMessage())->withInput();
+            }
+            $application->update([
+                'current_step' => max((int) $application->current_step, 5),
+                'documents_completed_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+
+            return back()->with('success', 'Dokumen berhasil disimpan.');
+        }
+
+        $validated = $request->validate($this->updateDataStepRules($step));
+
+        DB::transaction(function () use ($request, $application, $validated, $step) {
+            if ($step === 1 && $request->hasFile('foto_3x4')) {
+                if ($application->foto_3x4) {
+                    Storage::disk('public')->delete($application->foto_3x4);
+                }
+                $validated['foto_3x4'] = $request->file('foto_3x4')->store('spmb/foto-siswa', 'public');
+            }
+
+            if (array_key_exists('boarding_ready', $validated)) {
+                $validated['boarding_ready'] = (bool) $validated['boarding_ready'];
+            }
+
+            $validated['current_step'] = max((int) $application->current_step, min($step + 1, 5));
+            $validated['last_saved_at'] = now();
+
+            $completedColumn = match ($step) {
+                1 => 'student_data_completed_at',
+                2 => 'parent_data_completed_at',
+                3 => 'guardian_boarding_completed_at',
+            };
+            $validated[$completedColumn] = now();
+
+            $application->update($validated);
+        });
+
+        return back()->with('success', 'Data langkah ' . $step . ' berhasil disimpan.');
+    }
+
+    public function finalSubmitUpdateData(Request $request, $token)
+    {
+        $application = StudentApplication::where('update_token', $token)
+            ->with('requirementFiles')
+            ->first();
+
+        if (!$application) {
+            return back()->with('error', 'Link pembaruan data tidak valid.');
+        }
+
+        if ($application->is_final_submitted) {
+            return back()->with('error', 'Data sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.');
+        }
+
+        $errors = $this->finalUpdateDataErrors($application);
+        if (!empty($errors)) {
+            return back()->withErrors($errors)->withInput();
+        }
+
+        DB::transaction(function () use ($application) {
+            $fromStatus = $application->status;
+
+            $application->update([
+                'is_final_submitted' => true,
+                'final_submitted_at' => now(),
+                'status' => 'menunggu_verifikasi',
+                'status_data' => 'sudah_lengkap',
+                'current_step' => 5,
+                'last_saved_at' => now(),
+            ]);
+
+            if ($fromStatus !== 'menunggu_verifikasi') {
+                ApplicationStatusHistory::create([
+                    'student_application_id' => $application->id,
+                    'from_status' => $fromStatus,
+                    'to_status' => 'menunggu_verifikasi',
+                    'changed_by' => null,
+                    'notes' => 'Data pembaruan dikirim final oleh orang tua/wali.',
+                ]);
+            }
+        });
+
+        return redirect()->route('spmb.info')
+            ->with('success', 'Data berhasil dikirim final dan menunggu verifikasi panitia.');
+    }
+
+    private function updateDataStepRules(int $step): array
+    {
+        return match ($step) {
+            1 => [
+                'nama_panggilan' => ['nullable', 'string', 'max:100'],
+                'nomor_induk_asal' => ['nullable', 'string', 'max:50'],
+                'nisn' => ['nullable', 'string', 'max:20'],
+                'student_name' => ['nullable', 'string', 'max:255'],
+                'gender' => ['nullable', 'in:laki_laki,perempuan'],
+                'birth_place' => ['nullable', 'string', 'max:255'],
+                'birth_date' => ['nullable', 'date'],
+                'agama' => ['nullable', 'string', 'max:20'],
+                'anak_ke' => ['nullable', 'integer', 'min:1'],
+                'status_anak_dalam_keluarga' => ['nullable', 'string', 'max:50'],
+                'previous_school' => ['nullable', 'string', 'max:255'],
+                'alamat_sekolah_asal' => ['nullable', 'string'],
+                'address' => ['nullable', 'string'],
+                'telepon_siswa' => ['nullable', 'string', 'max:20'],
+                'foto_3x4' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:8192'],
+            ],
+            2 => [
+                'father_name' => ['nullable', 'string', 'max:255'],
+                'mother_name' => ['nullable', 'string', 'max:255'],
+                'alamat_ayah' => ['nullable', 'string'],
+                'alamat_ibu' => ['nullable', 'string'],
+                'parent_whatsapp' => ['nullable', 'string', 'max:20'],
+                'parent_job' => ['nullable', 'string', 'max:255'],
+                'pekerjaan_ayah' => ['nullable', 'string', 'max:100'],
+                'pekerjaan_ibu' => ['nullable', 'string', 'max:100'],
+                'pendidikan_ayah' => ['nullable', 'string', 'max:100'],
+                'pendidikan_ibu' => ['nullable', 'string', 'max:100'],
+                'penghasilan_ayah' => ['nullable', 'string', 'max:50'],
+                'penghasilan_ibu' => ['nullable', 'string', 'max:50'],
+            ],
+            3 => [
+                'nama_ayah_wali' => ['nullable', 'string', 'max:255'],
+                'nama_ibu_wali' => ['nullable', 'string', 'max:255'],
+                'alamat_ayah_wali' => ['nullable', 'string'],
+                'alamat_ibu_wali' => ['nullable', 'string'],
+                'telepon_wali' => ['nullable', 'string', 'max:20'],
+                'pekerjaan_ayah_wali' => ['nullable', 'string', 'max:100'],
+                'pekerjaan_ibu_wali' => ['nullable', 'string', 'max:100'],
+                'pendidikan_ayah_wali' => ['nullable', 'string', 'max:100'],
+                'pendidikan_ibu_wali' => ['nullable', 'string', 'max:100'],
+                'penghasilan_ayah_wali' => ['nullable', 'string', 'max:50'],
+                'penghasilan_ibu_wali' => ['nullable', 'string', 'max:50'],
+                'boarding_ready' => ['nullable', 'in:0,1'],
+                'quran_reading_ability' => ['nullable', 'in:belum_bisa,terbata_bata,lancar,baik'],
+                'health_notes' => ['nullable', 'string'],
+                'motivation' => ['nullable', 'string'],
+            ],
+            default => [],
+        };
+    }
+
+    private function validateUpdateDataFiles(Request $request): void
+    {
+        $rules = [];
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            $rules[$key] = ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png'];
+        }
+
+        $request->validate($rules);
+
+        $sizeErrors = [];
+        foreach (array_keys(StudentRequirementFile::$requirements) as $key) {
+            if (!$request->hasFile($key)) {
+                continue;
+            }
+
+            $file = $request->file($key);
+            $extension = strtolower($file->getClientOriginalExtension());
+            $size = $file->getSize();
+            $isImage = in_array($extension, ['jpg', 'jpeg', 'png'], true);
+            $isPdf = $extension === 'pdf';
+
+            if (!$isImage && !$isPdf) {
+                $sizeErrors[$key] = 'Format file harus PDF, JPG, JPEG, atau PNG.';
+            } elseif ($isPdf && $size > 2048 * 1024) {
+                $sizeErrors[$key] = 'File PDF maksimal 2MB.';
+            } elseif ($isImage && $size > 8192 * 1024) {
+                $sizeErrors[$key] = 'File gambar maksimal 8MB sebelum dikompres.';
+            }
+        }
+
+        if (!empty($sizeErrors)) {
+            throw \Illuminate\Validation\ValidationException::withMessages($sizeErrors);
+        }
+    }
+
+    private function storeUpdateDataRequirementFiles(Request $request, StudentApplication $application): void
+    {
+        $application->load('requirementFiles');
+        $existingFiles = $application->requirementFiles->keyBy('requirement_key');
+        $compressionService = app(FileCompressionService::class);
+
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            if (!$request->hasFile($key)) {
+                continue;
+            }
+
+            $result = $compressionService->storeRequirementFile($request->file($key), $key);
+            $existingFile = $existingFiles->get($key);
+
+            DB::transaction(function () use ($application, $key, $req, $result, $existingFile) {
+                if ($existingFile) {
+                    $existingFile->deleteFile();
+                    $existingFile->update([
+                        'file_path' => $result['file_path'],
+                        'original_filename' => $result['original_filename'],
+                        'mime_type' => $result['mime_type'],
+                        'file_size_original' => $result['file_size_original'],
+                        'file_size_compressed' => $result['file_size_compressed'],
+                        'compression_status' => $result['compression_status'],
+                        'uploaded_at' => now(),
+                    ]);
+                    return;
+                }
+
+                $application->requirementFiles()->create([
+                    'requirement_key' => $key,
+                    'requirement_label' => $req['label'],
+                    'file_path' => $result['file_path'],
+                    'original_filename' => $result['original_filename'],
+                    'mime_type' => $result['mime_type'],
+                    'file_size_original' => $result['file_size_original'],
+                    'file_size_compressed' => $result['file_size_compressed'],
+                    'compression_status' => $result['compression_status'],
+                    'uploaded_at' => now(),
+                ]);
+            });
+        }
+    }
+
+    private function finalUpdateDataErrors(StudentApplication $application): array
+    {
+        $requiredFields = [
+            'student_name' => 'Nama lengkap wajib diisi.',
+            'nisn' => 'NISN wajib diisi.',
+            'gender' => 'Jenis kelamin wajib dipilih.',
+            'agama' => 'Agama wajib dipilih.',
+            'birth_place' => 'Tempat lahir wajib diisi.',
+            'birth_date' => 'Tanggal lahir wajib diisi.',
+            'previous_school' => 'Sekolah sebelumnya wajib diisi.',
+            'address' => 'Alamat siswa wajib diisi.',
+            'father_name' => 'Nama ayah wajib diisi.',
+            'mother_name' => 'Nama ibu wajib diisi.',
+            'parent_whatsapp' => 'Nomor WhatsApp orang tua wajib diisi.',
+            'boarding_ready' => 'Kesiapan boarding wajib dipilih.',
+            'quran_reading_ability' => 'Kemampuan baca Al-Quran wajib dipilih.',
+            'motivation' => 'Motivasi wajib diisi.',
+        ];
+
+        $errors = [];
+        foreach ($requiredFields as $field => $message) {
+            if (blank($application->{$field}) && $application->{$field} !== false) {
+                $errors[$field] = $message;
+            }
+        }
+
+        $uploadedFiles = $application->requirementFiles->keyBy('requirement_key');
+        foreach (StudentRequirementFile::$requirements as $key => $req) {
+            if (($req['required'] ?? false) && !$uploadedFiles->has($key)) {
+                $errors[$key] = $req['label'] . ' wajib diunggah.';
+            }
+        }
+
+        return $errors;
     }
 
     public function statusForm()
