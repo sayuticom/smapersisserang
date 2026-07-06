@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Website;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonationEducationSetting;
+use App\Models\DonationShareTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -88,6 +89,46 @@ class DonationEducationSettingController extends Controller
 
             $data[$field] = $request->file($field)->store('donasi-pendidikan', 'public');
         }
+    }
+
+    public function shareTemplate()
+    {
+        $template = DonationShareTemplate::activeTemplate();
+
+        if (!$template) {
+            $template = DonationShareTemplate::create([
+                'title' => 'Default',
+                'is_active' => true,
+                'message_template' => "Assalamu'alaikum warahmatullahi wabarakatuh, {sapaan} {nama_tujuan}.\n\nSaya bersama rekan-rekan di SMA Persis Serang sedang berikhtiar menghadirkan pendidikan gratis, makan, dan asrama bagi para santri.\n\nMelalui pesan ini, saya memohon dukungan {sapaan} untuk ikut membantu perjuangan ini dengan sedekah terbaik, baik berupa beras, telur, sayuran, maupun kebutuhan makan santri lainnya.\n\nInsyaAllah, apabila diperlukan, kami siap menjemput donasi ke tempat {sapaan}.\n\nSemoga setiap bantuan yang diberikan menjadi amal jariyah dan pahala yang terus mengalir hingga akhirat.\n\nSilakan berdonasi melalui link berikut:\n{link_donasi}\n\nJazakumullahu khairan katsiran.\n\nWassalamu'alaikum warahmatullahi wabarakatuh.",
+            ]);
+        }
+
+        return view('admin.donasi-pendidikan.share-template', compact('template'));
+    }
+
+    public function updateShareTemplate(Request $request)
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'message_template' => 'required|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $template = DonationShareTemplate::activeTemplate();
+
+        if (!$template) {
+            $template = DonationShareTemplate::create([
+                'title' => $data['title'],
+                'message_template' => $data['message_template'],
+                'is_active' => $request->boolean('is_active'),
+            ]);
+        } else {
+            $data['is_active'] = $request->boolean('is_active');
+            $template->update($data);
+        }
+
+        return redirect()->route('admin.donasi-pendidikan.share-template')
+            ->with('success', 'Template pesan WhatsApp berhasil disimpan.');
     }
 
     private function defaultData(): array

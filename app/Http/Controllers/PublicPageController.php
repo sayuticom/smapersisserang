@@ -79,7 +79,113 @@ class PublicPageController extends Controller
             $websitePage = null;
         }
 
-        return view('pages.boarding', compact('schoolSetting', 'websitePage'));
+        $content = $this->buildBoardingContent($websitePage);
+
+        return view('pages.boarding', compact('schoolSetting', 'websitePage', 'content'));
+    }
+
+    private function buildBoardingContent($websitePage): array
+    {
+        $defaults = [
+            'section_label' => 'PROGRAM ASRAMA',
+            'section_heading' => 'Mengapa Boarding School?',
+            'section_subtitle' => 'Konsep pendidikan berasrama yang disiapkan untuk membentuk akhlak, kemandirian, ibadah, dan kedisiplinan siswa.',
+            'schedule_heading' => 'Rancangan Jadwal Harian',
+            'schedule_subtitle' => 'Rancangan pembiasaan harian yang dapat disesuaikan dengan kalender akademik dan kebutuhan pembinaan siswa.',
+            'schedule_note' => 'Jadwal bersifat rancangan dan dapat menyesuaikan kondisi sekolah serta kalender akademik.',
+            'focus_heading' => 'Fokus Pembinaan Asrama',
+            'focus_subtitle' => 'Aspek pembinaan yang disiapkan untuk membentuk karakter Islami, mandiri, dan siap menghadapi masa depan.',
+            'why_boarding_cards' => [
+                ['title' => 'Pembinaan Akhlak Harian', 'description' => 'Program asrama dirancang untuk membiasakan adab, ibadah, dan akhlak Islami dalam kehidupan sehari-hari.', 'color' => 'emerald', 'icon' => 'building'],
+                ['title' => 'Kemandirian dan Disiplin', 'description' => 'Siswa akan dibimbing untuk belajar mandiri, mengatur waktu, menjaga kebersihan, dan bertanggung jawab.', 'color' => 'amber', 'icon' => 'bolt'],
+                ['title' => 'Lingkungan Belajar Terarah', 'description' => 'Suasana asrama disiapkan agar mendukung belajar, pembinaan karakter, dan pendampingan akademik.', 'color' => 'emerald', 'icon' => 'academic'],
+                ['title' => 'Pengawasan & Pendampingan', 'description' => 'Sistem pendampingan dirancang agar perkembangan siswa dapat dipantau secara lebih dekat.', 'color' => 'amber', 'icon' => 'users'],
+            ],
+            'holiday_schedule' => [],
+            'daily_schedule' => [
+                ['time' => '03.00', 'title' => 'Subuh & Pembinaan Ibadah', 'description' => 'Pembiasaan shalat Subuh berjamaah, dzikir pagi, dan pembinaan ibadah harian.', 'color' => 'emerald'],
+                ['time' => '07.00', 'title' => 'Pembelajaran Sekolah', 'description' => 'Belajar di kelas sesuai kurikulum nasional dengan pendekatan integratif.', 'color' => 'amber'],
+                ['time' => '12.00', 'title' => 'Istirahat & Kegiatan Mandiri', 'description' => 'Shalat Dzuhur, istirahat, dan waktu untuk kegiatan mandiri siswa.', 'color' => 'emerald'],
+                ['time' => '15.30', 'title' => 'Kajian / Tahsin / Pembinaan', 'description' => 'Kajian Islam, tahsin Al-Qur\'an, dan pembinaan karakter.', 'color' => 'amber'],
+                ['time' => '19.00', 'title' => 'Belajar Mandiri / Muhasabah', 'description' => 'Waktu belajar mandiri dan muhasabah malam yang dibimbing oleh pembina asrama.', 'color' => 'emerald'],
+                ['time' => '21.00', 'title' => 'Istirahat', 'description' => 'Persiapan tidur dan istirahat malam untuk memulihkan energi.', 'color' => 'gray'],
+            ],
+            'info_cards' => [],
+            'focus_cards' => [
+                ['title' => 'Ibadah', 'description' => 'Pembiasaan shalat berjamaah, puasa sunnah, dan amalan ibadah harian.', 'color' => 'emerald', 'icon' => 'building'],
+                ['title' => 'Adab', 'description' => 'Pembentukan adab Islami terhadap Allah, sesama, dan lingkungan menjadi perhatian utama.', 'color' => 'amber', 'icon' => 'shield'],
+                ['title' => 'Al-Qur\'an', 'description' => 'Program tahsin dan tahfidz Al-Qur\'an akan disesuaikan dengan kemampuan masing-masing siswa.', 'color' => 'emerald', 'icon' => 'academic'],
+                ['title' => 'Kemandirian', 'description' => 'Siswa akan dilatih mengurus diri sendiri, mengatur waktu, dan bertanggung jawab.', 'color' => 'amber', 'icon' => 'bolt'],
+                ['title' => 'Teknologi', 'description' => 'Literasi digital dan keterampilan teknologi disiapkan sebagai bekal masa depan.', 'color' => 'emerald', 'icon' => 'cog'],
+                ['title' => 'Kepemimpinan', 'description' => 'Jiwa kepemimpinan akan dikembangkan melalui organisasi dan kegiatan sosial.', 'color' => 'amber', 'icon' => 'users'],
+            ],
+        ];
+
+        try {
+            $settings = \App\Models\BoardingPageSetting::first();
+            $whyCards = \App\Models\BoardingCard::whyBoarding()->where('is_active', true)->get();
+            $focusCards = \App\Models\BoardingCard::focus()->where('is_active', true)->get();
+            $infoCards = \App\Models\BoardingCard::info()->where('is_active', true)->get();
+            $dailySchedules = \App\Models\BoardingSchedule::where('schedule_type', 'daily')->where('is_active', true)->orderBy('sort_order')->get();
+            $holidaySchedules = \App\Models\BoardingSchedule::where('schedule_type', 'holiday')->where('is_active', true)->orderBy('sort_order')->get();
+
+            $hasDbData = $settings || $whyCards->isNotEmpty() || $focusCards->isNotEmpty() || $infoCards->isNotEmpty() || $dailySchedules->isNotEmpty() || $holidaySchedules->isNotEmpty();
+
+            if ($hasDbData) {
+                $content = $defaults;
+
+                if ($settings) {
+                    $content['section_label'] = $settings->section_label ?? $defaults['section_label'];
+                    $content['section_heading'] = $settings->section_heading ?? $defaults['section_heading'];
+                    $content['section_subtitle'] = $settings->section_subtitle ?? $defaults['section_subtitle'];
+                    $content['schedule_heading'] = $settings->schedule_heading ?? $defaults['schedule_heading'];
+                    $content['schedule_subtitle'] = $settings->schedule_subtitle ?? $defaults['schedule_subtitle'];
+                    $content['schedule_note'] = $settings->schedule_note ?? $defaults['schedule_note'];
+                    $content['focus_heading'] = $settings->focus_heading ?? $defaults['focus_heading'];
+                    $content['focus_subtitle'] = $settings->focus_subtitle ?? $defaults['focus_subtitle'];
+                }
+
+                $content['why_boarding_cards'] = $whyCards->isNotEmpty()
+                    ? $whyCards->toArray()
+                    : $defaults['why_boarding_cards'];
+
+                $content['focus_cards'] = $focusCards->isNotEmpty()
+                    ? $focusCards->toArray()
+                    : $defaults['focus_cards'];
+
+                $content['info_cards'] = $infoCards->isNotEmpty()
+                    ? $infoCards->toArray()
+                    : [];
+
+                $content['daily_schedule'] = $dailySchedules->isNotEmpty()
+                    ? $dailySchedules->toArray()
+                    : $defaults['daily_schedule'];
+
+                $content['holiday_schedule'] = $holidaySchedules->isNotEmpty()
+                    ? $holidaySchedules->toArray()
+                    : [];
+
+                return $content;
+            }
+        } catch (\Exception $e) {
+            // Fall through to legacy JSON fallback
+        }
+
+        // Legacy fallback: read from website_pages.content
+        if ($websitePage?->content) {
+            $decoded = json_decode($websitePage->content, true);
+            if (is_array($decoded)) {
+                $content = array_replace_recursive($defaults, $decoded);
+                foreach (['why_boarding_cards', 'daily_schedule', 'focus_cards', 'holiday_schedule'] as $key) {
+                    if (array_key_exists($key, $decoded)) {
+                        $content[$key] = $decoded[$key];
+                    }
+                }
+                return $content;
+            }
+        }
+
+        return $defaults;
     }
 
     public function gallery(Request $request)
@@ -788,5 +894,59 @@ class PublicPageController extends Controller
         }
 
         return view('pages.teachers', compact('schoolSetting', 'websitePage', 'headmaster', 'groupedByCategory', 'orphanTeachers', 'heroImages', 'tab', 'organisasi', 'strukturWebsitePage'));
+    }
+
+    public function sebarkan()
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        $setting = DonationEducationSetting::activeSetting();
+
+        $sapaanOptions = [
+            'Bapak', 'Ibu', 'Pak Haji', 'Bu Haji',
+            'Ustadz', 'Ustadzah', 'Kang', 'Teh', 'Saudara/i',
+        ];
+
+        return view('pages.sebarkan', compact('schoolSetting', 'setting', 'sapaanOptions'));
+    }
+
+    public function submitSebarkan(Request $request)
+    {
+        $data = $request->validate([
+            'sapaan' => 'required|string|max:50',
+            'nama_tujuan' => 'required|string|max:255',
+            'nomor_whatsapp' => 'nullable|string|max:30',
+        ]);
+
+        $template = \App\Models\DonationShareTemplate::activeTemplate();
+
+        $message = $template?->message_template ?? "Assalamu'alaikum warahmatullahi wabarakatuh, {sapaan} {nama_tujuan}.\n\nSilakan berdonasi melalui link berikut:\n{link_donasi}\n\nJazakumullahu khairan katsiran.";
+
+        $linkDonasi = route('donasi-pendidikan');
+
+        $message = str_replace(
+            ['{sapaan}', '{nama_tujuan}', '{link_donasi}'],
+            [$data['sapaan'], $data['nama_tujuan'], $linkDonasi],
+            $message
+        );
+
+        $nomor = $data['nomor_whatsapp'] ?? '';
+        $nomor = preg_replace('/[\s\-]+/', '', $nomor);
+        $nomor = preg_replace('/^08/', '628', $nomor);
+        $nomor = preg_replace('/^\+/', '', $nomor);
+
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        return view('pages.sebarkan-preview', compact(
+            'message', 'nomor', 'linkDonasi', 'schoolSetting', 'data'
+        ));
     }
 }

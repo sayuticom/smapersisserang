@@ -135,6 +135,14 @@
                         OTA - Pengajuan
                     </a>
 
+                    <a href="{{ route('admin.donasi-pendidikan.share-template') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.donasi-pendidikan.share-template') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.donasi-pendidikan.share-template') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        Template Share WA
+                    </a>
+
                     <div class="pt-3 pb-1">
                         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">SARPRAS</p>
                     </div>
@@ -207,6 +215,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         Pengaturan Website
+                    </a>
+
+                    <a href="{{ route('admin.website.boarding.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ml-6 {{ request()->routeIs('admin.website.boarding.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.website.boarding.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Konten Boarding
                     </a>
 
                     <a href="{{ route('admin.website.media.index') }}"

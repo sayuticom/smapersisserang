@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\SarprasController;
 use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
 use App\Http\Controllers\Admin\WebsiteSettingController;
+use App\Http\Controllers\Admin\BoardingContentController;
 use App\Http\Controllers\FosterParentController;
 use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\ProfileController;
@@ -177,6 +178,8 @@ Route::middleware('track.visitor')->group(function () {
     Route::post('/donasi-pendidikan/qris/preview', [PublicPageController::class, 'previewQrisInline'])->name('donasi-pendidikan.qris.preview');
     Route::get('/donasi-pendidikan/qris', [PublicPageController::class, 'qris'])->name('donasi-pendidikan.qris');
     Route::get('/donasi-pendidikan/qris/download', [PublicPageController::class, 'downloadQris'])->name('donasi-pendidikan.qris.download');
+    Route::get('/donasi-pendidikan/sebarkan', [PublicPageController::class, 'sebarkan'])->name('donasi-pendidikan.sebarkan');
+    Route::post('/donasi-pendidikan/sebarkan', [PublicPageController::class, 'submitSebarkan'])->name('donasi-pendidikan.sebarkan.submit');
 
     Route::get('/orang-tua-asuh', [FosterParentController::class, 'index'])->name('orang-tua-asuh');
     Route::post('/orang-tua-asuh/submit', [FosterParentController::class, 'submit'])
@@ -241,6 +244,17 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::post('/generate-token', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'generateToken'])->name('public-dashboard-token.generate');
     });
 
+    Route::name('website.boarding.')->prefix('website/boarding')->group(function () {
+        Route::get('/', [BoardingContentController::class, 'index'])->name('index');
+        Route::put('/settings', [BoardingContentController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/cards', [BoardingContentController::class, 'storeCard'])->name('cards.store');
+        Route::put('/cards/{boardingCard}', [BoardingContentController::class, 'updateCard'])->name('cards.update');
+        Route::delete('/cards/{boardingCard}', [BoardingContentController::class, 'destroyCard'])->name('cards.destroy');
+        Route::post('/schedules', [BoardingContentController::class, 'storeSchedule'])->name('schedules.store');
+        Route::put('/schedules/{boardingSchedule}', [BoardingContentController::class, 'updateSchedule'])->name('schedules.update');
+        Route::delete('/schedules/{boardingSchedule}', [BoardingContentController::class, 'destroySchedule'])->name('schedules.destroy');
+    });
+
     Route::get('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'edit'])
         ->name('website.donasi-pendidikan.edit');
     Route::put('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'update'])
@@ -254,6 +268,11 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
         Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
         Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+    });
+
+    Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')->group(function () {
+        Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
+        Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
     });
 
     Route::name('sarpras.')->prefix('sarpras')->group(function () {

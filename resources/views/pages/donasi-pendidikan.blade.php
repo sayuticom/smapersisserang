@@ -20,9 +20,7 @@
     $whatsappButtonText = $setting?->whatsapp_button_text ?: 'Hubungi WA SMA Persis Serang';
     $whatsappMessage = $setting?->whatsapp_message ?: 'Assalamu\'alaikum, saya ingin berdonasi untuk program pendidikan dan makan santri SMA Persis Serang';
     $shareButtonText = $setting?->share_button_text ?: 'Sebarkan Informasi Kebaikan Ini';
-    $shareText = $setting?->share_message ?: 'Assalamu’alaikum. Mari ikut mendukung program pendidikan gratis dan makan santri SMA Persis Serang. Donasi bisa berupa beras, telur, sayur, sembako, atau uang. Hubungi WA 6289661234569.';
     $waUrl = 'https://wa.me/' . $whatsappNumber . '?text=' . urlencode($whatsappMessage);
-    $shareUrl = 'https://wa.me/?text=' . urlencode($shareText . ' ' . route('donasi-pendidikan'));
     $defaultDonationItems = [
         ['title' => 'Beras', 'description' => 'Mendukung kebutuhan pokok makan harian santri.'],
         ['title' => 'Telur', 'description' => 'Sumber protein untuk menu makan santri.'],
@@ -60,19 +58,20 @@
 @section('meta')
     <meta name="description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
 
-    <meta property="og:title" content="Donasi Pendidikan & Orang Tua Asuh Santri - SMA Persis Serang">
+    <meta property="og:title" content="Donasi Pendidikan &amp; Orang Tua Asuh Santri - SMA Persis Serang">
     <meta property="og:description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ $donationHeroImage }}">
+    <meta property="og:image" content="{{ $donationHeroImage }}?v={{ date('Ymd') }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{ $heroTitle }}">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Donasi Pendidikan & Orang Tua Asuh Santri - SMA Persis Serang">
+    <meta name="twitter:title" content="Donasi Pendidikan &amp; Orang Tua Asuh Santri - SMA Persis Serang">
     <meta name="twitter:description" content="Bersama mendukung pendidikan gratis, makan, asrama, dan pembinaan santri SMA Persis Serang.">
-    <meta name="twitter:image" content="{{ $donationHeroImage }}">
+    <meta name="twitter:image" content="{{ $donationHeroImage }}?v={{ date('Ymd') }}">
 @endsection
 
 @section('content')
@@ -134,7 +133,7 @@
                        class="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500 sm:w-auto">
                         {{ $whatsappButtonText }}
                     </a>
-                    <a href="{{ $shareUrl }}" target="_blank" rel="noopener"
+                    <a href="{{ route('donasi-pendidikan.sebarkan') }}"
                        class="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10 sm:w-auto">
                         {{ $shareButtonText }}
                     </a>
@@ -268,7 +267,7 @@
                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
                 {{ $whatsappButtonText }}
             </a>
-            <a href="{{ $shareUrl }}" target="_blank" rel="noopener"
+            <a href="{{ route('donasi-pendidikan.sebarkan') }}"
                class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                 {{ $shareButtonText }}
             </a>

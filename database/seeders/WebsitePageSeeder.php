@@ -44,7 +44,38 @@ class WebsitePageSeeder extends Seeder
                 'page_key' => 'boarding',
                 'title' => 'Islamic Boarding School',
                 'subtitle' => 'Lingkungan pendidikan berasrama untuk membentuk akhlak, kemandirian, ibadah, dan kedisiplinan siswa.',
-                'content' => 'Sistem boarding school membantu siswa membangun kebiasaan baik melalui pembinaan harian, ibadah berjamaah, adab, belajar mandiri, dan kehidupan sosial yang terarah.',
+                'content' => json_encode([
+                    'section_label' => 'PROGRAM ASRAMA',
+                    'section_heading' => 'Mengapa Boarding School?',
+                    'section_subtitle' => 'Konsep pendidikan berasrama yang disiapkan untuk membentuk akhlak, kemandirian, ibadah, dan kedisiplinan siswa.',
+                    'schedule_heading' => 'Rancangan Jadwal Harian',
+                    'schedule_subtitle' => 'Rancangan pembiasaan harian yang dapat disesuaikan dengan kalender akademik dan kebutuhan pembinaan siswa.',
+                    'schedule_note' => 'Jadwal bersifat rancangan dan dapat menyesuaikan kondisi sekolah serta kalender akademik.',
+                    'focus_heading' => 'Fokus Pembinaan Asrama',
+                    'focus_subtitle' => 'Aspek pembinaan yang disiapkan untuk membentuk karakter Islami, mandiri, dan siap menghadapi masa depan.',
+                    'why_boarding_cards' => [
+                        ['title' => 'Pembinaan Akhlak Harian', 'description' => 'Program asrama dirancang untuk membiasakan adab, ibadah, dan akhlak Islami dalam kehidupan sehari-hari.', 'color' => 'emerald', 'icon' => 'building'],
+                        ['title' => 'Kemandirian dan Disiplin', 'description' => 'Siswa akan dibimbing untuk belajar mandiri, mengatur waktu, menjaga kebersihan, dan bertanggung jawab.', 'color' => 'amber', 'icon' => 'bolt'],
+                        ['title' => 'Lingkungan Belajar Terarah', 'description' => 'Suasana asrama disiapkan agar mendukung belajar, pembinaan karakter, dan pendampingan akademik.', 'color' => 'emerald', 'icon' => 'academic'],
+                        ['title' => 'Pengawasan & Pendampingan', 'description' => 'Sistem pendampingan dirancang agar perkembangan siswa dapat dipantau secara lebih dekat.', 'color' => 'amber', 'icon' => 'users'],
+                    ],
+                    'daily_schedule' => [
+                        ['time' => '03.00', 'title' => 'Subuh & Pembinaan Ibadah', 'description' => 'Pembiasaan shalat Subuh berjamaah, dzikir pagi, dan pembinaan ibadah harian.', 'color' => 'emerald'],
+                        ['time' => '07.00', 'title' => 'Pembelajaran Sekolah', 'description' => 'Belajar di kelas sesuai kurikulum nasional dengan pendekatan integratif.', 'color' => 'amber'],
+                        ['time' => '12.00', 'title' => 'Istirahat & Kegiatan Mandiri', 'description' => 'Shalat Dzuhur, istirahat, dan waktu untuk kegiatan mandiri siswa.', 'color' => 'emerald'],
+                        ['time' => '15.30', 'title' => 'Kajian / Tahsin / Pembinaan', 'description' => 'Kajian Islam, tahsin Al-Qur\'an, dan pembinaan karakter.', 'color' => 'amber'],
+                        ['time' => '19.00', 'title' => 'Belajar Mandiri / Muhasabah', 'description' => 'Waktu belajar mandiri dan muhasabah malam yang dibimbing oleh pembina asrama.', 'color' => 'emerald'],
+                        ['time' => '21.00', 'title' => 'Istirahat', 'description' => 'Persiapan tidur dan istirahat malam untuk memulihkan energi.', 'color' => 'gray'],
+                    ],
+                    'focus_cards' => [
+                        ['title' => 'Ibadah', 'description' => 'Pembiasaan shalat berjamaah, puasa sunnah, dan amalan ibadah harian.', 'color' => 'emerald', 'icon' => 'building'],
+                        ['title' => 'Adab', 'description' => 'Pembentukan adab Islami terhadap Allah, sesama, dan lingkungan menjadi perhatian utama.', 'color' => 'amber', 'icon' => 'shield'],
+                        ['title' => 'Al-Qur\'an', 'description' => 'Program tahsin dan tahfidz Al-Qur\'an akan disesuaikan dengan kemampuan masing-masing siswa.', 'color' => 'emerald', 'icon' => 'academic'],
+                        ['title' => 'Kemandirian', 'description' => 'Siswa akan dilatih mengurus diri sendiri, mengatur waktu, dan bertanggung jawab.', 'color' => 'amber', 'icon' => 'bolt'],
+                        ['title' => 'Teknologi', 'description' => 'Literasi digital dan keterampilan teknologi disiapkan sebagai bekal masa depan.', 'color' => 'emerald', 'icon' => 'cog'],
+                        ['title' => 'Kepemimpinan', 'description' => 'Jiwa kepemimpinan akan dikembangkan melalui organisasi dan kegiatan sosial.', 'color' => 'amber', 'icon' => 'users'],
+                    ],
+                ]),
                 'button_primary_text' => 'Daftar SPMB',
                 'button_primary_url' => '/spmb/daftar',
                 'meta_description' => 'Boarding school SMA Persis Serang untuk pembinaan akhlak, ibadah, kemandirian, dan kedisiplinan.',
@@ -95,6 +126,14 @@ class WebsitePageSeeder extends Seeder
         ];
 
         foreach ($pages as $page) {
+            $existing = WebsitePage::where('page_key', $page['page_key'])->first();
+
+            if ($existing && $page['page_key'] === 'boarding') {
+                if ($existing->content !== null && $existing->content !== '') {
+                    unset($page['content']);
+                }
+            }
+
             WebsitePage::updateOrCreate(
                 ['page_key' => $page['page_key']],
                 $page

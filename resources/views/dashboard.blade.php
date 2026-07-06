@@ -27,7 +27,7 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white rounded-xl border border-emerald-200 shadow-sm p-5">
                 <div class="flex items-start justify-between">
                     <div>
@@ -103,7 +103,7 @@ $menunggu = $counts->get('menunggu_verifikasi', 0) + $counts->get('baru_daftar',
 
         <div>
             <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Statistik Kunjungan Website</h3>
-            <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div class="bg-white rounded-xl border border-indigo-200 shadow-sm p-4">
                     <p class="text-xs font-medium text-slate-500">Hari Ini</p>
                     <p class="text-2xl font-bold text-indigo-700 mt-1">{{ $visitorToday }}</p>
