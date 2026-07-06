@@ -28,6 +28,9 @@ class StudentApplication extends Model
         'admin_notes', 'verified_by', 'verified_at', 'submitted_at',
         'follow_up_status', 'follow_up_notes', 'follow_up_at', 'follow_up_by',
         'status_data', 'update_token', 'updated_by_parent_at',
+        'current_step', 'student_data_completed_at', 'parent_data_completed_at',
+        'guardian_boarding_completed_at', 'documents_completed_at',
+        'final_submitted_at', 'is_final_submitted', 'last_saved_at',
     ];
     
     protected $casts = [
@@ -39,6 +42,14 @@ class StudentApplication extends Model
         'follow_up_at' => 'datetime',
         'updated_by_parent_at' => 'datetime',
         'anak_ke' => 'integer',
+        'current_step' => 'integer',
+        'student_data_completed_at' => 'datetime',
+        'parent_data_completed_at' => 'datetime',
+        'guardian_boarding_completed_at' => 'datetime',
+        'documents_completed_at' => 'datetime',
+        'final_submitted_at' => 'datetime',
+        'is_final_submitted' => 'boolean',
+        'last_saved_at' => 'datetime',
     ];
     
     public function admissionYear()
