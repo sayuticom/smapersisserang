@@ -472,6 +472,12 @@ class PPDBController extends Controller
                 'last_saved_at' => now(),
             ]);
 
+            if ($request->boolean('next')) {
+                return redirect()
+                    ->route('spmb.update-data', ['token' => $application->update_token, 'step' => 5])
+                    ->with('success', 'Dokumen berhasil disimpan.');
+            }
+
             return back()->with('success', 'Dokumen berhasil disimpan.');
         }
 
@@ -501,6 +507,12 @@ class PPDBController extends Controller
 
             $application->update($validated);
         });
+
+        if ($request->boolean('next')) {
+            return redirect()
+                ->route('spmb.update-data', ['token' => $application->update_token, 'step' => $step + 1])
+                ->with('success', 'Data langkah ' . $step . ' berhasil disimpan.');
+        }
 
         return back()->with('success', 'Data langkah ' . $step . ' berhasil disimpan.');
     }
