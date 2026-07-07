@@ -317,6 +317,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{letterOutgoing}/print', [LetterOutgoingController::class, 'print'])->name('print');
         Route::put('/{letterOutgoing}', [LetterOutgoingController::class, 'update'])->name('update');
         Route::post('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issue'])->name('issue');
+        Route::put('/{letterOutgoing}/attachment', [LetterOutgoingController::class, 'updateAttachment'])->name('update-attachment');
     });
 
     Route::name('letters.signers.')->prefix('surat/signers')->group(function () {

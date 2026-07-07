@@ -334,6 +334,20 @@
             height: auto;
         }
 
+        .attachment-title {
+            font-size: 13pt;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: underline;
+            margin-bottom: 14px;
+        }
+
+        .attachment-content {
+            font-size: {{ $pdfFontSize }}pt;
+            line-height: 1.08;
+            text-align: left;
+        }
+
     </style>
 </head>
 <body>
@@ -474,6 +488,16 @@
     <div class="cc">
         <strong>Tembusan:</strong>
         <div>{!! \App\Helpers\LetterHtmlSanitizer::render($letter->cc) !!}</div>
+    </div>
+@endif
+
+@if($letter->relationLoaded('attachmentContent') && $letter->attachmentContent?->content)
+    <div style="page-break-before: always;"></div>
+    <div class="attachment-page">
+        <h3 class="attachment-title">LAMPIRAN</h3>
+        <div class="attachment-content">
+            {!! \App\Helpers\LetterHtmlSanitizer::render($letter->attachmentContent->content) !!}
+        </div>
     </div>
 @endif
 </body>

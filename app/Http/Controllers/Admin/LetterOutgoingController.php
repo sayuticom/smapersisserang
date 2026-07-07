@@ -100,7 +100,7 @@ class LetterOutgoingController extends Controller
                 ->with('error', 'Surat yang sudah diterbitkan tidak dapat diedit pada tahap ini.');
         }
 
-        $letterOutgoing->load('recipients');
+        $letterOutgoing->load('recipients', 'attachmentContent');
 
         return view('admin.letters.outgoings.edit', array_merge(
             $this->formData(),
@@ -108,6 +108,7 @@ class LetterOutgoingController extends Controller
                 'letterOutgoing' => $letterOutgoing,
                 'recipientRows' => $letterOutgoing->recipients->values(),
                 'defaultSettings' => SchoolSetting::current(),
+                'attachmentContent' => $letterOutgoing->attachmentContent,
             ]
         ));
     }
@@ -178,6 +179,23 @@ class LetterOutgoingController extends Controller
             ->with('success', 'Surat berhasil diterbitkan dan nomor surat sudah dibuat.');
     }
 
+    public function updateAttachment(Request $request, LetterOutgoing $letterOutgoing): RedirectResponse
+    {
+        $data = $request->validate([
+            'content' => ['nullable', 'string'],
+        ]);
+
+        if ($letterOutgoing->attachmentContent) {
+            $letterOutgoing->attachmentContent->update($data);
+        } else {
+            $letterOutgoing->attachmentContent()->create($data);
+        }
+
+        return redirect()
+            ->route('admin.letters.outgoings.edit', $letterOutgoing)
+            ->with('success', 'Lampiran surat berhasil disimpan.');
+    }
+
     public function print(LetterOutgoing $letterOutgoing)
     {
         if ($letterOutgoing->status !== 'issued') {
@@ -201,6 +219,7 @@ class LetterOutgoingController extends Controller
             'recipients',
             'signerOne',
             'signerTwo',
+            'attachmentContent',
         ]);
 
         $schoolSetting = SchoolSetting::current();
