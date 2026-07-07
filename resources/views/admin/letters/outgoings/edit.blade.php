@@ -52,13 +52,22 @@
             </div>
 
 @php $hasAttachment = !empty($attachmentContent?->content); @endphp
-            <div x-show="tab === 'lampiran'" class="mt-6" x-cloak
+            <div x-show="tab === 'lampiran'" class="mt-6" x-cloak id="lampiran-panel"
                  x-data="{
                     mode: '{{ $hasAttachment ? 'view' : 'edit' }}',
-                    startEdit() { this.mode = 'edit'; document.getElementById('lampiran-panel').querySelectorAll('.letter-ckeditor').forEach(function(el) { if (!el.ckeditorInstance && window.initLetterEditorElement) { el.dataset.ckeditorInitialized = 'false'; initLetterEditorElement(el); } }); },
+                    startEdit() {
+                        this.mode = 'edit';
+                        setTimeout(function(){
+                            document.querySelectorAll('#lampiran-panel .letter-ckeditor').forEach(function(el){
+                                if (!el.ckeditorInstance) {
+                                    el.dataset.ckeditorInitialized = 'false';
+                                    if (window.initLetterEditorElement) initLetterEditorElement(el);
+                                }
+                            });
+                        }, 50);
+                    },
                     cancelEdit() { location.reload(); }
-                 }"
-                 id="lampiran-panel">
+                 }">
                 <div class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900">Lampiran Surat</h3>
