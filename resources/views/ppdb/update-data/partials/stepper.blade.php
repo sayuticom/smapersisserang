@@ -1,5 +1,5 @@
 <div class="mb-4 rounded-2xl border border-white/10 bg-white/10 p-3 shadow-lg backdrop-blur sm:mb-6 sm:p-4">
-    <div class="grid grid-cols-5 gap-2">
+    <div class="grid grid-cols-6 gap-2">
         @foreach($steps as $number => $step)
             @php
                 $isActive = $activeStep === $number;

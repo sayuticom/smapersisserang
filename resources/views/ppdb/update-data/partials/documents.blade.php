@@ -1,7 +1,7 @@
-<form method="POST" action="{{ route('spmb.update-data.step', ['token' => $app->update_token, 'step' => 4]) }}?step=4" enctype="multipart/form-data">
+<form method="POST" action="{{ route('spmb.update-data.step', ['token' => $app->update_token, 'step' => 5]) }}?step=5" enctype="multipart/form-data">
     @csrf
     <div class="border-b border-amber-100 bg-amber-50 px-5 py-4 sm:px-6">
-        <h2 class="text-lg font-bold text-amber-800">Langkah 4: Upload Dokumen</h2>
+        <h2 class="text-lg font-bold text-amber-800">Langkah 5: Upload Dokumen</h2>
         <p class="mt-1 text-sm text-amber-700">Dokumen bisa diunggah bertahap. File lama tetap tersimpan jika tidak diganti.</p>
     </div>
 
@@ -61,5 +61,5 @@
         </div>
     </div>
 
-    @include('ppdb.update-data.partials.actions', ['current' => 4])
+    @include('ppdb.update-data.partials.actions', ['current' => 5])
 </form>

@@ -455,11 +455,11 @@ class PPDBController extends Controller
             return back()->with('error', 'Data sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.');
         }
 
-        if (!in_array($step, [1, 2, 3, 4], true)) {
+        if (!in_array($step, [1, 2, 3, 4, 5], true)) {
             abort(404);
         }
 
-        if ($step === 4) {
+        if ($step === 5) {
             $this->validateUpdateDataFiles($request);
             try {
                 $this->storeUpdateDataRequirementFiles($request, $application);
@@ -467,14 +467,14 @@ class PPDBController extends Controller
                 return back()->with('error', $e->getMessage())->withInput();
             }
             $application->update([
-                'current_step' => max((int) $application->current_step, 5),
+                'current_step' => max((int) $application->current_step, 6),
                 'documents_completed_at' => now(),
                 'last_saved_at' => now(),
             ]);
 
             if ($request->boolean('next')) {
                 return redirect()
-                    ->route('spmb.update-data', ['token' => $application->update_token, 'step' => 5])
+                    ->route('spmb.update-data', ['token' => $application->update_token, 'step' => 6])
                     ->with('success', 'Dokumen berhasil disimpan.');
             }
 
@@ -495,15 +495,18 @@ class PPDBController extends Controller
                 $validated['boarding_ready'] = (bool) $validated['boarding_ready'];
             }
 
-            $validated['current_step'] = max((int) $application->current_step, min($step + 1, 5));
+            $validated['current_step'] = max((int) $application->current_step, min($step + 1, 6));
             $validated['last_saved_at'] = now();
 
             $completedColumn = match ($step) {
                 1 => 'student_data_completed_at',
                 2 => 'parent_data_completed_at',
-                3 => 'guardian_boarding_completed_at',
+                3 => null,
+                4 => 'guardian_boarding_completed_at',
             };
-            $validated[$completedColumn] = now();
+            if ($completedColumn) {
+                $validated[$completedColumn] = now();
+            }
 
             $application->update($validated);
         });
@@ -544,7 +547,7 @@ class PPDBController extends Controller
                 'final_submitted_at' => now(),
                 'status' => 'menunggu_verifikasi',
                 'status_data' => 'sudah_lengkap',
-                'current_step' => 5,
+                'current_step' => 6,
                 'last_saved_at' => now(),
             ]);
 
@@ -609,10 +612,12 @@ class PPDBController extends Controller
                 'pendidikan_ibu_wali' => ['nullable', 'string', 'max:100'],
                 'penghasilan_ayah_wali' => ['nullable', 'string', 'max:50'],
                 'penghasilan_ibu_wali' => ['nullable', 'string', 'max:50'],
-                'boarding_ready' => ['nullable', 'in:0,1'],
-                'quran_reading_ability' => ['nullable', 'in:belum_bisa,terbata_bata,lancar,baik'],
+            ],
+            4 => [
+                'boarding_ready' => ['required', 'in:0,1'],
+                'quran_reading_ability' => ['required', 'in:belum_bisa,terbata_bata,lancar,baik'],
                 'health_notes' => ['nullable', 'string'],
-                'motivation' => ['nullable', 'string'],
+                'motivation' => ['required', 'string'],
             ],
             default => [],
         };

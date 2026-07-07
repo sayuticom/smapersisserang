@@ -28,6 +28,8 @@
         $row('Nama Ayah Wali', $app->nama_ayah_wali),
         $row('Nama Ibu Wali', $app->nama_ibu_wali),
         $row('Telepon Wali', $app->telepon_wali),
+    ];
+    $boardingRows = [
         $row('Siap Boarding', is_null($app->boarding_ready) ? '-' : ($app->boarding_ready ? 'Ya' : 'Tidak')),
         $row('Kemampuan Baca Al-Quran', $app->quran_reading_ability ? ucwords(str_replace('_', ' ', $app->quran_reading_ability)) : null),
         $row('Motivasi', $app->motivation),
@@ -37,12 +39,12 @@
 
 <div>
     <div class="border-b border-emerald-100 bg-emerald-50 px-5 py-4 sm:px-6">
-        <h2 class="text-lg font-bold text-emerald-800">Langkah 5: Review & Kirim Final</h2>
+        <h2 class="text-lg font-bold text-emerald-800">Langkah 6: Review & Kirim Final</h2>
         <p class="mt-1 text-sm text-emerald-700">Periksa kembali data. Setelah dikirim final, data menunggu verifikasi admin.</p>
     </div>
 
     <div class="space-y-4 p-5 sm:p-6">
-        @foreach(['Data Siswa' => $studentRows, 'Data Orang Tua' => $parentRows, 'Wali, Boarding, Kesehatan & Motivasi' => $guardianRows] as $title => $rows)
+        @foreach(['Data Siswa' => $studentRows, 'Data Orang Tua' => $parentRows, 'Data Wali' => $guardianRows, 'Boarding, Al-Quran, Motivasi & Kesehatan' => $boardingRows] as $title => $rows)
             <section class="rounded-xl border border-gray-200 p-4">
                 <h3 class="text-sm font-bold uppercase tracking-wide text-emerald-700">{{ $title }}</h3>
                 <dl class="mt-3 space-y-2 text-sm">
@@ -77,10 +79,10 @@
         </section>
     </div>
 
-    <form method="POST" action="{{ route('spmb.update-data.final-submit', $app->update_token) }}?step=5">
+    <form method="POST" action="{{ route('spmb.update-data.final-submit', $app->update_token) }}?step=6">
         @csrf
         <div class="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <a href="{{ route('spmb.update-data', ['token' => $app->update_token, 'step' => 4]) }}" class="inline-flex justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <a href="{{ route('spmb.update-data', ['token' => $app->update_token, 'step' => 5]) }}" class="inline-flex justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                 Kembali
             </a>
             <button type="submit" class="rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-emerald-950 shadow hover:bg-amber-300">

@@ -3,13 +3,14 @@
 @php
     $app = $application;
     $activeStep = (int) request('step', $app->current_step ?: 1);
-    $activeStep = max(1, min(5, $activeStep));
+    $activeStep = max(1, min(6, $activeStep));
     $steps = [
         1 => ['title' => 'Data Siswa', 'completed' => filled($app->student_data_completed_at)],
         2 => ['title' => 'Data Orang Tua', 'completed' => filled($app->parent_data_completed_at)],
-        3 => ['title' => 'Wali & Kesehatan', 'completed' => filled($app->guardian_boarding_completed_at)],
-        4 => ['title' => 'Upload Dokumen', 'completed' => filled($app->documents_completed_at)],
-        5 => ['title' => 'Review Final', 'completed' => (bool) $app->is_final_submitted],
+        3 => ['title' => 'Data Wali', 'completed' => (int) ($app->current_step ?: 1) > 3],
+        4 => ['title' => 'Boarding & Kesehatan', 'completed' => filled($app->guardian_boarding_completed_at)],
+        5 => ['title' => 'Upload Dokumen', 'completed' => filled($app->documents_completed_at)],
+        6 => ['title' => 'Review Final', 'completed' => (bool) $app->is_final_submitted],
     ];
 @endphp
 
@@ -67,6 +68,8 @@
                 @elseif($activeStep === 3)
                     @include('ppdb.update-data.partials.guardian-boarding')
                 @elseif($activeStep === 4)
+                    @include('ppdb.update-data.partials.boarding-health')
+                @elseif($activeStep === 5)
                     @include('ppdb.update-data.partials.documents')
                 @else
                     @include('ppdb.update-data.partials.review')

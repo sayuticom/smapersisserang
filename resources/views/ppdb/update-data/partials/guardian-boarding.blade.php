@@ -1,7 +1,7 @@
 <form method="POST" action="{{ route('spmb.update-data.step', ['token' => $app->update_token, 'step' => 3]) }}?step=3">
     @csrf
     <div class="border-b border-emerald-100 bg-emerald-50 px-5 py-4 sm:px-6">
-        <h2 class="text-lg font-bold text-emerald-800">Langkah 3: Data Wali, Boarding, Kesehatan & Motivasi</h2>
+        <h2 class="text-lg font-bold text-emerald-800">Langkah 3: Data Wali</h2>
         <p class="mt-1 text-sm text-emerald-700">Data wali boleh dikosongkan jika tidak ada.</p>
     </div>
 
@@ -43,33 +43,6 @@
                 </div>
             @endforeach
 
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Siap Boarding</label>
-                <select name="boarding_ready" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">-- Pilih --</option>
-                    <option value="1" {{ old('boarding_ready', $app->boarding_ready) === true || old('boarding_ready', $app->boarding_ready) === 1 || old('boarding_ready', $app->boarding_ready) === '1' ? 'selected' : '' }}>Ya, Siap</option>
-                    <option value="0" {{ old('boarding_ready', $app->boarding_ready) === false || old('boarding_ready', $app->boarding_ready) === 0 || old('boarding_ready', $app->boarding_ready) === '0' ? 'selected' : '' }}>Tidak</option>
-                </select>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Kemampuan Baca Al-Quran</label>
-                <select name="quran_reading_ability" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">-- Pilih --</option>
-                    <option value="belum_bisa" {{ old('quran_reading_ability', $app->quran_reading_ability) === 'belum_bisa' ? 'selected' : '' }}>Belum Bisa</option>
-                    <option value="terbata_bata" {{ old('quran_reading_ability', $app->quran_reading_ability) === 'terbata_bata' ? 'selected' : '' }}>Terbata-bata</option>
-                    <option value="lancar" {{ old('quran_reading_ability', $app->quran_reading_ability) === 'lancar' ? 'selected' : '' }}>Lancar</option>
-                    <option value="baik" {{ old('quran_reading_ability', $app->quran_reading_ability) === 'baik' ? 'selected' : '' }}>Baik</option>
-                </select>
-            </div>
-        </div>
-
-        <div>
-            <label class="mb-1 block text-sm font-semibold text-gray-700">Motivasi</label>
-            <textarea name="motivation" rows="3" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('motivation', $app->motivation) }}</textarea>
-        </div>
-        <div>
-            <label class="mb-1 block text-sm font-semibold text-gray-700">Catatan Kesehatan</label>
-            <textarea name="health_notes" rows="2" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('health_notes', $app->health_notes) }}</textarea>
         </div>
     </div>
 
