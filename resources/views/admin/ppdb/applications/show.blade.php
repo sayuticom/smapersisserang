@@ -537,8 +537,8 @@ $app = $studentApplication;
             </div>
             <div class="p-4">
                 @php
-                    $statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan'];
-                    $statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800'];
+                    $statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan', 'data_kurang' => 'Data Kurang', 'terverifikasi' => 'Terverifikasi'];
+                    $statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800', 'data_kurang' => 'bg-red-100 text-red-800', 'terverifikasi' => 'bg-blue-100 text-blue-800'];
                 @endphp
                 <div class="flex flex-wrap items-center gap-4 mb-4">
                     <span class="inline-flex px-3 py-1 rounded-full text-sm font-medium {{ $statusDataColors[$app->status_data] ?? 'bg-gray-100 text-gray-800' }}">
@@ -559,13 +559,13 @@ $app = $studentApplication;
                         </button>
                     </form>
 
-                    @if($app->status_data !== 'perlu_perbaikan')
+                    @if(! in_array($app->status_data, ['perlu_perbaikan', 'data_kurang'], true))
                     <form method="POST" action="{{ route('admin.ppdb.applications.mark-data-complete', $app) }}" class="inline">
                         @csrf
                         @method('PATCH')
-                        <input type="hidden" name="status_data" value="perlu_perbaikan">
+                        <input type="hidden" name="status_data" value="data_kurang">
                         <button type="submit" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
-                            Tandai Perlu Perbaikan
+                            Tandai Data Kurang
                         </button>
                     </form>
                     @endif

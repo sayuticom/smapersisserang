@@ -1,6 +1,6 @@
 @php
-$statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan'];
-$statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800'];
+$statusDataLabels = ['belum_lengkap' => 'Belum Lengkap', 'sudah_lengkap' => 'Sudah Lengkap', 'perlu_perbaikan' => 'Perlu Perbaikan', 'data_kurang' => 'Data Kurang', 'terverifikasi' => 'Terverifikasi'];
+$statusDataColors = ['belum_lengkap' => 'bg-yellow-100 text-yellow-800', 'sudah_lengkap' => 'bg-green-100 text-green-800', 'perlu_perbaikan' => 'bg-red-100 text-red-800', 'data_kurang' => 'bg-red-100 text-red-800', 'terverifikasi' => 'bg-blue-100 text-blue-800'];
 
 $statusLabels = [
     'baru_daftar' => 'Baru Daftar',

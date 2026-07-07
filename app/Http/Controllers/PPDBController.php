@@ -444,7 +444,7 @@ class PPDBController extends Controller
             return back()->with('error', 'Link pembaruan data tidak valid.');
         }
 
-        if ($application->is_final_submitted) {
+        if ($application->is_final_submitted && ! $this->canReviseFinalSubmittedData($application)) {
             return back()->with('error', 'Data sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.');
         }
 
@@ -523,7 +523,7 @@ class PPDBController extends Controller
             return back()->with('error', 'Link pembaruan data tidak valid.');
         }
 
-        if ($application->is_final_submitted) {
+        if ($application->is_final_submitted && ! $this->canReviseFinalSubmittedData($application)) {
             return back()->with('error', 'Data sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.');
         }
 
@@ -615,6 +615,12 @@ class PPDBController extends Controller
             ],
             default => [],
         };
+    }
+
+    private function canReviseFinalSubmittedData(StudentApplication $application): bool
+    {
+        return in_array($application->status_data, ['data_kurang', 'perlu_perbaikan'], true)
+            || $application->status === 'data_kurang';
     }
 
     private function validateUpdateDataFiles(Request $request): void

@@ -12,6 +12,9 @@
         5 => ['title' => 'Upload Dokumen', 'completed' => filled($app->documents_completed_at)],
         6 => ['title' => 'Review Final', 'completed' => (bool) $app->is_final_submitted],
     ];
+    $needsRevision = in_array($app->status_data, ['data_kurang', 'perlu_perbaikan'], true) || $app->status === 'data_kurang';
+    $isVerified = $app->status_data === 'terverifikasi' || $app->status === 'terverifikasi';
+    $showSubmitted = ! $needsRevision && ! $isVerified && $app->is_final_submitted && $app->status_data === 'sudah_lengkap';
 @endphp
 
 @section('title', 'Pembaruan Data Siswa - SPMB SMA Persis Serang')
@@ -25,9 +28,30 @@
             <p class="mt-2 text-xs text-white/90 sm:text-sm">Nomor Pendaftaran: <strong>{{ $app->registration_number }}</strong></p>
         </div>
 
-        @if($app->is_final_submitted)
+        @if($isVerified)
+            @include('ppdb.update-data.partials.verified')
+        @elseif($showSubmitted)
             @include('ppdb.update-data.partials.submitted')
         @else
+            @if($needsRevision)
+                <div class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+                    <div class="font-bold">Perlu Perbaikan Data</div>
+                    <p class="mt-1">Data Anda perlu dilengkapi kembali. Silakan perbaiki bagian yang kurang, lalu kirim ulang data final.</p>
+                    @if($app->admin_notes)
+                        <div class="mt-3 rounded-xl bg-white/70 p-3">
+                            <div class="text-xs font-bold uppercase tracking-wide text-amber-700">Catatan Admin</div>
+                            <p class="mt-1">{{ $app->admin_notes }}</p>
+                        </div>
+                    @endif
+                    @if($app->follow_up_notes)
+                        <div class="mt-3 rounded-xl bg-white/70 p-3">
+                            <div class="text-xs font-bold uppercase tracking-wide text-amber-700">Catatan Follow-up</div>
+                            <p class="mt-1">{{ $app->follow_up_notes }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             @include('ppdb.update-data.partials.stepper')
 
             @if(session('success'))
