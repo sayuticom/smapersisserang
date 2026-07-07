@@ -8,6 +8,12 @@ use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\FosterStudentController;
 use App\Http\Controllers\Admin\DonationTransactionController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\LetterIncomingController;
+use App\Http\Controllers\Admin\LetterSettingController;
+use App\Http\Controllers\Admin\LetterOutgoingController;
+use App\Http\Controllers\Admin\LetterSignerController;
+use App\Http\Controllers\Admin\LetterTemplateController;
+use App\Http\Controllers\Admin\LetterTypeController;
 use App\Http\Controllers\Admin\SarprasController;
 use App\Http\Controllers\Admin\Website\DonationEducationSettingController;
 use App\Http\Controllers\Admin\WebsitePageController;
@@ -299,6 +305,59 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
 
         Route::get('/laporan', [FinanceController::class, 'report'])->name('report');
+    });
+
+    Route::name('letters.outgoings.')->prefix('surat/keluar')->group(function () {
+        Route::get('/', [LetterOutgoingController::class, 'index'])->name('index');
+        Route::get('/create', [LetterOutgoingController::class, 'create'])->name('create');
+        Route::post('/', [LetterOutgoingController::class, 'store'])->name('store');
+        Route::get('/{letterOutgoing}', [LetterOutgoingController::class, 'show'])->name('show');
+        Route::get('/{letterOutgoing}/edit', [LetterOutgoingController::class, 'edit'])->name('edit');
+        Route::get('/{letterOutgoing}/preview', [LetterOutgoingController::class, 'preview'])->name('preview');
+        Route::get('/{letterOutgoing}/print', [LetterOutgoingController::class, 'print'])->name('print');
+        Route::put('/{letterOutgoing}', [LetterOutgoingController::class, 'update'])->name('update');
+        Route::post('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issue'])->name('issue');
+    });
+
+    Route::name('letters.signers.')->prefix('surat/signers')->group(function () {
+        Route::get('/', [LetterSignerController::class, 'index'])->name('index');
+        Route::post('/', [LetterSignerController::class, 'store'])->name('store');
+        Route::get('/{letterSigner}/edit', [LetterSignerController::class, 'edit'])->name('edit');
+        Route::put('/{letterSigner}', [LetterSignerController::class, 'update'])->name('update');
+        Route::delete('/{letterSigner}', [LetterSignerController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('letters.templates.')->prefix('surat/templates')->group(function () {
+        Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
+        Route::get('/create', [LetterTemplateController::class, 'create'])->name('create');
+        Route::post('/', [LetterTemplateController::class, 'store'])->name('store');
+        Route::get('/{letterTemplate}', [LetterTemplateController::class, 'show'])->name('show');
+        Route::get('/{letterTemplate}/edit', [LetterTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{letterTemplate}', [LetterTemplateController::class, 'update'])->name('update');
+        Route::delete('/{letterTemplate}', [LetterTemplateController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('letters.types.')->prefix('surat/types')->group(function () {
+        Route::get('/', [LetterTypeController::class, 'index'])->name('index');
+        Route::post('/', [LetterTypeController::class, 'store'])->name('store');
+        Route::get('/{letterType}/edit', [LetterTypeController::class, 'edit'])->name('edit');
+        Route::put('/{letterType}', [LetterTypeController::class, 'update'])->name('update');
+        Route::delete('/{letterType}', [LetterTypeController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('letters.settings.')->prefix('surat/settings')->group(function () {
+        Route::get('/', [LetterSettingController::class, 'edit'])->name('edit');
+        Route::put('/', [LetterSettingController::class, 'update'])->name('update');
+    });
+
+    Route::name('letters.incomings.')->prefix('surat/masuk')->group(function () {
+        Route::get('/', [LetterIncomingController::class, 'index'])->name('index');
+        Route::get('/create', [LetterIncomingController::class, 'create'])->name('create');
+        Route::post('/', [LetterIncomingController::class, 'store'])->name('store');
+        Route::get('/{letterIncoming}', [LetterIncomingController::class, 'show'])->name('show');
+        Route::get('/{letterIncoming}/edit', [LetterIncomingController::class, 'edit'])->name('edit');
+        Route::put('/{letterIncoming}', [LetterIncomingController::class, 'update'])->name('update');
+        Route::delete('/{letterIncoming}', [LetterIncomingController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('sarpras.')->prefix('sarpras')->group(function () {

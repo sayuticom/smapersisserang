@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             AiFaqSeeder::class,
             DonationShareTemplateSeeder::class,
+            LetterTypeSeeder::class,
         ]);
 
         User::updateOrCreate(

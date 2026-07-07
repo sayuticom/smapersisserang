@@ -36,12 +36,23 @@ class SchoolSetting extends Model
         'google_maps_link',
         'letterhead_png',
         'public_dashboard_token',
+        'default_letter_classification_code',
+        'default_letter_school_code',
+        'default_letter_show_basmallah',
+        'default_letter_basmallah_text',
+        'default_letter_show_closing_dua',
+        'default_letter_closing_dua_text',
+        'default_letter_pdf_font_size',
+        'basmallah_image_path',
+        'closing_dua_image_path',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'default_letter_show_basmallah' => 'boolean',
+            'default_letter_show_closing_dua' => 'boolean',
         ];
     }
 
