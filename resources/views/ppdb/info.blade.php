@@ -118,21 +118,13 @@
         <section class="py-5 md:py-8">
             <div class="mx-auto max-w-4xl px-4">
                 @if($admissionYear && $admissionStats)
-                    <div class="grid grid-cols-3 gap-2 md:gap-4">
+                    <div class="grid grid-cols-2 gap-2 md:gap-4">
                         <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
                             <div class="text-[10px] sm:text-xs md:text-base lg:text-lg font-semibold text-emerald-700 leading-tight">
                                 Total Pendaftar
                             </div>
                             <div class="mt-1 md:mt-2 text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-emerald-800 leading-none">
                                 {{ $admissionStats['totalApplicants'] }}
-                            </div>
-                        </div>
-                        <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
-                            <div class="text-[10px] sm:text-xs md:text-base lg:text-lg font-semibold text-emerald-700 leading-tight">
-                                Diterima
-                            </div>
-                            <div class="mt-1 md:mt-2 text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-emerald-800 leading-none">
-                                {{ $admissionStats['totalAccepted'] }}
                             </div>
                         </div>
                         <div class="rounded-2xl border border-emerald-200 bg-white/90 px-2 py-3 text-center shadow-sm md:px-5 md:py-6 lg:py-7">
