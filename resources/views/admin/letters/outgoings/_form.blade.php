@@ -22,7 +22,14 @@
         <label for="letter_date" class="block text-sm font-semibold text-gray-700">Tanggal Surat <span class="text-red-500">*</span></label>
         <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date', $letterOutgoing?->letter_date?->format('Y-m-d') ?? now()->toDateString()) }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
-        <label for="hijri_date" class="mt-3 block text-sm font-semibold text-gray-700">Tanggal Hijriyah</label>
+    </div>
+    <div>
+        <label for="attachment" class="block text-sm font-semibold text-gray-700">Lampiran</label>
+        <input type="text" name="attachment" id="attachment" value="{{ old('attachment', $letterOutgoing?->attachment) }}"
+               class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Contoh: 1 berkas">
+    </div>
+    <div>
+        <label for="hijri_date" class="block text-sm font-semibold text-gray-700">Tanggal Hijriyah</label>
         <input type="text" name="hijri_date" id="hijri_date"
                value="{{ old('hijri_date', $letterOutgoing?->hijri_date ?? '') }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
@@ -33,11 +40,6 @@
         <label for="subject" class="block text-sm font-semibold text-gray-700">Perihal <span class="text-red-500">*</span></label>
         <input type="text" name="subject" id="subject" value="{{ old('subject', $letterOutgoing?->subject ?? $template?->subject_template) }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
-    </div>
-    <div>
-        <label for="attachment" class="block text-sm font-semibold text-gray-700">Lampiran</label>
-        <input type="text" name="attachment" id="attachment" value="{{ old('attachment', $letterOutgoing?->attachment) }}"
-               class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Contoh: 1 berkas">
     </div>
 </div>
 
