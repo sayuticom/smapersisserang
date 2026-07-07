@@ -28,7 +28,7 @@
                     <button @click="tab = 'data'" :class="tab === 'data' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'" class="border-b-2 px-1 py-3 text-sm font-semibold transition">
                         Data Surat
                     </button>
-                    <button @click="tab = 'lampiran'" :class="tab === 'lampiran' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'" class="border-b-2 px-1 py-3 text-sm font-semibold transition">
+                    <button @click="tab = 'lampiran'; setTimeout(function(){ window.initLetterEditors(); }, 100)" :class="tab === 'lampiran' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'" class="border-b-2 px-1 py-3 text-sm font-semibold transition">
                         Lampiran
                     </button>
                 </nav>
@@ -55,11 +55,10 @@
             <div x-show="tab === 'lampiran'" class="mt-6" x-cloak
                  x-data="{
                     mode: '{{ $hasAttachment ? 'view' : 'edit' }}',
-                    savedContent: {{ json_encode($attachmentContent?->content ?? '') }},
-                    editingContent: {{ json_encode(old('content', $attachmentContent?->content ?? '')) }},
-                    startEdit() { this.editingContent = this.savedContent; this.mode = 'edit'; },
-                    cancelEdit() { this.editingContent = this.savedContent; this.mode = 'view'; }
-                 }">
+                    startEdit() { this.mode = 'edit'; document.getElementById('lampiran-panel').querySelectorAll('.letter-ckeditor').forEach(function(el) { if (!el.ckeditorInstance && window.initLetterEditorElement) { el.dataset.ckeditorInitialized = 'false'; initLetterEditorElement(el); } }); },
+                    cancelEdit() { location.reload(); }
+                 }"
+                 id="lampiran-panel">
                 <div class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900">Lampiran Surat</h3>
@@ -70,16 +69,18 @@
                         @csrf
                         @method('PUT')
 
-                        <div x-show="mode === 'edit'">
-                            <label for="attachment_content" class="block text-sm font-semibold text-gray-700">Isi Lampiran</label>
-                            <textarea name="content" id="attachment_content" rows="16" x-model="editingContent"
-                                      class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500 font-mono"
-                                      placeholder="Tulis isi lampiran di sini..."></textarea>
+                        <div x-show="mode === 'edit'" x-cloak>
+                            <x-letter-editor
+                                name="content"
+                                label="Isi Lampiran"
+                                :value="old('content', $attachmentContent?->content ?? '')"
+                                :rows="16"
+                            />
                         </div>
 
-                        <div x-show="mode === 'view'" class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div x-show="mode === 'view'" x-cloak class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div class="mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Isi Lampiran</div>
-                            <div class="prose prose-sm max-w-none whitespace-pre-wrap text-slate-800">{{ $attachmentContent?->content ?? '' }}</div>
+                            <div class="max-w-none text-sm text-slate-800 [&_table]:w-full [&_table]:border-collapse [&_table]:mb-3 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_th]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1">{!! $attachmentContent?->content ?? '' !!}</div>
                         </div>
 
                         <div class="mt-5 flex flex-col gap-3 sm:flex-row">
