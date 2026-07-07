@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 @php
+    \Carbon\Carbon::setLocale('id');
+
     $pdfFontSize = (int) ($letter->pdf_font_size ?? 11);
     $blockMargin = match($pdfFontSize) {
         9 => 5,
@@ -416,10 +418,10 @@
         </td>
         <td class="date-cell">
             {{ $schoolSetting?->city ?: 'Serang' }},
-            {{ $letter->letter_date?->translatedFormat('d F Y') }}
             @if($letter->hijri_date)
-                <br><span style="font-size: 7.5pt;">{{ $letter->hijri_date }}</span>
+                <br>{{ $letter->hijri_date }}
             @endif
+            <br>{{ $letter->letter_date?->translatedFormat('d F Y') }}
         </td>
     </tr>
 </table>
@@ -427,16 +429,14 @@
 <div class="recipient">
     <strong>Kepada Yth.</strong>
     <div class="recipient-body">
-        @foreach($letter->recipients as $recipient)
+        @php $recipients = $singleRecipient ? [$singleRecipient] : $letter->recipients; @endphp
+        @foreach($recipients as $recipient)
             <div>
                 {!! nl2br(e($cleanText($recipient->recipient_name))) !!}
                 @if($recipient->recipient_address)
                     <br>{!! nl2br(e($cleanText($recipient->recipient_address))) !!}
                 @endif
             </div>
-            @if(!$loop->last)
-                <br>
-            @endif
         @endforeach
     </div>
 </div>

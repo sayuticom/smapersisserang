@@ -207,12 +207,72 @@ class LetterOutgoingController extends Controller
         return $this->streamPdf($letterOutgoing, false);
     }
 
+    public function printRecipient(LetterOutgoing $letterOutgoing, LetterRecipient $recipient)
+    {
+        if ($letterOutgoing->status !== 'issued') {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Draft belum dapat dicetak sebagai surat resmi. Terbitkan surat terlebih dahulu.');
+        }
+
+        abort_if($recipient->letter_outgoing_id !== $letterOutgoing->id, 404);
+
+        return $this->streamPdf($letterOutgoing, false, $recipient);
+    }
+
+    public function printAll(LetterOutgoing $letterOutgoing)
+    {
+        if ($letterOutgoing->status !== 'issued') {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Draft belum dapat dicetak sebagai surat resmi. Terbitkan surat terlebih dahulu.');
+        }
+
+        $letterOutgoing->load('recipients');
+
+        if ($letterOutgoing->recipients->isEmpty()) {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Surat tidak memiliki penerima.');
+        }
+
+        $zip = new \ZipArchive;
+        $zipPath = tempnam(sys_get_temp_dir(), 'zip');
+        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        foreach ($letterOutgoing->recipients as $recipient) {
+            $pdf = $this->buildPdf($letterOutgoing, false, $recipient);
+            $safeName = preg_replace('/[^a-zA-Z0-9\s-]/', '', $recipient->recipient_name);
+            $safeName = trim(str_replace(' ', '-', $safeName));
+            $baseName = str_replace(['/', '\\'], '-', $letterOutgoing->letter_number);
+            $zip->addFromString("surat-keluar-{$baseName}-{$safeName}.pdf", $pdf->output());
+        }
+
+        $zip->close();
+
+        $zipName = 'surat-keluar-' . str_replace(['/', '\\'], '-', $letterOutgoing->letter_number) . '.zip';
+
+        return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+    }
+
     public function preview(LetterOutgoing $letterOutgoing)
     {
         return $this->streamPdf($letterOutgoing, $letterOutgoing->status !== 'issued');
     }
 
-    private function streamPdf(LetterOutgoing $letterOutgoing, bool $isPreview)
+    private function streamPdf(LetterOutgoing $letterOutgoing, bool $isPreview, ?LetterRecipient $singleRecipient = null)
+    {
+        $pdf = $this->buildPdf($letterOutgoing, $isPreview, $singleRecipient);
+
+        $filenameSuffix = $isPreview
+            ? 'preview-draft-' . $letterOutgoing->id
+            : str_replace(['/', '\\'], '-', $letterOutgoing->letter_number);
+        $filename = 'surat-keluar-' . $filenameSuffix . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    private function buildPdf(LetterOutgoing $letterOutgoing, bool $isPreview, ?LetterRecipient $singleRecipient = null): \Barryvdh\DomPDF\PDF
     {
         $letterOutgoing->load([
             'letterType',
@@ -224,22 +284,16 @@ class LetterOutgoingController extends Controller
 
         $schoolSetting = SchoolSetting::current();
 
-        $pdf = Pdf::loadView('admin.letters.outgoings.pdf', [
+        return Pdf::loadView('admin.letters.outgoings.pdf', [
             'letter' => $letterOutgoing,
             'schoolSetting' => $schoolSetting,
             'isPreview' => $isPreview,
+            'singleRecipient' => $singleRecipient,
             'logoSrc' => $this->storageImageDataUri($schoolSetting?->logo_path),
             'letterheadSrc' => $this->storageImageDataUri($schoolSetting?->letterhead_png),
             'signerOneSignatureSrc' => $this->storageImageDataUri($letterOutgoing->signerOne?->signature_path),
             'signerTwoSignatureSrc' => $this->storageImageDataUri($letterOutgoing->signerTwo?->signature_path),
         ])->setPaper('A4', 'portrait');
-
-        $filenameSuffix = $isPreview
-            ? 'preview-draft-' . $letterOutgoing->id
-            : str_replace(['/', '\\'], '-', $letterOutgoing->letter_number);
-        $filename = 'surat-keluar-' . $filenameSuffix . '.pdf';
-
-        return $pdf->stream($filename);
     }
 
     private function formData(): array
