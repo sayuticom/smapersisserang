@@ -13,8 +13,8 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Nama Lengkap</label>
-                <input type="text" name="student_name" value="{{ old('student_name', $app->student_name) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">Nama Lengkap <span class="text-red-500">*</span></label>
+                <input type="text" name="student_name" value="{{ old('student_name', $app->student_name) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
             </div>
             <div>
                 <label class="mb-1 block text-sm font-semibold text-gray-700">Nama Panggilan</label>
@@ -25,12 +25,12 @@
                 <input type="text" name="nomor_induk_asal" value="{{ old('nomor_induk_asal', $app->nomor_induk_asal) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">NISN</label>
-                <input type="text" name="nisn" value="{{ old('nisn', $app->nisn) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">NISN <span class="text-red-500">*</span></label>
+                <input type="text" name="nisn" value="{{ old('nisn', $app->nisn) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Jenis Kelamin</label>
-                <select name="gender" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">Jenis Kelamin <span class="text-red-500">*</span></label>
+                <select name="gender" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
                     <option value="">-- Pilih --</option>
                     <option value="laki_laki" {{ old('gender', $app->gender) === 'laki_laki' ? 'selected' : '' }}>Laki-laki</option>
                     <option value="perempuan" {{ old('gender', $app->gender) === 'perempuan' ? 'selected' : '' }}>Perempuan</option>
@@ -46,12 +46,12 @@
                 </select>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Tempat Lahir</label>
-                <input type="text" name="birth_place" value="{{ old('birth_place', $app->birth_place) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">Tempat Lahir <span class="text-red-500">*</span></label>
+                <input type="text" name="birth_place" value="{{ old('birth_place', $app->birth_place) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Tanggal Lahir</label>
-                <input type="date" name="birth_date" value="{{ old('birth_date', $app->birth_date?->format('Y-m-d')) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">Tanggal Lahir <span class="text-red-500">*</span></label>
+                <input type="date" name="birth_date" value="{{ old('birth_date', $app->birth_date?->format('Y-m-d')) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
             </div>
             <div>
                 <label class="mb-1 block text-sm font-semibold text-gray-700">Anak Ke</label>
@@ -69,8 +69,8 @@
         </div>
 
         <div>
-            <label class="mb-1 block text-sm font-semibold text-gray-700">Alamat Siswa</label>
-            <textarea name="address" rows="3" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('address', $app->address) }}</textarea>
+            <label class="mb-1 block text-sm font-semibold text-gray-700">Alamat Siswa <span class="text-red-500">*</span></label>
+            <textarea name="address" rows="3" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>{{ old('address', $app->address) }}</textarea>
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -79,8 +79,8 @@
                 <input type="text" name="telepon_siswa" value="{{ old('telepon_siswa', $app->telepon_siswa) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-semibold text-gray-700">Sekolah Sebelumnya</label>
-                <input type="text" name="previous_school" value="{{ old('previous_school', $app->previous_school) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                <label class="mb-1 block text-sm font-semibold text-gray-700">Sekolah Sebelumnya <span class="text-red-500">*</span></label>
+                <input type="text" name="previous_school" value="{{ old('previous_school', $app->previous_school) }}" class="w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
             </div>
         </div>
 
