@@ -55,6 +55,9 @@
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal Surat</div>
                     <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->letter_date?->format('d/m/Y') ?? '-' }}</div>
+                    @if($letterOutgoing->hijri_date)
+                        <div class="text-xs text-slate-500 mt-0.5">{{ $letterOutgoing->hijri_date }}</div>
+                    @endif
                 </div>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Jenis</div>

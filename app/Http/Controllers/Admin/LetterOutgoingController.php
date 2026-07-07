@@ -4,17 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Helpers\LetterHtmlSanitizer;
 use App\Http\Controllers\Controller;
-use App\Models\LetterTemplate;
 use App\Models\LetterOutgoing;
+use App\Models\LetterRecipient;
 use App\Models\LetterSigner;
 use App\Models\LetterType;
 use App\Models\SchoolSetting;
-use App\Services\Letters\LetterNumberService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\Letters\HijriDateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class LetterOutgoingController extends Controller
@@ -274,6 +272,7 @@ class LetterOutgoingController extends Controller
         $date = \Carbon\CarbonImmutable::parse($data['letter_date']);
         $data['letter_month'] = (int) $date->month;
         $data['letter_year'] = (int) $date->year;
+        $data['hijri_date'] = app(HijriDateService::class)->convert($date);
     }
 
     private function syncRecipients(LetterOutgoing $letter, array $recipients): void

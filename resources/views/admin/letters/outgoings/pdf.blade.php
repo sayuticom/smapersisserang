@@ -126,7 +126,7 @@
         }
 
         .recipient-body {
-            margin-left: 20px;
+            margin-left: 0;
             line-height: 1.08;
         }
 
@@ -403,6 +403,9 @@
         <td class="date-cell">
             {{ $schoolSetting?->city ?: 'Serang' }},
             {{ $letter->letter_date?->translatedFormat('d F Y') }}
+            @if($letter->hijri_date)
+                <br><span style="font-size: 7.5pt;">{{ $letter->hijri_date }}</span>
+            @endif
         </td>
     </tr>
 </table>

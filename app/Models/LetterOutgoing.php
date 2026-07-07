@@ -39,6 +39,7 @@ class LetterOutgoing extends Model
         'closing_dua_text',
         'letter_classification_code',
         'letter_school_code',
+        'hijri_date',
     ];
 
     protected function casts(): array
