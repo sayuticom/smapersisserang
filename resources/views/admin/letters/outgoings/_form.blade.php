@@ -22,6 +22,8 @@
         <label for="letter_date" class="block text-sm font-semibold text-gray-700">Tanggal Surat <span class="text-red-500">*</span></label>
         <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date', $letterOutgoing?->letter_date?->format('Y-m-d') ?? now()->toDateString()) }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
+        <div id="hijriPreview" class="mt-1.5 text-xs text-emerald-700"></div>
+        <p class="mt-1 text-[11px] text-slate-400 italic">* Tanggal hijriyah merupakan hasil konversi otomatis dan dapat berbeda 1 hari berdasarkan metode kalender hijriyah.</p>
     </div>
     <div class="md:col-span-2">
         <label for="subject" class="block text-sm font-semibold text-gray-700">Perihal <span class="text-red-500">*</span></label>
@@ -191,7 +193,60 @@
 </template>
 
 <script>
+function gregorianToHijri(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    const gYear = parseInt(parts[0], 10);
+    const gMonth = parseInt(parts[1], 10);
+    const gDay = parseInt(parts[2], 10);
+
+    let y = gYear, m = gMonth, d = gDay;
+    if (m <= 2) { y--; m += 12; }
+    const a = Math.floor(y / 100);
+    const b = 2 - a + Math.floor(a / 4);
+    const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + b - 1524;
+
+    const islamicEpoch = 1948440;
+    const day = jd - islamicEpoch;
+    const hijriYear = Math.floor((30 * day + 10646) / 10631);
+    const yearStart = Math.floor((10631 * hijriYear - 10631) / 30);
+    let remaining = day - yearStart;
+
+    const isLeap = (hijriYear * 11 + 14) % 30 < 11;
+    const monthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, isLeap ? 30 : 29];
+
+    let hijriMonth = 0;
+    while (hijriMonth < 12 && remaining > monthLengths[hijriMonth]) {
+        remaining -= monthLengths[hijriMonth];
+        hijriMonth++;
+    }
+    hijriMonth = Math.min(hijriMonth, 11);
+
+    const hijriDay = remaining + 1;
+    const monthNames = [
+        'Muharram', 'Safar', "Rabi'ul Awwal", "Rabi'ul Akhir",
+        'Jumadil Awwal', 'Jumadil Akhir', 'Rajab', "Sya'ban",
+        'Ramadhan', 'Syawwal', "Dzulqa'dah", 'Dzulhijjah'
+    ];
+
+    return hijriDay + ' ' + monthNames[hijriMonth] + ' ' + hijriYear + ' H';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    const dateInput = document.getElementById('letter_date');
+    const hijriPreview = document.getElementById('hijriPreview');
+
+    function updateHijriPreview() {
+        const hijri = gregorianToHijri(dateInput.value);
+        hijriPreview.textContent = hijri ? 'Hijriyah: ' + hijri : '';
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('change', updateHijriPreview);
+        dateInput.addEventListener('input', updateHijriPreview);
+        updateHijriPreview();
+    }
+
     const rows = document.getElementById('recipientRows');
     const addButton = document.getElementById('addRecipientBtn');
     const template = document.getElementById('recipientTemplate');
