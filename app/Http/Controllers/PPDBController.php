@@ -619,7 +619,7 @@ class PPDBController extends Controller
 
     private function canReviseFinalSubmittedData(StudentApplication $application): bool
     {
-        return in_array($application->status_data, ['data_kurang', 'perlu_perbaikan'], true)
+        return $application->status_data === 'perlu_perbaikan'
             || $application->status === 'data_kurang';
     }
 

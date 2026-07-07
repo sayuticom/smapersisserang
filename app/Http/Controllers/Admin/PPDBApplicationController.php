@@ -392,7 +392,7 @@ class PPDBApplicationController extends Controller
 
             if ($toStatus === 'data_kurang') {
                 $updateData['is_final_submitted'] = false;
-                $updateData['status_data'] = 'data_kurang';
+                $updateData['status_data'] = 'perlu_perbaikan';
             }
 
             $studentApplication->update($updateData);
@@ -437,11 +437,11 @@ class PPDBApplicationController extends Controller
     public function markDataComplete(Request $request, StudentApplication $studentApplication)
     {
         $validated = $request->validate([
-            'status_data' => ['required', 'in:belum_lengkap,sudah_lengkap,perlu_perbaikan,data_kurang,terverifikasi'],
+            'status_data' => ['required', 'in:belum_lengkap,sudah_lengkap,perlu_perbaikan'],
         ]);
 
         $updateData = ['status_data' => $validated['status_data']];
-        if (in_array($validated['status_data'], ['perlu_perbaikan', 'data_kurang'], true)) {
+        if ($validated['status_data'] === 'perlu_perbaikan') {
             $updateData['is_final_submitted'] = false;
         }
 
@@ -450,9 +450,7 @@ class PPDBApplicationController extends Controller
         $labels = [
             'belum_lengkap' => 'Belum Lengkap',
             'sudah_lengkap' => 'Sudah Lengkap',
-            'perlu_perbaikan' => 'Perlu Perbaikan',
-            'data_kurang' => 'Data Kurang',
-            'terverifikasi' => 'Terverifikasi',
+            'perlu_perbaikan' => 'Data Kurang',
         ];
 
         return back()->with('success', 'Status data diubah: ' . ($labels[$validated['status_data']] ?? $validated['status_data']));

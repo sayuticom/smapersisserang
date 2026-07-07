@@ -12,8 +12,8 @@
         5 => ['title' => 'Upload Dokumen', 'completed' => filled($app->documents_completed_at)],
         6 => ['title' => 'Review Final', 'completed' => (bool) $app->is_final_submitted],
     ];
-    $needsRevision = in_array($app->status_data, ['data_kurang', 'perlu_perbaikan'], true) || $app->status === 'data_kurang';
-    $isVerified = $app->status_data === 'terverifikasi' || $app->status === 'terverifikasi';
+    $needsRevision = $app->status_data === 'perlu_perbaikan' || $app->status === 'data_kurang';
+    $isVerified = $app->status === 'terverifikasi';
     $showSubmitted = ! $needsRevision && ! $isVerified && $app->is_final_submitted && $app->status_data === 'sudah_lengkap';
 @endphp
 
