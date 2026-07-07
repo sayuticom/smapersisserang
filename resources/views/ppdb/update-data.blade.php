@@ -26,18 +26,7 @@
         </div>
 
         @if($app->is_final_submitted)
-            <div class="rounded-2xl border border-emerald-100 bg-white p-5 text-center shadow-lg sm:p-8">
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <h2 class="mt-4 text-xl font-bold text-slate-900">Data Sudah Dikirim</h2>
-                <p class="mt-2 text-sm leading-relaxed text-slate-600">Pembaruan data sudah dikirim final dan sedang menunggu verifikasi admin SPMB.</p>
-                <a href="{{ route('spmb.info') }}" class="mt-5 inline-flex rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-800">
-                    Kembali ke Info SPMB
-                </a>
-            </div>
+            @include('ppdb.update-data.partials.submitted')
         @else
             @include('ppdb.update-data.partials.stepper')
 

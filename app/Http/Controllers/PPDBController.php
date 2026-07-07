@@ -238,13 +238,6 @@ class PPDBController extends Controller
             ]);
         }
 
-        if ($application->is_final_submitted) {
-            return view('ppdb.closed', [
-                'title' => 'Data Sudah Dikirim',
-                'message' => 'Data pembaruan sudah dikirim final dan sedang menunggu verifikasi panitia SPMB.',
-            ]);
-        }
-
         $application->load(['admissionYear', 'admissionProgram', 'requirementFiles']);
 
         $agamaOptions = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
@@ -562,8 +555,9 @@ class PPDBController extends Controller
             }
         });
 
-        return redirect()->route('spmb.info')
-            ->with('success', 'Data berhasil dikirim final dan menunggu verifikasi panitia.');
+        return redirect()
+            ->route('spmb.update-data', $application->update_token)
+            ->with('success', 'Data berhasil diperbarui.');
     }
 
     private function updateDataStepRules(int $step): array
