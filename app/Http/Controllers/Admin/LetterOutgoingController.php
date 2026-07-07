@@ -10,6 +10,7 @@ use App\Models\LetterSigner;
 use App\Models\LetterType;
 use App\Models\SchoolSetting;
 use App\Services\Letters\HijriDateService;
+use App\Services\Letters\LetterNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
