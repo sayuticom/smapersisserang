@@ -22,8 +22,12 @@
         <label for="letter_date" class="block text-sm font-semibold text-gray-700">Tanggal Surat <span class="text-red-500">*</span></label>
         <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date', $letterOutgoing?->letter_date?->format('Y-m-d') ?? now()->toDateString()) }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
-        <div id="hijriPreview" class="mt-1.5 text-xs text-emerald-700"></div>
-        <p class="mt-1 text-[11px] text-slate-400 italic">* Tanggal hijriyah merupakan hasil konversi otomatis dan dapat berbeda 1 hari berdasarkan metode kalender hijriyah.</p>
+        <label for="hijri_date" class="mt-3 block text-sm font-semibold text-gray-700">Tanggal Hijriyah</label>
+        <input type="text" name="hijri_date" id="hijri_date"
+               value="{{ old('hijri_date', $letterOutgoing?->hijri_date ?? '') }}"
+               class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+               placeholder="Otomatis terisi saat tanggal surat dipilih">
+        <p class="mt-1 text-[11px] text-slate-400 italic">* Tanggal Hijriyah hasil konversi otomatis dan dapat disesuaikan berdasarkan kalender Hijriyah yang digunakan.</p>
     </div>
     <div class="md:col-span-2">
         <label for="subject" class="block text-sm font-semibold text-gray-700">Perihal <span class="text-red-500">*</span></label>
@@ -234,17 +238,18 @@ function gregorianToHijri(dateStr) {
 
 document.addEventListener('DOMContentLoaded', function () {
     const dateInput = document.getElementById('letter_date');
-    const hijriPreview = document.getElementById('hijriPreview');
+    const hijriInput = document.getElementById('hijri_date');
 
-    function updateHijriPreview() {
-        const hijri = gregorianToHijri(dateInput.value);
-        hijriPreview.textContent = hijri ? 'Hijriyah: ' + hijri : '';
+    function updateHijriInput() {
+        if (!dateInput.value) { hijriInput.value = ''; return; }
+        hijriInput.value = gregorianToHijri(dateInput.value);
     }
 
-    if (dateInput) {
-        dateInput.addEventListener('change', updateHijriPreview);
-        dateInput.addEventListener('input', updateHijriPreview);
-        updateHijriPreview();
+    if (dateInput && hijriInput) {
+        dateInput.addEventListener('change', updateHijriInput);
+        if (!hijriInput.value) {
+            updateHijriInput();
+        }
     }
 
     const rows = document.getElementById('recipientRows');
