@@ -454,6 +454,13 @@
 </div>
 
 <div class="signature-row">
+    <div style="text-align: center; margin-bottom: 10px; line-height: 1.15;">
+        {{ $schoolSetting?->city ?: 'Serang' }},
+        @if($letter->hijri_date)
+            <br>{{ $letter->hijri_date }}
+        @endif
+        <br>{{ $letter->letter_date?->translatedFormat('d F Y') }}
+    </div>
     <div class="signature-col">
         @if($leftSigner)
             <div class="signature-title">{{ $leftSigner->position ?: 'Penandatangan' }}</div>
