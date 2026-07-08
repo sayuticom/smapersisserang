@@ -26,6 +26,9 @@ use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicProgressController;
+use App\Http\Controllers\WaqfController;
+use App\Http\Controllers\Admin\WaqfSettingController;
+use App\Http\Controllers\Admin\WaqfTransactionController;
 use App\Models\AdmissionYear;
 use App\Models\NavigationMenu;
 use App\Models\SchoolImage;
@@ -231,6 +234,16 @@ Route::middleware('track.visitor')->group(function () {
     });
 });
 
+Route::middleware('track.visitor')->group(function () {
+    Route::get('/wakaf-uang', [WaqfController::class, 'index'])->name('wakaf-uang.index');
+    Route::get('/wakaf-uang/form', [WaqfController::class, 'form'])->name('wakaf-uang.form');
+    Route::post('/wakaf-uang/qris/preview', [WaqfController::class, 'previewQris'])->name('wakaf-uang.qris.preview');
+    Route::post('/wakaf-uang', [WaqfController::class, 'submit'])
+        ->middleware('throttle:5,10')
+        ->name('wakaf-uang.submit');
+    Route::get('/wakaf-uang/qris/download', [WaqfController::class, 'downloadQris'])->name('wakaf-uang.qris.download');
+});
+
 Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::get('/ppdb', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'dashboard'])->name('ppdb.dashboard');
 
@@ -294,9 +307,25 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::post('/infaq-barang-wa', [DonationItemCommitmentController::class, 'store'])->name('infaq-barang-wa.store');
     Route::get('/infaq-barang-wa/{infaqBarangWa}', [DonationItemCommitmentController::class, 'show'])->name('infaq-barang-wa.show');
     Route::patch('/infaq-barang-wa/{infaqBarangWa}/status', [DonationItemCommitmentController::class, 'updateStatus'])->name('infaq-barang-wa.update-status');
+
     Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')->group(function () {
         Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
         Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
+    });
+
+    Route::name('wakaf.settings.')->prefix('wakaf/settings')->group(function () {
+        Route::get('/', [WaqfSettingController::class, 'edit'])->name('edit');
+        Route::put('/', [WaqfSettingController::class, 'update'])->name('update');
+    });
+
+    Route::name('wakaf.transactions.')->prefix('wakaf/transactions')->group(function () {
+        Route::get('/', [WaqfTransactionController::class, 'index'])->name('index');
+        Route::get('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'createReceipt'])->name('create-receipt');
+        Route::post('/buat-bukti-penerimaan/parse', [WaqfTransactionController::class, 'parseReceipt'])->name('parse-receipt');
+        Route::post('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'storeReceipt'])->name('store-receipt');
+        Route::get('/{transaction}', [WaqfTransactionController::class, 'show'])->name('show');
+        Route::patch('/{transaction}/mark-paid', [WaqfTransactionController::class, 'markPaid'])->name('mark-paid');
+        Route::patch('/{transaction}/mark-cancelled', [WaqfTransactionController::class, 'markCancelled'])->name('mark-cancelled');
     });
 
     Route::name('finance.')->prefix('finance')->group(function () {
