@@ -192,7 +192,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600">Alamat / Tempat</label>
-                <textarea name="recipients[__INDEX__][recipient_address]" rows="2" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="di Tempat"></textarea>
+                <textarea name="recipients[__INDEX__][recipient_address]" rows="2" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="di Tempat">di Tempat</textarea>
             </div>
         </div>
     </div>

@@ -37,7 +37,7 @@
             @include('admin.letters.outgoings._form', [
                 'letterOutgoing' => null,
                 'template' => $template,
-                'recipientRows' => collect(old('recipients', [['recipient_name' => '', 'recipient_institution' => '', 'recipient_address' => '', 'recipient_phone' => '', 'recipient_email' => '']]))
+                'recipientRows' => collect(old('recipients', [['recipient_name' => '', 'recipient_institution' => '', 'recipient_address' => 'di Tempat', 'recipient_phone' => '', 'recipient_email' => '']]))
             ])
         </form>
     </div>

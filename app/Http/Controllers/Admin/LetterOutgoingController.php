@@ -204,7 +204,21 @@ class LetterOutgoingController extends Controller
                 ->with('error', 'Draft belum dapat dicetak sebagai surat resmi. Terbitkan surat terlebih dahulu.');
         }
 
-        return $this->streamPdf($letterOutgoing, false);
+        $letterOutgoing->load('recipients');
+
+        if ($letterOutgoing->recipients->isEmpty()) {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Surat tidak memiliki penerima.');
+        }
+
+        if ($letterOutgoing->recipients->count() > 1) {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Pilih penerima tertentu untuk dicetak.');
+        }
+
+        return $this->streamPdf($letterOutgoing, false, $letterOutgoing->recipients->first());
     }
 
     public function printRecipient(LetterOutgoing $letterOutgoing, LetterRecipient $recipient)
@@ -236,28 +250,40 @@ class LetterOutgoingController extends Controller
                 ->with('error', 'Surat tidak memiliki penerima.');
         }
 
-        $zip = new \ZipArchive;
-        $zipPath = tempnam(sys_get_temp_dir(), 'zip');
-        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-
-        foreach ($letterOutgoing->recipients as $recipient) {
-            $pdf = $this->buildPdf($letterOutgoing, false, $recipient);
-            $safeName = preg_replace('/[^a-zA-Z0-9\s-]/', '', $recipient->recipient_name);
-            $safeName = trim(str_replace(' ', '-', $safeName));
-            $baseName = str_replace(['/', '\\'], '-', $letterOutgoing->letter_number);
-            $zip->addFromString("surat-keluar-{$baseName}-{$safeName}.pdf", $pdf->output());
-        }
-
-        $zip->close();
+        $zipData = $this->createZip($letterOutgoing);
 
         $zipName = 'surat-keluar-' . str_replace(['/', '\\'], '-', $letterOutgoing->letter_number) . '.zip';
 
-        return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+        return response()->streamDownload(function () use ($zipData) {
+            echo $zipData;
+        }, $zipName);
     }
 
     public function preview(LetterOutgoing $letterOutgoing)
     {
-        return $this->streamPdf($letterOutgoing, $letterOutgoing->status !== 'issued');
+        $letterOutgoing->load('recipients');
+
+        if ($letterOutgoing->recipients->isEmpty()) {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Surat tidak memiliki penerima.');
+        }
+
+        $recipientId = request('recipient');
+
+        if ($letterOutgoing->recipients->count() > 1 && !$recipientId) {
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Pilih penerima untuk preview surat.');
+        }
+
+        $singleRecipient = $recipientId
+            ? $letterOutgoing->recipients->firstWhere('id', $recipientId)
+            : $letterOutgoing->recipients->first();
+
+        abort_unless($singleRecipient, 404);
+
+        return $this->streamPdf($letterOutgoing, $letterOutgoing->status !== 'issued', $singleRecipient);
     }
 
     private function streamPdf(LetterOutgoing $letterOutgoing, bool $isPreview, ?LetterRecipient $singleRecipient = null)
@@ -310,6 +336,80 @@ class LetterOutgoingController extends Controller
                 ->orderBy('name')
                 ->get(),
         ];
+    }
+
+    private function createZip(LetterOutgoing $letterOutgoing): string
+    {
+        $files = [];
+        foreach ($letterOutgoing->recipients as $recipient) {
+            $pdf = $this->buildPdf($letterOutgoing, false, $recipient);
+            $safeName = preg_replace('/[^a-zA-Z0-9\s-]/', '', $recipient->recipient_name);
+            $safeName = trim(str_replace(' ', '-', $safeName));
+            $baseName = str_replace(['/', '\\'], '-', $letterOutgoing->letter_number);
+            $files["surat-keluar-{$baseName}-{$safeName}.pdf"] = $pdf->output();
+        }
+
+        $zipData = '';
+        $centralDir = '';
+        $offset = 0;
+
+        foreach ($files as $name => $content) {
+            $crc = hash('crc32b', $content);
+            $crc = hexdec($crc);
+            $size = strlen($content);
+            $nameLen = strlen($name);
+
+            // Local file header
+            $localHeader = pack('V', 0x04034b50); // signature
+            $localHeader .= pack('v', 20); // version needed
+            $localHeader .= pack('v', 0); // general purpose bit flag
+            $localHeader .= pack('v', 0); // compression method (store)
+            $localHeader .= pack('V', 0); // last mod file time
+            $localHeader .= pack('V', 0); // last mod file date
+            $localHeader .= pack('V', $crc); // crc-32
+            $localHeader .= pack('V', $size); // compressed size
+            $localHeader .= pack('V', $size); // uncompressed size
+            $localHeader .= pack('v', $nameLen); // file name length
+            $localHeader .= pack('v', 0); // extra field length
+            $localHeader .= $name; // file name
+
+            $zipData .= $localHeader . $content;
+
+            // Central directory entry
+            $entry = pack('V', 0x02014b50); // signature
+            $entry .= pack('v', 20); // version made by
+            $entry .= pack('v', 20); // version needed
+            $entry .= pack('v', 0); // general purpose bit flag
+            $entry .= pack('v', 0); // compression method
+            $entry .= pack('V', 0); // last mod file time
+            $entry .= pack('V', 0); // last mod file date
+            $entry .= pack('V', $crc); // crc-32
+            $entry .= pack('V', $size); // compressed size
+            $entry .= pack('V', $size); // uncompressed size
+            $entry .= pack('v', $nameLen); // file name length
+            $entry .= pack('v', 0); // extra field length
+            $entry .= pack('v', 0); // file comment length
+            $entry .= pack('v', 0); // disk number start
+            $entry .= pack('v', 0); // internal file attributes
+            $entry .= pack('V', 0); // external file attributes
+            $entry .= pack('V', $offset); // relative offset
+            $entry .= $name; // file name
+
+            $centralDir .= $entry;
+            $offset += strlen($localHeader) + $size;
+        }
+
+        // End of central directory record
+        $eocd = pack('V', 0x06054b50); // signature
+        $eocd .= pack('v', 0); // number of this disk
+        $eocd .= pack('v', 0); // disk where central directory starts
+        $eocd .= pack('v', count($files)); // entries on this disk
+        $eocd .= pack('v', count($files)); // total entries
+        $eocd .= pack('V', strlen($centralDir)); // size of central directory
+        $eocd .= pack('V', strlen($zipData)); // offset of central directory
+        $eocd .= pack('v', 0); // comment length
+
+        return $zipData . $centralDir . $eocd;
     }
 
     private function validatedData(Request $request): array

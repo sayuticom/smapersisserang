@@ -26,11 +26,10 @@ class LetterNumberService
             : CarbonImmutable::parse($date ?? now());
 
         return DB::transaction(function () use ($type, $letterDate, $classificationCode, $schoolCode) {
-            $counter = $this->lockCounter((int) $letterDate->year);
+            $counter = $this->lockCounter((int) $letterDate->year, $type->id);
             $counter->last_number = max($counter->last_number, $this->maxIssuedSequence((int) $letterDate->year));
             $counter->last_number++;
             $counter->month = (int) $letterDate->month;
-            $counter->letter_type_id = $type->id;
             $counter->updated_by = Auth::id();
             $counter->save();
 
@@ -83,10 +82,11 @@ class LetterNumberService
         ][$month] ?? '';
     }
 
-    private function lockCounter(int $year): LetterCounter
+    private function lockCounter(int $year, int $letterTypeId): LetterCounter
     {
         $counter = LetterCounter::query()
             ->where('year', $year)
+            ->where('letter_type_id', $letterTypeId)
             ->lockForUpdate()
             ->first();
 
@@ -96,7 +96,7 @@ class LetterNumberService
 
         try {
             return LetterCounter::query()->create([
-                'letter_type_id' => null,
+                'letter_type_id' => $letterTypeId,
                 'year' => $year,
                 'month' => null,
                 'last_number' => 0,
@@ -106,6 +106,7 @@ class LetterNumberService
         } catch (QueryException) {
             return LetterCounter::query()
                 ->where('year', $year)
+                ->where('letter_type_id', $letterTypeId)
                 ->lockForUpdate()
                 ->firstOrFail();
         }

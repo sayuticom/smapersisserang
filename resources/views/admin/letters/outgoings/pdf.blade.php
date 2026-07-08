@@ -417,9 +417,10 @@
             </table>
         </td>
         <td class="date-cell">
-            {{ $schoolSetting?->city ?: 'Serang' }},
             @if($letter->hijri_date)
-                <br>{{ $letter->hijri_date }}
+                {{ $schoolSetting?->city ?: 'Serang' }}, {{ $letter->hijri_date }}
+            @else
+                {{ $schoolSetting?->city ?: 'Serang' }},
             @endif
             <br>{{ $letter->letter_date?->translatedFormat('d F Y') }}
         </td>
@@ -429,15 +430,13 @@
 <div class="recipient">
     <strong>Kepada Yth.</strong>
     <div class="recipient-body">
-        @php $recipients = $singleRecipient ? [$singleRecipient] : $letter->recipients; @endphp
-        @foreach($recipients as $recipient)
-            <div>
-                {!! nl2br(e($cleanText($recipient->recipient_name))) !!}
-                @if($recipient->recipient_address)
-                    <br>{!! nl2br(e($cleanText($recipient->recipient_address))) !!}
-                @endif
-            </div>
-        @endforeach
+        @php $recipient = $singleRecipient; @endphp
+        @if($recipient)
+            {!! nl2br(e($cleanText($recipient->recipient_name))) !!}
+            @if($recipient->recipient_address)
+                <br>{!! nl2br(e($cleanText($recipient->recipient_address))) !!}
+            @endif
+        @endif
     </div>
 </div>
 
@@ -454,13 +453,6 @@
 </div>
 
 <div class="signature-row">
-    <div style="text-align: center; margin-bottom: 10px; line-height: 1.15;">
-        {{ $schoolSetting?->city ?: 'Serang' }},
-        @if($letter->hijri_date)
-            <br>{{ $letter->hijri_date }}
-        @endif
-        <br>{{ $letter->letter_date?->translatedFormat('d F Y') }}
-    </div>
     <div class="signature-col">
         @if($leftSigner)
             <div class="signature-title">{{ $leftSigner->position ?: 'Penandatangan' }}</div>
