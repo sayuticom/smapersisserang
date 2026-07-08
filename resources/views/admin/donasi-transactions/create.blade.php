@@ -88,6 +88,13 @@
                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
                     </div>
                     <div>
+                        <label for="admin_fee" class="block text-sm font-semibold text-gray-700">Biaya Admin</label>
+                        <input type="text" id="admin_fee" name="admin_fee"
+                               value="{{ old('admin_fee', $parsed['admin_fee'] ?? '') }}"
+                               placeholder="Rp300"
+                               class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                    </div>
+                    <div>
                         <label for="unique_code" class="block text-sm font-semibold text-gray-700">Kode Unik</label>
                         <input type="text" id="unique_code" name="unique_code"
                                value="{{ old('unique_code', $parsed['unique_code'] ?? '') }}"

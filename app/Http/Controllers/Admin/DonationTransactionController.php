@@ -67,6 +67,7 @@ class DonationTransactionController extends Controller
             'allow_future_donation_contact' => ['nullable', 'string', 'max:10'],
             'donor_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]*$/'],
             'nominal_amount' => ['required', 'string', 'max:50'],
+            'admin_fee' => ['nullable', 'string', 'max:50'],
             'unique_code' => ['required', 'string', 'max:3'],
             'total_transfer' => ['required', 'string', 'max:50'],
             'transfer_date' => ['nullable', 'string', 'max:50'],
@@ -76,6 +77,7 @@ class DonationTransactionController extends Controller
 
         $nominalAmount = $this->moneyToInteger($data['nominal_amount']);
         $totalTransfer = $this->moneyToInteger($data['total_transfer']);
+        $adminFee = $this->moneyToInteger($data['admin_fee'] ?? '0');
         $uniqueCode = str_pad((string) ((int) preg_replace('/[^0-9]/', '', $data['unique_code'])), 3, '0', STR_PAD_LEFT);
         $allowContact = strtolower(trim($data['allow_future_donation_contact'] ?? 'Tidak')) === 'ya';
         $donorWhatsapp = $allowContact ? trim($data['donor_whatsapp'] ?? '') : '';
@@ -86,17 +88,18 @@ class DonationTransactionController extends Controller
             return back()->withErrors(['nominal_amount' => 'Nominal donasi minimal Rp10.000.'])->withInput();
         }
 
-        if ((int) $uniqueCode < 1 || (int) $uniqueCode > 999) {
-            return back()->withErrors(['unique_code' => 'Kode unik harus 001 sampai 999.'])->withInput();
+        if ((int) $uniqueCode < 1 || (int) $uniqueCode > 299) {
+            return back()->withErrors(['unique_code' => 'Kode unik harus 001 sampai 299.'])->withInput();
         }
 
-        if ($totalTransfer !== $nominalAmount + (int) $uniqueCode) {
-            return back()->withErrors(['total_transfer' => 'Total transfer harus sama dengan nominal donasi ditambah kode unik.'])->withInput();
+        if ($totalTransfer !== $nominalAmount + $adminFee + (int) $uniqueCode) {
+            return back()->withErrors(['total_transfer' => 'Total transfer harus sama dengan nominal donasi + biaya admin + kode unik.'])->withInput();
         }
 
         $noteLines = [
             'Bersedia Dihubungi: ' . ($allowContact ? 'Ya' : 'Tidak'),
             'Nomor WhatsApp: ' . $donorWhatsapp,
+            'Biaya Admin: Rp' . number_format($adminFee, 0, ',', '.'),
             'Kode Unik: ' . $uniqueCode,
             'Total Transfer: Rp' . number_format($totalTransfer, 0, ',', '.'),
             'Tanggal Transfer: ' . ($data['transfer_date'] ?: '-'),
@@ -168,6 +171,7 @@ class DonationTransactionController extends Controller
             'allow_future_donation_contact' => $this->extractLabel($message, 'Bersedia Dihubungi') ?: 'Tidak',
             'donor_whatsapp' => $this->extractLabel($message, 'Nomor WhatsApp') ?: '-',
             'nominal_amount' => $this->extractLabel($message, 'Nominal Donasi') ?: '',
+            'admin_fee' => $this->extractLabel($message, 'Biaya Admin') ?: '',
             'unique_code' => $this->extractLabel($message, 'Kode Unik') ?: '',
             'total_transfer' => $this->extractLabel($message, 'Total Transfer') ?: '',
             'transfer_date' => $this->extractLabel($message, 'Tanggal Transfer') ?: now()->format('d/m/Y'),
@@ -199,6 +203,7 @@ class DonationTransactionController extends Controller
             'donor_name' => $transaction->donor_name ?: 'Hamba Allah',
             'donor_whatsapp' => $transaction->donor_whatsapp ?: '-',
             'nominal_amount' => (int) $transaction->amount,
+            'admin_fee' => $this->moneyToInteger($noteData['Biaya Admin'] ?? '0'),
             'unique_code' => $noteData['Kode Unik'] ?? '-',
             'total_transfer' => $this->moneyToInteger($noteData['Total Transfer'] ?? (string) $transaction->amount),
             'transfer_date' => $noteData['Tanggal Transfer'] ?? optional($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y'),

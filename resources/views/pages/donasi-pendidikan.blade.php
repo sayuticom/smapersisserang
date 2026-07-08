@@ -118,23 +118,15 @@
                     <a href="{{ route('donasi-pendidikan.form-donatur') }}"
                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F6B3A] px-7 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-[#0A4F2B] sm:w-auto">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
                         </svg>
                         Donasi Sekarang
                     </a>
-                    <a href="{{ route('orang-tua-asuh') }}"
-                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-400/60 bg-emerald-950/40 px-7 py-4 text-sm font-bold text-emerald-100 shadow-lg shadow-emerald-900/20 backdrop-blur transition hover:bg-emerald-900/50 hover:border-emerald-300/80 sm:w-auto">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                        Orang Tua Asuh
-                    </a>
-                    <a href="{{ $waUrl }}" target="_blank" rel="noopener"
-                       class="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-7 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500 sm:w-auto">
-                        {{ $whatsappButtonText }}
-                    </a>
                     <a href="{{ route('donasi-pendidikan.sebarkan') }}"
-                       class="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10 sm:w-auto">
+                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10 sm:w-auto">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+                        </svg>
                         {{ $shareButtonText }}
                     </a>
                 </div>

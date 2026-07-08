@@ -68,6 +68,10 @@
                         <dd class="text-right font-semibold text-slate-900">Rp{{ number_format($receipt['nominal_amount'], 0, ',', '.') }}</dd>
                     </div>
                     <div class="flex justify-between gap-4">
+                        <dt class="text-slate-500">Biaya Admin</dt>
+                        <dd class="text-right font-semibold text-slate-900">Rp{{ number_format($receipt['admin_fee'], 0, ',', '.') }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
                         <dt class="text-slate-500">Kode Unik</dt>
                         <dd class="text-right font-semibold text-slate-900">{{ $receipt['unique_code'] }}</dd>
                     </div>
