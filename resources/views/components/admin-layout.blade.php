@@ -11,6 +11,17 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .admin-sidebar-menu > a:not(:first-child) {
+            margin-left: 0.75rem;
+        }
+
+        @media (max-width: 420px) {
+            .admin-sidebar-menu > a:not(:first-child) {
+                margin-left: 0.5rem;
+            }
+        }
+    </style>
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-slate-50">
@@ -61,7 +72,7 @@
             </div>
 
             <nav class="flex-1 overflow-y-auto py-2 px-3">
-                <div class="space-y-0.5">
+                <div class="admin-sidebar-menu space-y-0.5">
                     <a href="{{ route('dashboard') }}"
                        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                         <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('dashboard') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,15 +225,15 @@
                         <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.donasi-transactions.create-receipt') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6m12 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2z"/>
                         </svg>
-                        Buat Bukti Penerimaan
+                        Bukti Penerimaan Donasi
                     </a>
 
-                    <a href="{{ route('admin.orang-tua-asuh.index') }}"
-                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <a href="{{ route('admin.infaq-barang-wa.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.infaq-barang-wa.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.infaq-barang-wa.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m8-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        OTA - Pengajuan
+                        Data WA Infaq Barang
                     </a>
 
                     <a href="{{ route('admin.donasi-pendidikan.share-template') }}"
@@ -233,6 +244,17 @@
                         Template Share WA
                     </a>
 
+                    <div class="pt-3 pb-1">
+                        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">ORANG TUA ASUH</p>
+                    </div>
+
+                    <a href="{{ route('admin.orang-tua-asuh.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.orang-tua-asuh.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Pengajuan OTA
+                    </a>
                     <div class="pt-3 pb-1">
                         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">SARPRAS</p>
                     </div>

@@ -432,10 +432,11 @@ class PublicPageController extends Controller
             ]);
         }
 
-        $uniqueCode = (int) ($data['unique_code'] ?? random_int(1, 999));
-        $uniqueCode = max(1, min(999, $uniqueCode));
+        $uniqueCode = (int) ($data['unique_code'] ?? random_int(1, 299));
+        $uniqueCode = max(1, min(299, $uniqueCode));
         $uniqueCodeFormatted = str_pad((string) $uniqueCode, 3, '0', STR_PAD_LEFT);
-        $totalTransfer = $amount + $uniqueCode;
+        $adminFee = (int) ceil($amount * 0.006);
+        $totalTransfer = $amount + $adminFee + $uniqueCode;
 
         $setting = DonationEducationSetting::activeSetting();
 
@@ -473,6 +474,7 @@ class PublicPageController extends Controller
             . "Bersedia Dihubungi: {$allowContactText}\n"
             . "Nomor WhatsApp: {$donorWhatsapp}\n"
             . "Nominal Donasi: Rp" . number_format($amount, 0, ',', '.') . "\n"
+            . "Biaya Admin: Rp" . number_format($adminFee, 0, ',', '.') . "\n"
             . "Kode Unik: {$uniqueCodeFormatted}\n"
             . "Total Transfer: Rp" . number_format($totalTransfer, 0, ',', '.') . "\n"
             . "Tanggal Transfer: {$transferDate}\n"
@@ -499,6 +501,8 @@ class PublicPageController extends Controller
             'amount_formatted' => 'Rp' . number_format($amount, 0, ',', '.'),
             'amount_raw' => $totalTransfer,
             'nominal_raw' => $amount,
+            'admin_fee' => $adminFee,
+            'admin_fee_formatted' => 'Rp' . number_format($adminFee, 0, ',', '.'),
             'unique_code' => $uniqueCodeFormatted,
             'unique_code_raw' => $uniqueCode,
             'total_transfer_formatted' => 'Rp' . number_format($totalTransfer, 0, ',', '.'),

@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\OrganizationStructureController;
 use App\Http\Controllers\Admin\PPDBApplicationController;
 use App\Http\Controllers\Admin\SchoolImageController;
 use App\Http\Controllers\Admin\FosterStudentController;
+use App\Http\Controllers\Admin\DonationItemCommitmentController;
+use App\Http\Controllers\Admin\DonationItemReceiptController;
 use App\Http\Controllers\Admin\DonationTransactionController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LetterIncomingController;
@@ -282,6 +284,16 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
     });
 
+    Route::resource('infaq-barang', DonationItemReceiptController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->parameters(['infaq-barang' => 'infaqBarang']);
+
+    Route::get('/infaq-barang-wa', [DonationItemCommitmentController::class, 'index'])->name('infaq-barang-wa.index');
+    Route::get('/infaq-barang-wa/create', [DonationItemCommitmentController::class, 'create'])->name('infaq-barang-wa.create');
+    Route::post('/infaq-barang-wa/parse', [DonationItemCommitmentController::class, 'parse'])->name('infaq-barang-wa.parse');
+    Route::post('/infaq-barang-wa', [DonationItemCommitmentController::class, 'store'])->name('infaq-barang-wa.store');
+    Route::get('/infaq-barang-wa/{infaqBarangWa}', [DonationItemCommitmentController::class, 'show'])->name('infaq-barang-wa.show');
+    Route::patch('/infaq-barang-wa/{infaqBarangWa}/status', [DonationItemCommitmentController::class, 'updateStatus'])->name('infaq-barang-wa.update-status');
     Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')->group(function () {
         Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
         Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
