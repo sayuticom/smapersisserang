@@ -241,6 +241,20 @@
                 .letter-content-display .ql-indent-4 { padding-left: 128px; }
                 .letter-content-display .ql-indent-5 { padding-left: 160px; }
                 .letter-content-display .ql-indent-6 { padding-left: 192px; }
+                .tembusan-section p,
+                .tembusan-section div,
+                .tembusan-section li {
+                    line-height: 1.15;
+                    margin: 0 0 1px 0;
+                }
+                .tembusan-section ol,
+                .tembusan-section ul {
+                    margin: 1px 0 0 0;
+                    padding-left: 18px;
+                }
+                .tembusan-section li {
+                    margin-bottom: 0;
+                }
             </style>
             <div class="mt-5 space-y-4 text-sm leading-relaxed text-slate-700 letter-content-display">
                 @if($letterOutgoing->opening_paragraph)
@@ -260,7 +274,7 @@
                     </div>
                 @endif
                 @if($letterOutgoing->cc)
-                    <div>
+                    <div class="tembusan-section">
                         <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tembusan</div>
                         <div class="mt-1">{!! \App\Helpers\LetterHtmlSanitizer::render($letterOutgoing->cc) !!}</div>
                     </div>

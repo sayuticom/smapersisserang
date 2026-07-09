@@ -289,9 +289,24 @@
         }
 
         .cc {
-            margin-top: 16px;
+            margin-top: 10px;
             font-size: 8pt;
             page-break-inside: avoid;
+            line-height: 1.15;
+        }
+        .cc p,
+        .cc div,
+        .cc li {
+            line-height: 1.15;
+            margin: 0 0 1px 0;
+        }
+        .cc ol,
+        .cc ul {
+            margin: 1px 0 0 0;
+            padding-left: 18px;
+        }
+        .cc li {
+            margin-bottom: 0;
         }
 
         .draft-watermark {
