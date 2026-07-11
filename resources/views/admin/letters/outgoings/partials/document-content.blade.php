@@ -9,12 +9,20 @@
 @endphp
 
 <style>
-    .basmallah-image,
+    .basmallah-image {
+        display: block;
+        width: auto;
+        max-width: 180px;
+        max-height: 28px;
+        margin: 14px auto;
+        object-fit: contain;
+    }
+
     .closing-dua-image {
         display: block;
         width: auto;
-        max-width: 420px;
-        max-height: 58px;
+        max-width: 260px;
+        max-height: 30px;
         margin: 14px auto;
         object-fit: contain;
     }
@@ -40,8 +48,8 @@
     }
 
     .signature-image {
-        max-width: 180px;
-        max-height: 100px;
+        max-width: 248px;
+        max-height: 128px;
         width: auto;
         height: auto;
         object-fit: contain;
