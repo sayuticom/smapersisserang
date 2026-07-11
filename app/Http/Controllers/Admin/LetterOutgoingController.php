@@ -15,7 +15,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -87,15 +86,6 @@ class LetterOutgoingController extends Controller
 
     public function show(LetterOutgoing $letterOutgoing): View
     {
-        Log::info('SHOW_LETTER_STATUS', [
-            'letter_id' => $letterOutgoing->id,
-            'status' => $letterOutgoing->status,
-            'letter_number' => $letterOutgoing->letter_number,
-            'database' => DB::connection()->getDatabaseName(),
-            'url' => request()->fullUrl(),
-            'server' => gethostname(),
-        ]);
-
         $letterOutgoing->load([
             'letterType',
             'recipients',
@@ -189,17 +179,6 @@ class LetterOutgoingController extends Controller
 
     public function issue(LetterOutgoing $letterOutgoing, LetterNumberService $numberService): RedirectResponse
     {
-        Log::info('ISSUE_HTTP_START', [
-            'letter_id' => $letterOutgoing->id,
-            'status_model' => $letterOutgoing->status,
-            'database' => DB::connection()->getDatabaseName(),
-            'host' => config('database.connections.mysql.host'),
-            'url' => request()->fullUrl(),
-            'method' => request()->method(),
-            'user_id' => auth()->id(),
-            'server' => gethostname(),
-        ]);
-
         try {
             if ($letterOutgoing->status === 'issued') {
                 return redirect()
@@ -208,35 +187,16 @@ class LetterOutgoingController extends Controller
             }
 
             DB::transaction(function () use ($letterOutgoing, $numberService) {
-                Log::info('ISSUE_BEFORE_LOCK', ['letter_id' => $letterOutgoing->id]);
-
                 $letter = LetterOutgoing::query()
                     ->whereKey($letterOutgoing->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                Log::info('ISSUE_AFTER_LOCK', [
-                    'letter_id' => $letter->id,
-                    'status' => $letter->status,
-                ]);
-
                 if ($letter->status === 'issued') {
                     return;
                 }
 
-                Log::info('ISSUE_BEFORE_NUMBER_GENERATE', [
-                    'letter_id' => $letter->id,
-                    'letter_type_id' => $letter->letter_type_id,
-                ]);
-
                 $number = $numberService->generate($letter->letter_type_id, $letter->letter_date, $letter->letter_classification_code, $letter->letter_school_code);
-
-                Log::info('ISSUE_AFTER_NUMBER_GENERATE', [
-                    'letter_id' => $letter->id,
-                    'number_data' => $number,
-                ]);
-
-                Log::info('ISSUE_BEFORE_UPDATE', ['letter_id' => $letter->id]);
 
                 $letter->update([
                     'sequence_number' => $number['sequence_number'],
@@ -249,44 +209,12 @@ class LetterOutgoingController extends Controller
                 ]);
 
                 $letter->refresh();
-
-                Log::info('ISSUE_HTTP_AFTER_UPDATE', [
-                    'letter_id' => $letter->id,
-                    'status' => $letter->status,
-                    'letter_number' => $letter->letter_number,
-                    'issued_at' => $letter->issued_at,
-                    'database' => DB::connection()->getDatabaseName(),
-                ]);
             });
-
-            $freshLetter = LetterOutgoing::find($letterOutgoing->id);
-
-            Log::info('ISSUE_HTTP_AFTER_COMMIT', [
-                'letter_id' => $freshLetter?->id,
-                'status' => $freshLetter?->status,
-                'letter_number' => $freshLetter?->letter_number,
-                'issued_at' => $freshLetter?->issued_at,
-                'database' => DB::connection()->getDatabaseName(),
-            ]);
-
-            Log::info('ISSUE_CODE_VERSION', [
-                'commit' => trim(shell_exec('git rev-parse --short HEAD 2>/dev/null') ?? 'unknown'),
-                'letter_id' => $letterOutgoing->id,
-            ]);
 
             return redirect()
                 ->route('admin.letters.outgoings.show', $letterOutgoing)
                 ->with('success', 'Surat berhasil diterbitkan dan nomor surat sudah dibuat.');
         } catch (\Throwable $e) {
-            Log::error('ISSUE_HTTP_FAILED', [
-                'letter_id' => $letterOutgoing->id,
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return redirect()
                 ->route('admin.letters.outgoings.show', $letterOutgoing)
                 ->with('error', 'Surat gagal diterbitkan: '.$e->getMessage());

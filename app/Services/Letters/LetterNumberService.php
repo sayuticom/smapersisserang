@@ -84,6 +84,7 @@ class LetterNumberService
 
     private function lockCounter(int $year, int $letterTypeId): LetterCounter
     {
+        // Try to find existing counter within this transaction
         $counter = LetterCounter::query()
             ->where('year', $year)
             ->where('letter_type_id', $letterTypeId)
@@ -94,16 +95,22 @@ class LetterNumberService
             return $counter;
         }
 
+        // Counter does not exist yet; create it within the same transaction.
+        // Because lockForUpdate() above returned nothing, we know no concurrent
+        // transaction holds a lock on this (year, letter_type_id) pair, so it
+        // is safe to INSERT.  Use a try-catch on the unique(year) constraint
+        // in case a concurrent INSERT won the race between our SELECT and INSERT.
         try {
             return LetterCounter::query()->create([
                 'letter_type_id' => $letterTypeId,
                 'year' => $year,
                 'month' => null,
-                'last_number' => 0,
+                'last_number' => $this->maxIssuedSequence($year),
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
         } catch (QueryException) {
+            // Another transaction inserted the row first; re-fetch with lock.
             return LetterCounter::query()
                 ->where('year', $year)
                 ->where('letter_type_id', $letterTypeId)
