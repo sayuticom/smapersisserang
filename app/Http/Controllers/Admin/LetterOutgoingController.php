@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -196,7 +197,32 @@ class LetterOutgoingController extends Controller
                     return;
                 }
 
-                $number = $numberService->generate($letter->letter_type_id, $letter->letter_date, $letter->letter_classification_code, $letter->letter_school_code);
+                $maxRetries = 3;
+
+                for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+                    $number = $numberService->generate($letter->letter_type_id, $letter->letter_date, $letter->letter_classification_code, $letter->letter_school_code);
+
+                    $duplicate = LetterOutgoing::query()
+                        ->where('letter_number', $number['letter_number'])
+                        ->whereKeyNot($letter->id)
+                        ->exists();
+
+                    if (!$duplicate) {
+                        break;
+                    }
+
+                    Log::warning('ISSUE_DUPLICATE_NUMBER', [
+                        'letter_id' => $letter->id,
+                        'letter_number' => $number['letter_number'],
+                        'attempt' => $attempt,
+                    ]);
+
+                    if ($attempt === $maxRetries) {
+                        throw new \RuntimeException(
+                            "Gagal menghasilkan nomor unik setelah {$maxRetries} percobaan. Nomor terakhir: {$number['letter_number']}"
+                        );
+                    }
+                }
 
                 $letter->update([
                     'sequence_number' => $number['sequence_number'],

@@ -26,19 +26,22 @@ class LetterNumberService
             ? CarbonImmutable::instance($date)
             : CarbonImmutable::parse($date ?? now());
 
-        return DB::transaction(function () use ($type, $letterDate, $classificationCode, $schoolCode) {
-            $counter = $this->lockCounter((int) $letterDate->year, $type->id);
-            $counter->last_number = max($counter->last_number, $this->maxIssuedSequence($type->id, (int) $letterDate->year));
+        $code = $classificationCode ?: '421.3';
+
+        return DB::transaction(function () use ($type, $letterDate, $code, $schoolCode) {
+            $counter = $this->lockCounter((int) $letterDate->year, $code);
+            $counter->last_number = max($counter->last_number, $this->maxIssuedSequence((int) $letterDate->year, $code));
             $counter->last_number++;
             $counter->month = (int) $letterDate->month;
             $counter->updated_by = Auth::id();
             $counter->save();
 
             $sequence = $counter->last_number;
+            $letterNumber = $this->formatNumber($sequence, $type->code, $letterDate, $code, $schoolCode);
 
             return [
                 'sequence_number' => $sequence,
-                'letter_number' => $this->formatNumber($sequence, $type->code, $letterDate, $classificationCode, $schoolCode),
+                'letter_number' => $letterNumber,
                 'letter_type_id' => $type->id,
                 'year' => (int) $letterDate->year,
                 'month' => (int) $letterDate->month,
@@ -83,12 +86,11 @@ class LetterNumberService
         ][$month] ?? '';
     }
 
-    private function lockCounter(int $year, int $letterTypeId): LetterCounter
+    private function lockCounter(int $year, string $classificationCode): LetterCounter
     {
-        // Try to find existing counter within this transaction
         $counter = LetterCounter::query()
             ->where('year', $year)
-            ->where('letter_type_id', $letterTypeId)
+            ->where('classification_code', $classificationCode)
             ->lockForUpdate()
             ->first();
 
@@ -97,16 +99,16 @@ class LetterNumberService
         }
 
         $attributes = [
-            'letter_type_id' => $letterTypeId,
+            'classification_code' => $classificationCode,
             'year' => $year,
             'month' => null,
-            'last_number' => $this->maxIssuedSequence($letterTypeId, $year),
+            'last_number' => $this->maxIssuedSequence($year, $classificationCode),
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
         ];
 
         Log::info('LETTER_COUNTER_LOOKUP', [
-            'letter_type_id' => $letterTypeId,
+            'classification_code' => $classificationCode,
             'year' => $year,
             'existing' => $counter?->toArray(),
             'attributes' => $attributes,
@@ -120,7 +122,7 @@ class LetterNumberService
             $isDuplicateKey = $sqlState === '23000' && (int) $driverCode === 1062;
 
             Log::error('LETTER_COUNTER_CREATE_FAILED', [
-                'letter_type_id' => $letterTypeId,
+                'classification_code' => $classificationCode,
                 'year' => $year,
                 'sql_state' => $sqlState,
                 'driver_code' => $driverCode,
@@ -134,13 +136,13 @@ class LetterNumberService
 
             $counter = LetterCounter::query()
                 ->where('year', $year)
-                ->where('letter_type_id', $letterTypeId)
+                ->where('classification_code', $classificationCode)
                 ->lockForUpdate()
                 ->first();
 
             if (!$counter) {
                 throw new \RuntimeException(
-                    "LetterCounter duplicate race detected but counter row was not found for type {$letterTypeId}, year {$year}."
+                    "LetterCounter duplicate race detected but counter row was not found for classification_code {$classificationCode}, year {$year}."
                 );
             }
 
@@ -148,10 +150,10 @@ class LetterNumberService
         }
     }
 
-    private function maxIssuedSequence(int $letterTypeId, int $year): int
+    private function maxIssuedSequence(int $year, string $classificationCode): int
     {
         return (int) LetterOutgoing::query()
-            ->where('letter_type_id', $letterTypeId)
+            ->where('letter_classification_code', $classificationCode)
             ->where('letter_year', $year)
             ->where('status', 'issued')
             ->max('sequence_number');

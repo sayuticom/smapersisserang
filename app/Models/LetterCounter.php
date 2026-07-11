@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LetterCounter extends Model
 {
     protected $fillable = [
+        'classification_code',
         'letter_type_id',
         'year',
         'month',

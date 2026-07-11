@@ -9,16 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('letter_counters', function (Blueprint $table) {
-            $table->dropUnique(['year']);
-            $table->unique(['year', 'letter_type_id']);
+            $table->foreignId('letter_type_id')->nullable()->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('letter_counters', function (Blueprint $table) {
-            $table->dropUnique(['year', 'letter_type_id']);
-            $table->unique('year');
+            $table->foreignId('letter_type_id')->nullable(false)->change();
         });
     }
 };
