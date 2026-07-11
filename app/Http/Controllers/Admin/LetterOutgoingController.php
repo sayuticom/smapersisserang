@@ -172,6 +172,11 @@ class LetterOutgoingController extends Controller
             ->with('success', 'Draft surat keluar berhasil diperbarui.');
     }
 
+    public function issueGet(LetterOutgoing $letterOutgoing): RedirectResponse
+    {
+        return redirect()->route('admin.letters.outgoings.show', $letterOutgoing);
+    }
+
     public function issue(LetterOutgoing $letterOutgoing, LetterNumberService $numberService): RedirectResponse
     {
         if ($letterOutgoing->status === 'issued') {

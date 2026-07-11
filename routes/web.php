@@ -359,6 +359,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{letterOutgoing}/print-all', [LetterOutgoingController::class, 'printAll'])->name('print-all');
         Route::get('/{letterOutgoing}/print/{recipient}', [LetterOutgoingController::class, 'printRecipient'])->name('print-recipient');
         Route::put('/{letterOutgoing}', [LetterOutgoingController::class, 'update'])->name('update');
+        Route::get('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issueGet'])->name('issue.get');
         Route::post('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issue'])->name('issue');
         Route::put('/{letterOutgoing}/attachment', [LetterOutgoingController::class, 'updateAttachment'])->name('update-attachment');
     });
