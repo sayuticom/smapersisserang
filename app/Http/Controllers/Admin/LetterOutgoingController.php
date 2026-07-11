@@ -200,63 +200,97 @@ class LetterOutgoingController extends Controller
             'server' => gethostname(),
         ]);
 
-        if ($letterOutgoing->status === 'issued') {
-            return redirect()
-                ->route('admin.letters.outgoings.show', $letterOutgoing)
-                ->with('success', 'Surat sudah diterbitkan. Nomor surat tidak dibuat ulang.');
-        }
-
-        DB::transaction(function () use ($letterOutgoing, $numberService) {
-            $letter = LetterOutgoing::query()
-                ->whereKey($letterOutgoing->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($letter->status === 'issued') {
-                return;
+        try {
+            if ($letterOutgoing->status === 'issued') {
+                return redirect()
+                    ->route('admin.letters.outgoings.show', $letterOutgoing)
+                    ->with('success', 'Surat sudah diterbitkan. Nomor surat tidak dibuat ulang.');
             }
 
-            $number = $numberService->generate($letter->letter_type_id, $letter->letter_date, $letter->letter_classification_code, $letter->letter_school_code);
+            DB::transaction(function () use ($letterOutgoing, $numberService) {
+                Log::info('ISSUE_BEFORE_LOCK', ['letter_id' => $letterOutgoing->id]);
 
-            $letter->update([
-                'sequence_number' => $number['sequence_number'],
-                'letter_number' => $number['letter_number'],
-                'letter_month' => $number['month'],
-                'letter_year' => $number['year'],
-                'status' => 'issued',
-                'issued_at' => now(),
-                'updated_by' => auth()->id(),
-            ]);
+                $letter = LetterOutgoing::query()
+                    ->whereKey($letterOutgoing->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            $letter->refresh();
+                Log::info('ISSUE_AFTER_LOCK', [
+                    'letter_id' => $letter->id,
+                    'status' => $letter->status,
+                ]);
 
-            Log::info('ISSUE_HTTP_AFTER_UPDATE', [
-                'letter_id' => $letter->id,
-                'status' => $letter->status,
-                'letter_number' => $letter->letter_number,
-                'issued_at' => $letter->issued_at,
+                if ($letter->status === 'issued') {
+                    return;
+                }
+
+                Log::info('ISSUE_BEFORE_NUMBER_GENERATE', [
+                    'letter_id' => $letter->id,
+                    'letter_type_id' => $letter->letter_type_id,
+                ]);
+
+                $number = $numberService->generate($letter->letter_type_id, $letter->letter_date, $letter->letter_classification_code, $letter->letter_school_code);
+
+                Log::info('ISSUE_AFTER_NUMBER_GENERATE', [
+                    'letter_id' => $letter->id,
+                    'number_data' => $number,
+                ]);
+
+                Log::info('ISSUE_BEFORE_UPDATE', ['letter_id' => $letter->id]);
+
+                $letter->update([
+                    'sequence_number' => $number['sequence_number'],
+                    'letter_number' => $number['letter_number'],
+                    'letter_month' => $number['month'],
+                    'letter_year' => $number['year'],
+                    'status' => 'issued',
+                    'issued_at' => now(),
+                    'updated_by' => auth()->id(),
+                ]);
+
+                $letter->refresh();
+
+                Log::info('ISSUE_HTTP_AFTER_UPDATE', [
+                    'letter_id' => $letter->id,
+                    'status' => $letter->status,
+                    'letter_number' => $letter->letter_number,
+                    'issued_at' => $letter->issued_at,
+                    'database' => DB::connection()->getDatabaseName(),
+                ]);
+            });
+
+            $freshLetter = LetterOutgoing::find($letterOutgoing->id);
+
+            Log::info('ISSUE_HTTP_AFTER_COMMIT', [
+                'letter_id' => $freshLetter?->id,
+                'status' => $freshLetter?->status,
+                'letter_number' => $freshLetter?->letter_number,
+                'issued_at' => $freshLetter?->issued_at,
                 'database' => DB::connection()->getDatabaseName(),
             ]);
-        });
 
-        $freshLetter = LetterOutgoing::find($letterOutgoing->id);
+            Log::info('ISSUE_CODE_VERSION', [
+                'commit' => trim(shell_exec('git rev-parse --short HEAD 2>/dev/null') ?? 'unknown'),
+                'letter_id' => $letterOutgoing->id,
+            ]);
 
-        Log::info('ISSUE_HTTP_AFTER_COMMIT', [
-            'letter_id' => $freshLetter?->id,
-            'status' => $freshLetter?->status,
-            'letter_number' => $freshLetter?->letter_number,
-            'issued_at' => $freshLetter?->issued_at,
-            'database' => DB::connection()->getDatabaseName(),
-        ]);
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('success', 'Surat berhasil diterbitkan dan nomor surat sudah dibuat.');
+        } catch (\Throwable $e) {
+            Log::error('ISSUE_HTTP_FAILED', [
+                'letter_id' => $letterOutgoing->id,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-        Log::info('ISSUE_CODE_VERSION', [
-            'commit' => trim(shell_exec('git rev-parse --short HEAD 2>/dev/null') ?? 'unknown'),
-            'letter_id' => $letterOutgoing->id,
-        ]);
-
-        return redirect()
-            ->route('admin.letters.outgoings.show', $letterOutgoing)
-            ->with('success', 'Surat berhasil diterbitkan dan nomor surat sudah dibuat.');
+            return redirect()
+                ->route('admin.letters.outgoings.show', $letterOutgoing)
+                ->with('error', 'Surat gagal diterbitkan: '.$e->getMessage());
+        }
     }
 
     public function updateAttachment(Request $request, LetterOutgoing $letterOutgoing): RedirectResponse
