@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -86,6 +87,15 @@ class LetterOutgoingController extends Controller
 
     public function show(LetterOutgoing $letterOutgoing): View
     {
+        Log::info('SHOW_LETTER_STATUS', [
+            'letter_id' => $letterOutgoing->id,
+            'status' => $letterOutgoing->status,
+            'letter_number' => $letterOutgoing->letter_number,
+            'database' => DB::connection()->getDatabaseName(),
+            'url' => request()->fullUrl(),
+            'server' => gethostname(),
+        ]);
+
         $letterOutgoing->load([
             'letterType',
             'recipients',
@@ -179,6 +189,17 @@ class LetterOutgoingController extends Controller
 
     public function issue(LetterOutgoing $letterOutgoing, LetterNumberService $numberService): RedirectResponse
     {
+        Log::info('ISSUE_HTTP_START', [
+            'letter_id' => $letterOutgoing->id,
+            'status_model' => $letterOutgoing->status,
+            'database' => DB::connection()->getDatabaseName(),
+            'host' => config('database.connections.mysql.host'),
+            'url' => request()->fullUrl(),
+            'method' => request()->method(),
+            'user_id' => auth()->id(),
+            'server' => gethostname(),
+        ]);
+
         if ($letterOutgoing->status === 'issued') {
             return redirect()
                 ->route('admin.letters.outgoings.show', $letterOutgoing)
@@ -206,7 +227,32 @@ class LetterOutgoingController extends Controller
                 'issued_at' => now(),
                 'updated_by' => auth()->id(),
             ]);
+
+            $letter->refresh();
+
+            Log::info('ISSUE_HTTP_AFTER_UPDATE', [
+                'letter_id' => $letter->id,
+                'status' => $letter->status,
+                'letter_number' => $letter->letter_number,
+                'issued_at' => $letter->issued_at,
+                'database' => DB::connection()->getDatabaseName(),
+            ]);
         });
+
+        $freshLetter = LetterOutgoing::find($letterOutgoing->id);
+
+        Log::info('ISSUE_HTTP_AFTER_COMMIT', [
+            'letter_id' => $freshLetter?->id,
+            'status' => $freshLetter?->status,
+            'letter_number' => $freshLetter?->letter_number,
+            'issued_at' => $freshLetter?->issued_at,
+            'database' => DB::connection()->getDatabaseName(),
+        ]);
+
+        Log::info('ISSUE_CODE_VERSION', [
+            'commit' => trim(shell_exec('git rev-parse --short HEAD 2>/dev/null') ?? 'unknown'),
+            'letter_id' => $letterOutgoing->id,
+        ]);
 
         return redirect()
             ->route('admin.letters.outgoings.show', $letterOutgoing)
