@@ -27,7 +27,7 @@ class LetterNumberService
 
         return DB::transaction(function () use ($type, $letterDate, $classificationCode, $schoolCode) {
             $counter = $this->lockCounter((int) $letterDate->year, $type->id);
-            $counter->last_number = max($counter->last_number, $this->maxIssuedSequence((int) $letterDate->year));
+            $counter->last_number = max($counter->last_number, $this->maxIssuedSequence($type->id, (int) $letterDate->year));
             $counter->last_number++;
             $counter->month = (int) $letterDate->month;
             $counter->updated_by = Auth::id();
@@ -105,7 +105,7 @@ class LetterNumberService
                 'letter_type_id' => $letterTypeId,
                 'year' => $year,
                 'month' => null,
-                'last_number' => $this->maxIssuedSequence($year),
+                'last_number' => $this->maxIssuedSequence($letterTypeId, $year),
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
@@ -119,11 +119,12 @@ class LetterNumberService
         }
     }
 
-    private function maxIssuedSequence(int $year): int
+    private function maxIssuedSequence(int $letterTypeId, int $year): int
     {
         return (int) LetterOutgoing::query()
+            ->where('letter_type_id', $letterTypeId)
             ->where('letter_year', $year)
-            ->whereNotNull('sequence_number')
+            ->where('status', 'issued')
             ->max('sequence_number');
     }
 }
