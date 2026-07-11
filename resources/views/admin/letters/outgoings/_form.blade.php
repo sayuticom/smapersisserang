@@ -33,7 +33,7 @@
             <option value="3 berkas">3 berkas</option>
         </select>
 
-        @if($showAttachmentEditor ?? true)
+        @if($showAttachmentEditor ?? false)
         <div x-show="attachment !== ''" x-cloak x-transition class="mt-4" x-init="initLampiranEditor()">
             <x-letter-editor
                 name="attachment_content"

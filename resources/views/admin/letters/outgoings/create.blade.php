@@ -33,25 +33,57 @@
         @endif
 
         <form method="POST" action="{{ route('admin.letters.outgoings.store') }}"
-              class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
               x-data="{
+                tab: 'data',
                 attachment: '{{ old('attachment', '') }}',
-                initLampiranEditor() {
-                    this.$nextTick(() => {
-                        const el = this.$el.querySelector('.letter-ckeditor');
-                        if (el && !el.ckeditorInstance && window.initSingleLetterEditor) {
-                            el.dataset.ckeditorInitialized = 'false';
-                            window.initSingleLetterEditor(el);
+                get hasAttachment() {
+                    const v = (this.attachment || '').toString().trim().toLowerCase();
+                    return v !== '' && v !== 'none' && v !== 'tidak ada lampiran' && v !== '-';
+                },
+                init() {
+                    this.$watch('attachment', () => {
+                        if (!this.hasAttachment && this.tab === 'lampiran') {
+                            this.tab = 'data';
                         }
                     });
+                },
+                startAttachmentEditor() {
+                    const panel = document.getElementById('lampiran-panel');
+                    const data = panel && window.Alpine && Alpine.$data(panel);
+                    if (data && typeof data.startEditor === 'function') {
+                        data.startEditor();
+                    }
                 }
               }">
             @csrf
-            @include('admin.letters.outgoings._form', [
-                'letterOutgoing' => null,
-                'template' => $template,
-                'recipientRows' => collect(old('recipients', [['recipient_name' => '', 'recipient_institution' => '', 'recipient_address' => 'di Tempat', 'recipient_phone' => '', 'recipient_email' => '']]))
+
+            @include('admin.letters.outgoings.partials.draft-tabs')
+
+            <div x-show="tab === 'data'" class="mt-6">
+                <div class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                    @include('admin.letters.outgoings._form', [
+                        'showAttachmentEditor' => false,
+                        'letterOutgoing' => null,
+                        'template' => $template,
+                        'recipientRows' => collect(old('recipients', [['recipient_name' => '', 'recipient_institution' => '', 'recipient_address' => 'di Tempat', 'recipient_phone' => '', 'recipient_email' => '']]))
+                    ])
+                </div>
+            </div>
+
+            @include('admin.letters.outgoings.partials.attachment-panel', [
+                'usesOwnForm' => false,
+                'editorName' => 'attachment_content',
+                'editorValue' => old('attachment_content', ''),
+                'initialMode' => 'edit',
+                'showViewMode' => false,
+                'saveLabel' => 'Kembali ke Data Surat',
+                'primaryButtonType' => 'button',
+                'primaryButtonClick' => "tab = 'data'",
             ])
         </form>
     </div>
+
+    @push('styles')
+        <style>[x-cloak] { display: none !important; }</style>
+    @endpush
 </x-admin-layout>
