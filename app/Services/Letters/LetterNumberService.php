@@ -10,6 +10,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LetterNumberService
 {
@@ -95,27 +96,55 @@ class LetterNumberService
             return $counter;
         }
 
-        // Counter does not exist yet; create it within the same transaction.
-        // Because lockForUpdate() above returned nothing, we know no concurrent
-        // transaction holds a lock on this (year, letter_type_id) pair, so it
-        // is safe to INSERT.  Use a try-catch on the unique(year) constraint
-        // in case a concurrent INSERT won the race between our SELECT and INSERT.
+        $attributes = [
+            'letter_type_id' => $letterTypeId,
+            'year' => $year,
+            'month' => null,
+            'last_number' => $this->maxIssuedSequence($letterTypeId, $year),
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+        ];
+
+        Log::info('LETTER_COUNTER_LOOKUP', [
+            'letter_type_id' => $letterTypeId,
+            'year' => $year,
+            'existing' => $counter?->toArray(),
+            'attributes' => $attributes,
+        ]);
+
         try {
-            return LetterCounter::query()->create([
+            return LetterCounter::query()->create($attributes);
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? '';
+            $driverCode = $e->errorInfo[1] ?? 0;
+            $isDuplicateKey = $sqlState === '23000' && (int) $driverCode === 1062;
+
+            Log::error('LETTER_COUNTER_CREATE_FAILED', [
                 'letter_type_id' => $letterTypeId,
                 'year' => $year,
-                'month' => null,
-                'last_number' => $this->maxIssuedSequence($letterTypeId, $year),
-                'created_by' => Auth::id(),
-                'updated_by' => Auth::id(),
+                'sql_state' => $sqlState,
+                'driver_code' => $driverCode,
+                'message' => $e->getMessage(),
+                'is_duplicate_key' => $isDuplicateKey,
             ]);
-        } catch (QueryException) {
-            // Another transaction inserted the row first; re-fetch with lock.
-            return LetterCounter::query()
+
+            if (!$isDuplicateKey) {
+                throw $e;
+            }
+
+            $counter = LetterCounter::query()
                 ->where('year', $year)
                 ->where('letter_type_id', $letterTypeId)
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (!$counter) {
+                throw new \RuntimeException(
+                    "LetterCounter duplicate race detected but counter row was not found for type {$letterTypeId}, year {$year}."
+                );
+            }
+
+            return $counter;
         }
     }
 
