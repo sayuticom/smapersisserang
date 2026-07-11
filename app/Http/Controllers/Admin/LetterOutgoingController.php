@@ -73,6 +73,12 @@ class LetterOutgoingController extends Controller
             return $letter;
         });
 
+        if (!empty($validated['attachment']) && $request->filled('attachment_content')) {
+            $letter->attachmentContent()->create([
+                'content' => LetterHtmlSanitizer::sanitize($request->input('attachment_content')),
+            ]);
+        }
+
         return redirect()
             ->route('admin.letters.outgoings.show', $letter)
             ->with('success', 'Draft surat keluar berhasil dibuat.');
@@ -87,9 +93,16 @@ class LetterOutgoingController extends Controller
             'signerTwo',
             'creator',
             'updater',
+            'attachmentContent',
         ]);
 
-        return view('admin.letters.outgoings.show', compact('letterOutgoing'));
+        $schoolSetting = SchoolSetting::current();
+
+        return view('admin.letters.outgoings.show', [
+            'letterOutgoing' => $letterOutgoing,
+            'schoolSetting' => $schoolSetting,
+            'hasAttachment' => $letterOutgoing->relationLoaded('attachmentContent') && $letterOutgoing->attachmentContent?->content,
+        ]);
     }
 
     public function edit(LetterOutgoing $letterOutgoing): View|RedirectResponse
@@ -137,6 +150,22 @@ class LetterOutgoingController extends Controller
             $letterOutgoing->update($validated);
             $this->syncRecipients($letterOutgoing, $recipients);
         });
+
+        $attachmentContent = $request->input('attachment_content');
+        if (!empty($validated['attachment'])) {
+            if ($attachmentContent) {
+                $sanitized = LetterHtmlSanitizer::sanitize($attachmentContent);
+                if ($letterOutgoing->attachmentContent) {
+                    $letterOutgoing->attachmentContent()->update(['content' => $sanitized]);
+                } else {
+                    $letterOutgoing->attachmentContent()->create(['content' => $sanitized]);
+                }
+            }
+        } else {
+            if ($letterOutgoing->attachmentContent) {
+                $letterOutgoing->attachmentContent()->delete();
+            }
+        }
 
         return redirect()
             ->route('admin.letters.outgoings.show', $letterOutgoing)

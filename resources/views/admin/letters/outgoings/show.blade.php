@@ -78,207 +78,87 @@
             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
         @endif
 
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-6 py-3">
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Ringkasan Administrasi</h3>
+            </div>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-2 px-6 py-4 text-sm md:grid-cols-3">
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->status === 'issued' ? 'Terbit' : 'Draft' }}</div>
+                    <span class="font-medium text-slate-500">Status:</span>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $letterOutgoing->status === 'issued' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                        {{ $letterOutgoing->status === 'issued' ? 'Terbit' : 'Draft' }}
+                    </span>
                 </div>
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nomor Surat</div>
-                    <div class="mt-1 font-mono text-sm font-semibold text-slate-900">{{ $letterOutgoing->letter_number ?: '-' }}</div>
+                    <span class="font-medium text-slate-500">Nomor Surat:</span>
+                    <span class="font-mono">{{ $letterOutgoing->letter_number ?: '-' }}</span>
                 </div>
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal Surat</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->letter_date?->format('d/m/Y') ?? '-' }}</div>
-                    @if($letterOutgoing->hijri_date)
-                        <div class="text-xs text-slate-500 mt-0.5">{{ $letterOutgoing->hijri_date }}</div>
-                    @endif
+                    <span class="font-medium text-slate-500">Jenis:</span>
+                    {{ $letterOutgoing->letterType?->code ? $letterOutgoing->letterType->code . ' - ' . $letterOutgoing->letterType->name : '-' }}
                 </div>
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Jenis</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->letterType?->code }} - {{ $letterOutgoing->letterType?->name }}</div>
+                    <span class="font-medium text-slate-500">Kode Klasifikasi:</span>
+                    {{ $letterOutgoing->letter_classification_code ?? '421.3' }}
                 </div>
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Lampiran</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->attachment ?: '-' }}</div>
+                    <span class="font-medium text-slate-500">Kode Sekolah:</span>
+                    {{ $letterOutgoing->letter_school_code ?? 'SMA-PERSIS-SRG' }}
                 </div>
                 <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Diterbitkan</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->issued_at?->format('d/m/Y H:i') ?? '-' }}</div>
-                </div>
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kode Klasifikasi</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->letter_classification_code ?: '421.3' }}</div>
-                </div>
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kode Sekolah</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ $letterOutgoing->letter_school_code ?: 'SMA-PERSIS-SRG' }}</div>
-                </div>
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Basmallah</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ ($letterOutgoing->show_basmallah ?? true) ? 'Ditampilkan' : 'Tidak' }}</div>
-                </div>
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Doa Penutup</div>
-                    <div class="mt-1 font-semibold text-slate-900">{{ ($letterOutgoing->show_closing_dua ?? true) ? 'Ditampilkan' : 'Tidak' }}</div>
+                    <span class="font-medium text-slate-500">Diterbitkan:</span>
+                    {{ $letterOutgoing->issued_at?->format('d/m/Y H:i') ?: '-' }}
                 </div>
             </div>
+        </div>
 
-            <div class="mt-6 border-t border-slate-100 pt-5">
-                <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Perihal</div>
-                <h3 class="mt-1 text-xl font-bold text-slate-900">{{ $letterOutgoing->subject }}</h3>
-            </div>
+        <style>
+            .document-content { line-height: 1.6; color: #1f2937; }
+            .document-content .letter-meta td { padding: 1px 0; vertical-align: top; }
+            .document-content .letter-meta .label { width: 80px; }
+            .document-content .letter-meta .colon { width: 12px; text-align: center; }
+            .document-content .recipient-block p { margin: 0 0 2px 0; }
+            .document-content .signature-area { margin-top: 48px; }
+            .document-content .signature-col { text-align: center; }
+            .document-content .signature-col .signature-name { font-weight: 600; text-decoration: underline; }
+            .document-content .signature-col .signature-title { margin-bottom: 2px; }
+            .document-content .signature-col .signature-space { height: 80px; }
+            .document-content figure.table { margin-left: 0; margin-right: auto; text-align: left; }
+            .document-content table { border-collapse: collapse; margin: 8px 0; width: 100%; table-layout: fixed; }
+            .document-content th, .document-content td { border: 1px solid #333; padding: 5px 7px; vertical-align: top; text-align: left; }
+            .document-content .no-border-table table td,
+            .document-content .no-border-table table th,
+            .document-content table.no-border-table td,
+            .document-content table.no-border-table th { border: none !important; padding: 2px 6px; }
+            .document-content .letter-body > div > p { margin: 0 0 8px 0; }
+            .document-content .letter-body ul,
+            .document-content .letter-body ol { margin: 0.5rem 0; padding-left: 1.75rem; }
+            .document-content .letter-body ol { list-style-type: decimal; }
+            .document-content .letter-body ul { list-style-type: disc; }
+            .document-content .letter-body li { margin: 0.2rem 0; }
+            .document-content .letter-body ol ol { list-style-type: lower-alpha; }
+            .document-content .letter-body ol ol ol { list-style-type: lower-roman; }
+            .document-content .letter-body ul ul { list-style-type: circle; }
+            .document-content .ql-indent-1 { padding-left: 32px; }
+            .document-content .ql-indent-2 { padding-left: 64px; }
+            .document-content .ql-indent-3 { padding-left: 96px; }
+            .document-content .ql-indent-4 { padding-left: 128px; }
+            .document-content .ql-indent-5 { padding-left: 160px; }
+            .document-content .ql-indent-6 { padding-left: 192px; }
+            .cc-section p,
+            .cc-section div,
+            .cc-section li { line-height: 1.15; margin: 0 0 1px 0; }
+            .cc-section ol, .cc-section ul { margin: 1px 0 0 0; padding-left: 18px; }
+            .cc-section li { margin-bottom: 0; }
+        </style>
 
-            <div class="mt-5 grid gap-5 lg:grid-cols-2">
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <h4 class="font-semibold text-slate-900">Penerima</h4>
-                    <div class="mt-3 space-y-3 text-sm">
-                        @foreach($letterOutgoing->recipients as $recipient)
-                            <div class="rounded-lg bg-slate-50 p-3">
-                                <div class="font-semibold text-slate-900">{{ $recipient->recipient_name }}</div>
-                                @if($recipient->recipient_address)
-                                    <div class="mt-1 text-xs text-slate-500">{{ $recipient->recipient_address }}</div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <h4 class="font-semibold text-slate-900">Penandatangan</h4>
-                    <dl class="mt-3 space-y-3 text-sm">
-                        <div>
-                            <dt class="text-xs font-semibold uppercase text-slate-500">Penandatangan 1</dt>
-                            <dd class="mt-1 text-slate-900">{{ $letterOutgoing->signerOne?->name ?? '-' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs font-semibold uppercase text-slate-500">Penandatangan 2</dt>
-                            <dd class="mt-1 text-slate-900">{{ $letterOutgoing->signerTwo?->name ?? '-' }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-
-            <style>
-                .letter-text-block {
-                    margin-bottom: 8px;
-                    line-height: 1.55;
-                }
-                .letter-content-display p {
-                    margin: 0 0 8px 0;
-                    line-height: 1.55;
-                    text-align: left;
-                }
-                .letter-content-display ul,
-                .letter-content-display ol,
-                .letter-content ul,
-                .letter-content ol {
-                    margin: 0.5rem 0;
-                    padding-left: 1.75rem;
-                }
-                .letter-content-display ol,
-                .letter-content ol {
-                    list-style-type: decimal;
-                }
-                .letter-content-display ul,
-                .letter-content ul {
-                    list-style-type: disc;
-                }
-                .letter-content-display li,
-                .letter-content li {
-                    margin: 0.2rem 0;
-                    line-height: 1.55;
-                }
-                .letter-content-display ol ol,
-                .letter-content ol ol {
-                    list-style-type: lower-alpha;
-                }
-                .letter-content-display ol ol ol,
-                .letter-content ol ol ol {
-                    list-style-type: lower-roman;
-                }
-                .letter-content-display ul ul,
-                .letter-content ul ul {
-                    list-style-type: circle;
-                }
-                .letter-content-display figure.table {
-                    margin-left: 0 !important;
-                    margin-right: auto !important;
-                    text-align: left;
-                }
-                .letter-content-display figure.table table {
-                    margin-left: 0 !important;
-                    margin-right: auto !important;
-                }
-                .letter-content-display table {
-                    border-collapse: collapse;
-                    margin: 8px 0;
-                    margin-left: 0 !important;
-                    margin-right: auto !important;
-                    width: 100%;
-                }
-                .letter-content-display th,
-                .letter-content-display td {
-                    border: 1px solid #333;
-                    padding: 5px 7px;
-                    vertical-align: top;
-                    text-align: left;
-                }
-                .letter-content-display .no-border-table table,
-                .letter-content-display table.no-border-table {
-                    border-collapse: collapse;
-                }
-                .letter-content-display .no-border-table table td,
-                .letter-content-display .no-border-table table th,
-                .letter-content-display table.no-border-table td,
-                .letter-content-display table.no-border-table th {
-                    border: none !important;
-                    padding: 2px 6px;
-                }
-                .letter-content-display .ql-indent-1 { padding-left: 32px; }
-                .letter-content-display .ql-indent-2 { padding-left: 64px; }
-                .letter-content-display .ql-indent-3 { padding-left: 96px; }
-                .letter-content-display .ql-indent-4 { padding-left: 128px; }
-                .letter-content-display .ql-indent-5 { padding-left: 160px; }
-                .letter-content-display .ql-indent-6 { padding-left: 192px; }
-                .tembusan-section p,
-                .tembusan-section div,
-                .tembusan-section li {
-                    line-height: 1.15;
-                    margin: 0 0 1px 0;
-                }
-                .tembusan-section ol,
-                .tembusan-section ul {
-                    margin: 1px 0 0 0;
-                    padding-left: 18px;
-                }
-                .tembusan-section li {
-                    margin-bottom: 0;
-                }
-            </style>
-            <div class="mt-5 space-y-4 text-sm leading-relaxed text-slate-700 letter-content-display">
-                @if($letterOutgoing->opening_paragraph)
-                    <div>
-                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pembuka</div>
-                        <div class="mt-1">{!! \App\Helpers\LetterHtmlSanitizer::render($letterOutgoing->opening_paragraph) !!}</div>
-                    </div>
-                @endif
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Isi Surat</div>
-                    <div class="mt-1">{!! \App\Helpers\LetterHtmlSanitizer::render($letterOutgoing->body) !!}</div>
-                </div>
-                @if($letterOutgoing->closing_paragraph)
-                    <div>
-                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Penutup</div>
-                        <div class="mt-1">{!! \App\Helpers\LetterHtmlSanitizer::render($letterOutgoing->closing_paragraph) !!}</div>
-                    </div>
-                @endif
-                @if($letterOutgoing->cc)
-                    <div class="tembusan-section">
-                        <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tembusan</div>
-                        <div class="mt-1">{!! \App\Helpers\LetterHtmlSanitizer::render($letterOutgoing->cc) !!}</div>
-                    </div>
-                @endif
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm document-content">
+            <div class="mx-auto max-w-[850px] px-6 py-8 md:px-12 md:py-12">
+                @include('admin.letters.outgoings.partials.document-content', [
+                    'letter' => $letterOutgoing,
+                    'mode' => 'web',
+                    'schoolSetting' => $schoolSetting,
+                ])
             </div>
         </div>
     </div>

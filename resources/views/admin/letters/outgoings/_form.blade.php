@@ -25,8 +25,26 @@
     </div>
     <div>
         <label for="attachment" class="block text-sm font-semibold text-gray-700">Lampiran</label>
-        <input type="text" name="attachment" id="attachment" value="{{ old('attachment', $letterOutgoing?->attachment) }}"
-               class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Contoh: 1 berkas">
+        <select name="attachment" id="attachment" x-model="attachment"
+                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <option value="">Tidak ada lampiran</option>
+            <option value="1 berkas">1 berkas</option>
+            <option value="2 berkas">2 berkas</option>
+            <option value="3 berkas">3 berkas</option>
+        </select>
+
+        @if($showAttachmentEditor ?? true)
+        <div x-show="attachment !== ''" x-cloak x-transition class="mt-4" x-init="initLampiranEditor()">
+            <x-letter-editor
+                name="attachment_content"
+                label="Isi Lampiran"
+                :value="old('attachment_content', $letterOutgoing?->attachmentContent?->content ?? '')"
+                :rows="8"
+                :showTableButtons="true"
+                auto-init="false"
+            />
+        </div>
+        @endif
     </div>
     <div>
         <label for="hijri_date" class="block text-sm font-semibold text-gray-700">Tanggal Hijriyah</label>
@@ -112,6 +130,7 @@
             label="Pembuka"
             :value="$letterOutgoing?->opening_paragraph ?? $template?->opening_template ?? ''"
             :rows="3"
+            :showTableButtons="false"
         />
     </div>
     <div>
@@ -129,6 +148,7 @@
             label="Penutup"
             :value="$letterOutgoing?->closing_paragraph ?? $template?->closing_template ?? ''"
             :rows="3"
+            :showTableButtons="false"
         />
     </div>
     <div>
@@ -137,6 +157,7 @@
             label="Tembusan"
             :value="$letterOutgoing?->cc ?? ''"
             :rows="3"
+            :showTableButtons="false"
         />
     </div>
 </div>

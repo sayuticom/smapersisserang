@@ -12,6 +12,7 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
+        [x-cloak] { display: none !important; }
         .admin-sidebar-menu > a:not(:first-child) {
             margin-left: 0.75rem;
         }

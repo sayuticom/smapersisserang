@@ -22,13 +22,31 @@
             </div>
         @endif
 
-        <div x-data="{ tab: '{{ old("content") !== null ? "lampiran" : "data" }}' }">
+        <div x-data="{
+            tab: '{{ old("content") !== null && $letterOutgoing->attachment ? "lampiran" : "data" }}',
+            attachment: '{{ old('attachment', $letterOutgoing?->attachment ?? '') }}',
+            get hasAttachment() {
+                const v = (this.attachment || '').toString().trim().toLowerCase();
+                return v !== '' && v !== 'none' && v !== 'tidak ada lampiran' && v !== '-';
+            },
+            init() {
+                this.$watch('attachment', (val) => {
+                    if (!this.hasAttachment && this.tab === 'lampiran') {
+                        this.tab = 'data';
+                    }
+                });
+            }
+        }">
             <div class="border-b border-slate-200">
                 <nav class="-mb-px flex gap-6">
                     <button @click="tab = 'data'" :class="tab === 'data' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'" class="border-b-2 px-1 py-3 text-sm font-semibold transition">
                         Data Surat
                     </button>
-                    <button @click="tab = 'lampiran'; setTimeout(function(){ window.initLetterEditors(); }, 100)" :class="tab === 'lampiran' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'" class="border-b-2 px-1 py-3 text-sm font-semibold transition">
+                    <button @click="hasAttachment && (tab = 'lampiran', setTimeout(function(){ const panel = document.getElementById('lampiran-panel'); const data = panel && window.Alpine && Alpine.$data(panel); if (data && typeof data.startEditor === 'function') data.startEditor(); }, 100))"
+                            :class="tab === 'lampiran' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'"
+                            class="border-b-2 px-1 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            :disabled="!hasAttachment"
+                            :title="!hasAttachment ? 'Tidak ada lampiran' : ''">
                         Lampiran
                     </button>
                 </nav>
@@ -39,6 +57,7 @@
                     @csrf
                     @method('PUT')
                     @include('admin.letters.outgoings._form', [
+                        'showAttachmentEditor' => false,
                         'letterOutgoing' => $letterOutgoing,
                         'recipientRows' => collect(old('recipients', $recipientRows->map(fn($row) => [
                             'recipient_name' => $row->recipient_name,
@@ -55,16 +74,34 @@
             <div x-show="tab === 'lampiran'" class="mt-6" x-cloak id="lampiran-panel"
                  x-data="{
                     mode: '{{ $hasAttachment ? 'view' : 'edit' }}',
+                    editorInited: false,
+                    init() {
+                        this.$watch('mode', (val) => {
+                            if (val === 'edit') {
+                                this.$nextTick(() => this.startEditor());
+                            }
+                        });
+                        if (this.mode === 'edit') {
+                            this.$nextTick(() => this.startEditor());
+                        }
+                    },
+                    startEditor() {
+                        if (this.editorInited) return;
+                        const panel = document.getElementById('lampiran-panel');
+                        if (!panel || panel.offsetParent === null) {
+                            return;
+                        }
+                        this.editorInited = true;
+                        document.querySelectorAll('#lampiran-panel .letter-ckeditor').forEach(function(el){
+                            if (!el.ckeditorInstance && window.initSingleLetterEditor) {
+                                el.classList.remove('hidden');
+                                el.dataset.ckeditorInitialized = 'false';
+                                window.initSingleLetterEditor(el);
+                            }
+                        });
+                    },
                     startEdit() {
                         this.mode = 'edit';
-                        setTimeout(function(){
-                            document.querySelectorAll('#lampiran-panel .letter-ckeditor').forEach(function(el){
-                                if (!el.ckeditorInstance) {
-                                    el.dataset.ckeditorInitialized = 'false';
-                                    if (window.initLetterEditorElement) initLetterEditorElement(el);
-                                }
-                            });
-                        }, 50);
                     },
                     cancelEdit() { location.reload(); }
                  }">
@@ -84,12 +121,14 @@
                                 label="Isi Lampiran"
                                 :value="old('content', $attachmentContent?->content ?? '')"
                                 :rows="16"
+                                :showTableButtons="true"
+                                :auto-init="false"
                             />
                         </div>
 
                         <div x-show="mode === 'view'" x-cloak class="rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div class="mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">Isi Lampiran</div>
-                            <div class="max-w-none text-sm text-slate-800 [&_table]:w-full [&_table]:border-collapse [&_table]:mb-3 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_th]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1">{!! $attachmentContent?->content ?? '' !!}</div>
+                            <div class="max-w-none text-sm text-slate-800 [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_table]:mb-3 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:p-2 [&_th]:bg-slate-100 [&_th]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1">{!! $attachmentContent?->content ?? '' !!}</div>
                         </div>
 
                         <div class="mt-5 flex flex-col gap-3 sm:flex-row">

@@ -4,6 +4,8 @@
     'label' => '',
     'required' => false,
     'rows' => 10,
+    'showTableButtons' => true,
+    'autoInit' => true,
 ])
 
 @php
@@ -125,6 +127,7 @@
         data-input-id="{{ $inputId }}"
         data-fallback-id="{{ $fallbackId }}"
         data-initial-value="{{ $sanitizedValue }}"
+        data-auto-init="{{ $autoInit ? 'true' : 'false' }}"
         data-placeholder="Ketik isi surat..."
         style="min-height: {{ $rows * 24 }}px;"
     ></div>
@@ -133,7 +136,8 @@
         class="letter-editor-fallback"
         rows="{{ $rows }}"
         placeholder="Ketik isi surat..."
-    >{{ $sanitizedValue }}</textarea>
+    >{!! $sanitizedValue !!}</textarea>
+    @if($showTableButtons)
     <div class="mt-2 flex flex-wrap gap-2">
         <button
             type="button"
@@ -157,4 +161,5 @@
             Tampilkan Garis Tabel
         </button>
     </div>
+    @endif
 </div>

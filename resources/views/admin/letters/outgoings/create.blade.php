@@ -32,7 +32,20 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.letters.outgoings.store') }}" class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('admin.letters.outgoings.store') }}"
+              class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+              x-data="{
+                attachment: '{{ old('attachment', '') }}',
+                initLampiranEditor() {
+                    this.$nextTick(() => {
+                        const el = this.$el.querySelector('.letter-ckeditor');
+                        if (el && !el.ckeditorInstance && window.initSingleLetterEditor) {
+                            el.dataset.ckeditorInitialized = 'false';
+                            window.initSingleLetterEditor(el);
+                        }
+                    });
+                }
+              }">
             @csrf
             @include('admin.letters.outgoings._form', [
                 'letterOutgoing' => null,
