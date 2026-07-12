@@ -227,10 +227,11 @@ class LetterHtmlSanitizer
                     $existing = $sm[1];
                     if (!preg_match('/table-layout\s*:/i', $existing)) { $parts[] = 'table-layout:fixed'; }
                     if (!preg_match('/border-collapse\s*:/i', $existing)) { $parts[] = 'border-collapse:collapse'; }
+                    if (!preg_match('/(?<!border-)border\s*:\s*[^;]+/i', $existing)) { $parts[] = 'border:1px solid #000'; }
                     $parts[] = $existing;
                     $newAttrs = preg_replace('/style\s*=\s*"[^"]*"/i', '', $attrs);
                 } else {
-                    $parts = ['table-layout:fixed', 'border-collapse:collapse'];
+                    $parts = ['table-layout:fixed', 'border-collapse:collapse', 'border:1px solid #000'];
                 }
                 return '<table ' . trim($newAttrs) . ' style="' . implode('; ', $parts) . '">';
             }, $table);
@@ -275,9 +276,15 @@ class LetterHtmlSanitizer
                             if (!preg_match('/vertical-align\s*:/i', $existing)) {
                                 $existing = $existing . '; vertical-align:top';
                             }
+                            if (!preg_match('/(?<!border-)border\s*:\s*[^;]+/i', $existing)) {
+                                $existing = $existing . '; border:1px solid #000';
+                            }
+                            if (!preg_match('/padding\s*:/i', $existing)) {
+                                $existing = $existing . '; padding:6px';
+                            }
                             $clean .= ' style="' . $existing . '"';
                         } else {
-                            $clean .= ' style="width:' . $w . '; vertical-align:top;"';
+                            $clean .= ' style="width:' . $w . '; vertical-align:top; border:1px solid #000; padding:6px;"';
                         }
 
                         // Width HTML attribute

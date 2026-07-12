@@ -365,6 +365,27 @@
             text-align: left;
         }
 
+        .attachment-content table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin: 3px 0 5px 0;
+        }
+
+        .attachment-content th,
+        .attachment-content td {
+            border: 1px solid #000 !important;
+            padding: 6px !important;
+            vertical-align: top !important;
+            text-align: left !important;
+        }
+
+        .attachment-content .no-border-table table td,
+        .attachment-content .no-border-table table th,
+        .attachment-content table.no-border-table td,
+        .attachment-content table.no-border-table th {
+            border: none !important;
+        }
+
     </style>
 </head>
 <body>
@@ -510,7 +531,7 @@
     <div class="attachment-page">
         <h3 class="attachment-title">LAMPIRAN</h3>
         <div class="attachment-content">
-            {!! \App\Helpers\LetterHtmlSanitizer::render($letter->attachmentContent->content) !!}
+            {!! \App\Helpers\LetterHtmlSanitizer::normalizeAttachmentTablesForPdf(\App\Helpers\LetterHtmlSanitizer::render($letter->attachmentContent->content)) !!}
         </div>
     </div>
 @endif
