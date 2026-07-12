@@ -108,12 +108,6 @@ class LetterOutgoingController extends Controller
 
     public function edit(LetterOutgoing $letterOutgoing): View|RedirectResponse
     {
-        if ($letterOutgoing->status === 'issued') {
-            return redirect()
-                ->route('admin.letters.outgoings.show', $letterOutgoing)
-                ->with('error', 'Surat yang sudah diterbitkan tidak dapat diedit pada tahap ini.');
-        }
-
         $letterOutgoing->load('recipients', 'attachmentContent');
 
         return view('admin.letters.outgoings.edit', array_merge(
@@ -129,12 +123,6 @@ class LetterOutgoingController extends Controller
 
     public function update(Request $request, LetterOutgoing $letterOutgoing): RedirectResponse
     {
-        if ($letterOutgoing->status === 'issued') {
-            return redirect()
-                ->route('admin.letters.outgoings.show', $letterOutgoing)
-                ->with('error', 'Surat yang sudah diterbitkan tidak dapat diedit.');
-        }
-
         $validated = $this->validatedData($request);
         $settings = SchoolSetting::current();
         $validated['updated_by'] = auth()->id();

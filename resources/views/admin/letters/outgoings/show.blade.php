@@ -10,11 +10,14 @@
                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                     Kembali
                 </a>
-                @if($letterOutgoing->status !== 'issued')
+                @if(auth()->user()?->isAdmin())
                     <a href="{{ route('admin.letters.outgoings.edit', $letterOutgoing) }}"
+                       @if($letterOutgoing->status === 'issued') onclick="return confirm('Surat ini sudah diterbitkan. Perubahan akan memengaruhi isi surat dan PDF. Lanjutkan mengedit?')" @endif
                        class="inline-flex items-center justify-center rounded-lg border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
-                        Edit Draft
+                        Edit
                     </a>
+                @endif
+                @if($letterOutgoing->status !== 'issued')
                     @if($letterOutgoing->recipients->count() > 1)
                         <div class="flex flex-col gap-2">
                             <details class="group">
