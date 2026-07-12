@@ -81,6 +81,12 @@
          style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
     <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
 
+    @php
+        $qrisUrl = $setting?->donation_qris_image
+            ? \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image)
+            : null;
+    @endphp
+
     <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
 
         <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
@@ -92,16 +98,41 @@
             @endif
 
             <div class="text-center lg:text-left">
-                <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
-                    <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-                    LADANG AMAL JARIYAH
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 lg:gap-8">
+                    <div class="flex-1">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
+                            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                            LADANG AMAL JARIYAH
+                        </div>
+                        <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
+                            {{ $heroTitle }}
+                        </h1>
+                        <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
+                            {{ $heroSubtitle }}
+                        </p>
+                    </div>
+                    @if($qrisUrl)
+                        @php
+                            $merchantName = $schoolSetting?->school_name
+                                ? strtoupper($schoolSetting->school_name) . ', CURUG'
+                                : 'SMA PERSIS SERANG, CURUG';
+                        @endphp
+                        <div class="flex-shrink-0 mx-auto lg:mx-0">
+                            <div class="w-36 sm:w-40 lg:w-44 rounded-xl border border-amber-300/30 bg-white/10 p-2.5 shadow-lg shadow-emerald-950/20 backdrop-blur">
+                                <div class="overflow-hidden rounded-lg bg-white p-1.5 shadow-inner">
+                                    <img src="{{ $qrisUrl }}" alt="QRIS Donasi"
+                                         class="w-full aspect-square object-contain">
+                                </div>
+                                <p class="mt-2 text-center text-xs font-bold text-white leading-tight">
+                                    {{ $merchantName }}
+                                </p>
+                                <p class="mt-0.5 text-center text-[10px] font-medium text-amber-300/80 leading-tight">
+                                    Scan untuk Donasi
+                                </p>
+                            </div>
+                        </div>
+                    @endif
                 </div>
-                <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
-                    {{ $heroTitle }}
-                </h1>
-                <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
-                    {{ $heroSubtitle }}
-                </p>
 
                 <div class="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-300/30 bg-white/10 p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur lg:mx-0">
                     <p class="text-lg font-semibold leading-8">
