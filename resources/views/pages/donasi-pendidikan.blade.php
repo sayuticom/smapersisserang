@@ -85,48 +85,46 @@
         $qrisUrl = $setting?->donation_qris_image
             ? \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image)
             : null;
+        $merchantName = $schoolSetting?->school_name
+            ? strtoupper($schoolSetting->school_name) . ', CURUG'
+            : 'SMA PERSIS SERANG, CURUG';
     @endphp
 
-    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-10 sm:pt-10 sm:pb-12 lg:pt-12 lg:pb-14 xl:pt-16 xl:pb-16">
 
-        <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+        <div class="grid xl:grid-cols-2 gap-8 xl:gap-10 items-center">
 
             @if($heroBg)
                 <div class="flex justify-center">
-                    <img src="{{ $heroBg }}" alt="{{ $heroTitle }}" class="w-full max-w-md lg:max-w-lg aspect-square object-cover rounded-3xl shadow-2xl border border-amber-300/30">
+                    <img src="{{ $heroBg }}" alt="{{ $heroTitle }}" class="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl aspect-square object-cover rounded-2xl shadow-xl border border-amber-300/20">
                 </div>
             @endif
 
             <div class="text-center lg:text-left">
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 lg:gap-8">
+                <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3 xl:gap-6">
                     <div class="flex-1">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
-                            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                        <div class="inline-flex items-center gap-1.5 rounded-full border border-amber-300/70 bg-emerald-950/60 px-3 py-1.5 text-xs font-semibold text-amber-300 shadow shadow-emerald-950/20 backdrop-blur-sm">
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
                             LADANG AMAL JARIYAH
                         </div>
-                        <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
+                        <h1 class="mx-auto mt-3 max-w-4xl text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl lg:mx-0">
                             {{ $heroTitle }}
                         </h1>
-                        <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
+                        <p class="mx-auto mt-2 max-w-2xl text-base font-semibold leading-7 text-amber-300 sm:text-lg lg:text-xl lg:mx-0">
                             {{ $heroSubtitle }}
                         </p>
                     </div>
                     @if($qrisUrl)
-                        @php
-                            $merchantName = $schoolSetting?->school_name
-                                ? strtoupper($schoolSetting->school_name) . ', CURUG'
-                                : 'SMA PERSIS SERANG, CURUG';
-                        @endphp
-                        <div class="flex-shrink-0 mx-auto lg:mx-0">
-                            <div class="w-36 sm:w-40 lg:w-44 rounded-xl border border-amber-300/30 bg-white/10 p-2.5 shadow-lg shadow-emerald-950/20 backdrop-blur">
+                        <div class="flex-shrink-0 mx-auto xl:mx-0">
+                            <div class="w-32 sm:w-36 xl:w-44 rounded-xl border border-amber-300/30 bg-white/10 p-2 shadow-lg shadow-emerald-950/20 backdrop-blur">
                                 <div class="overflow-hidden rounded-lg bg-white p-1.5 shadow-inner">
                                     <img src="{{ $qrisUrl }}" alt="QRIS Donasi"
                                          class="w-full aspect-square object-contain">
                                 </div>
-                                <p class="mt-2 text-center text-xs font-bold text-white leading-tight">
+                                <p class="mt-1.5 text-center text-[11px] font-bold text-white leading-tight">
                                     {{ $merchantName }}
                                 </p>
-                                <p class="mt-0.5 text-center text-[10px] font-medium text-amber-300/80 leading-tight">
+                                <p class="mt-0.5 text-center text-[9px] font-medium text-amber-300/80 leading-tight">
                                     Scan untuk Donasi
                                 </p>
                             </div>
@@ -134,18 +132,18 @@
                     @endif
                 </div>
 
-                <div class="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-300/30 bg-white/10 p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur lg:mx-0">
-                    <p class="text-lg font-semibold leading-8">
-                        “{{ $hadithText }}”
+                <div class="mx-auto mt-6 xl:mt-8 max-w-3xl rounded-2xl border border-amber-300/30 bg-white/10 p-4 sm:p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur lg:mx-0">
+                    <p class="text-sm sm:text-base font-semibold leading-7">
+                        "{{ $hadithText }}"
                     </p>
-                    <p class="mt-2 text-sm font-medium text-amber-300">{{ $hadithSource }}</p>
+                    <p class="mt-1.5 text-xs font-medium text-amber-300">{{ $hadithSource }}</p>
                 </div>
 
-                <p class="mx-auto mt-8 max-w-2xl text-base leading-7 text-emerald-100/90 lg:mx-0">
+                <p class="mx-auto mt-4 xl:mt-5 max-w-2xl text-sm sm:text-base leading-6 sm:leading-7 text-emerald-100/90 lg:mx-0">
                     Bantuan Bapak/Ibu akan digunakan untuk kebutuhan makan harian, perlengkapan sekolah, perlengkapan asrama, kesehatan ringan, dan pembinaan akhlak para santri.
                 </p>
 
-                <div class="mt-6 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+                <div class="mt-5 xl:mt-6 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
                     <a href="{{ route('donasi-pendidikan.form-donatur') }}"
                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-gradient-to-r from-amber-400 to-yellow-500 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-yellow-500/30 ring-1 ring-yellow-200/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-amber-300 hover:to-yellow-400 hover:shadow-xl hover:shadow-yellow-500/40 active:translate-y-0 active:shadow-lg sm:w-auto">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
