@@ -54,39 +54,19 @@
                placeholder="Otomatis terisi saat tanggal surat dipilih">
         <p class="mt-1 text-[11px] text-slate-400 italic">* Tanggal Hijriyah hasil konversi otomatis dan dapat disesuaikan berdasarkan kalender Hijriyah yang digunakan.</p>
     </div>
-    <div class="md:col-span-2">
+    <div>
         <label for="subject" class="block text-sm font-semibold text-gray-700">Perihal <span class="text-red-500">*</span></label>
         <input type="text" name="subject" id="subject" value="{{ old('subject', $letterOutgoing?->subject ?? $template?->subject_template) }}"
                class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" required>
     </div>
-</div>
-
-<div class="border-t border-slate-100 pt-5">
-    <h3 class="mb-3 font-semibold text-slate-900">Pengaturan Surat</h3>
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-            <label for="letter_classification_code" class="block text-sm font-semibold text-gray-700">Kode Klasifikasi Surat</label>
-            <input type="text" name="letter_classification_code" id="letter_classification_code"
-                   value="{{ old('letter_classification_code', $letterOutgoing?->letter_classification_code ?? $defaultSettings?->default_letter_classification_code ?? '421.3') }}"
-                   placeholder="421.3"
-                   class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-        </div>
-        <div>
-            <label for="letter_school_code" class="block text-sm font-semibold text-gray-700">Kode Sekolah</label>
-            <input type="text" name="letter_school_code" id="letter_school_code"
-                   value="{{ old('letter_school_code', $letterOutgoing?->letter_school_code ?? $defaultSettings?->default_letter_school_code ?? 'SMA-PERSIS-SRG') }}"
-                   placeholder="SMA-PERSIS-SRG"
-                   class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-        </div>
-        <div>
-            <label for="pdf_font_size" class="block text-sm font-semibold text-gray-700">Ukuran Huruf PDF</label>
-            <select name="pdf_font_size" id="pdf_font_size" class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                <option value="9" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '9' ? 'selected' : '' }}>9 &ndash; Ekstra Kecil</option>
-                <option value="10" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '10' ? 'selected' : '' }}>10 &ndash; Kecil</option>
-                <option value="11" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '11' ? 'selected' : '' }}>11 &ndash; Normal</option>
-                <option value="12" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '12' ? 'selected' : '' }}>12 &ndash; Besar</option>
-            </select>
-        </div>
+    <div>
+        <label for="pdf_font_size" class="block text-sm font-semibold text-gray-700">Ukuran Huruf PDF</label>
+        <select name="pdf_font_size" id="pdf_font_size" class="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <option value="9" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '9' ? 'selected' : '' }}>9 &ndash; Ekstra Kecil</option>
+            <option value="10" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '10' ? 'selected' : '' }}>10 &ndash; Kecil</option>
+            <option value="11" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '11' ? 'selected' : '' }}>11 &ndash; Normal</option>
+            <option value="12" {{ (string) old('pdf_font_size', $letterOutgoing?->pdf_font_size ?? $defaultSettings?->default_letter_pdf_font_size ?? 11) === '12' ? 'selected' : '' }}>12 &ndash; Besar</option>
+        </select>
     </div>
 </div>
 

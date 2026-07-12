@@ -60,8 +60,8 @@ class LetterOutgoingController extends Controller
         $validated['show_closing_dua'] = (bool) ($settings?->default_letter_show_closing_dua ?? true);
         $validated['basmallah_text'] = $settings?->default_letter_basmallah_text;
         $validated['closing_dua_text'] = $settings?->default_letter_closing_dua_text;
-        $validated['letter_classification_code'] = $validated['letter_classification_code'] ?: '421.3';
-        $validated['letter_school_code'] = $validated['letter_school_code'] ?: 'SMA-PERSIS-SRG';
+        $validated['letter_classification_code'] = $settings?->default_letter_classification_code ?? '421.3';
+        $validated['letter_school_code'] = $settings?->default_letter_school_code ?? 'SMA-PERSIS-SRG';
         $this->applyDateParts($validated);
 
         $letter = DB::transaction(function () use ($validated) {
@@ -142,6 +142,8 @@ class LetterOutgoingController extends Controller
         $validated['show_closing_dua'] = (bool) ($settings?->default_letter_show_closing_dua ?? true);
         $validated['basmallah_text'] = $settings?->default_letter_basmallah_text;
         $validated['closing_dua_text'] = $settings?->default_letter_closing_dua_text;
+        $validated['letter_classification_code'] = $settings?->default_letter_classification_code ?? '421.3';
+        $validated['letter_school_code'] = $settings?->default_letter_school_code ?? 'SMA-PERSIS-SRG';
         $this->applyDateParts($validated);
 
         DB::transaction(function () use ($letterOutgoing, $validated) {
@@ -491,8 +493,6 @@ class LetterOutgoingController extends Controller
             'body' => ['required', 'string'],
             'closing_paragraph' => ['nullable', 'string'],
             'cc' => ['nullable', 'string'],
-            'letter_classification_code' => ['nullable', 'string', 'max:30'],
-            'letter_school_code' => ['nullable', 'string', 'max:50'],
             'pdf_font_size' => ['nullable', 'integer', 'in:9,10,11,12'],
             'signer_1_id' => ['nullable', 'exists:letter_signers,id'],
             'signer_2_id' => ['nullable', 'exists:letter_signers,id'],
