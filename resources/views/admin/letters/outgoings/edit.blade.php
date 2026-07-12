@@ -23,9 +23,11 @@
         @endif
 
         <div x-data="{
-            tab: '{{ old("content") !== null && $letterOutgoing->attachment ? "lampiran" : "data" }}',
+            tab: '{{ request('tab') === 'lampiran' ? 'lampiran' : (old('content') !== null && $hasAttachment ? 'lampiran' : 'data') }}',
             attachment: '{{ old('attachment', $letterOutgoing?->attachment ?? '') }}',
+            hasExistingContent: {{ !empty($attachmentContent?->content) ? 'true' : 'false' }},
             get hasAttachment() {
+                if (this.hasExistingContent) return true;
                 const v = (this.attachment || '').toString().trim().toLowerCase();
                 return v !== '' && v !== 'none' && v !== 'tidak ada lampiran' && v !== '-';
             },
@@ -64,21 +66,21 @@
                 </form>
             </div>
 
-            @php $hasAttachment = !empty($attachmentContent?->content); @endphp
+            @php $hasAttachmentContent = !empty($attachmentContent?->content); @endphp
             @include('admin.letters.outgoings.partials.attachment-panel', [
                 'usesOwnForm' => true,
                 'formAction' => route('admin.letters.outgoings.update-attachment', $letterOutgoing),
                 'formMethod' => 'PUT',
                 'editorName' => 'content',
                 'editorValue' => old('content', $attachmentContent?->content ?? ''),
-                'initialMode' => $hasAttachment ? 'view' : 'edit',
+                'initialMode' => $hasAttachmentContent ? 'view' : 'edit',
                 'showViewMode' => true,
-                'canEditAttachment' => $letterOutgoing->status === 'draft',
+                'canEditAttachment' => auth()->user()?->isAdmin(),
                 'showPreviewButton' => true,
                 'previewUrl' => route('admin.letters.outgoings.preview', $letterOutgoing),
                 'showPrintButton' => $letterOutgoing->status === 'issued',
                 'printUrl' => $letterOutgoing->status === 'issued' ? route('admin.letters.outgoings.print', $letterOutgoing) : null,
-                'saveLabel' => $hasAttachment ? 'Simpan Perubahan' : 'Simpan Lampiran',
+                'saveLabel' => $hasAttachmentContent ? 'Simpan Perubahan' : 'Simpan Lampiran',
             ])
         </div>
     </div>

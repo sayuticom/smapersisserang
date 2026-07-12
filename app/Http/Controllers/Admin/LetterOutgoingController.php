@@ -102,7 +102,7 @@ class LetterOutgoingController extends Controller
         return view('admin.letters.outgoings.show', [
             'letterOutgoing' => $letterOutgoing,
             'schoolSetting' => $schoolSetting,
-            'hasAttachment' => $letterOutgoing->relationLoaded('attachmentContent') && $letterOutgoing->attachmentContent?->content,
+            'hasAttachment' => $this->letterHasAttachment($letterOutgoing),
         ]);
     }
 
@@ -117,6 +117,7 @@ class LetterOutgoingController extends Controller
                 'recipientRows' => $letterOutgoing->recipients->values(),
                 'defaultSettings' => SchoolSetting::current(),
                 'attachmentContent' => $letterOutgoing->attachmentContent,
+                'hasAttachment' => $this->letterHasAttachment($letterOutgoing),
             ]
         ));
     }
@@ -239,6 +240,8 @@ class LetterOutgoingController extends Controller
 
     public function updateAttachment(Request $request, LetterOutgoing $letterOutgoing): RedirectResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         $data = $request->validate([
             'content' => ['nullable', 'string'],
         ]);
@@ -250,7 +253,7 @@ class LetterOutgoingController extends Controller
         }
 
         return redirect()
-            ->route('admin.letters.outgoings.edit', $letterOutgoing)
+            ->route('admin.letters.outgoings.show', $letterOutgoing)
             ->with('success', 'Lampiran surat berhasil disimpan.');
     }
 
@@ -551,5 +554,16 @@ class LetterOutgoingController extends Controller
         }
 
         return null;
+    }
+
+    private function letterHasAttachment(LetterOutgoing $letter): bool
+    {
+        $hasField = !empty($letter->attachment)
+            && !in_array(strtolower(trim($letter->attachment)), ['', 'none', 'tidak ada lampiran', '-']);
+
+        $hasContent = $letter->relationLoaded('attachmentContent')
+            && !empty($letter->attachmentContent?->content);
+
+        return $hasField || $hasContent;
     }
 }

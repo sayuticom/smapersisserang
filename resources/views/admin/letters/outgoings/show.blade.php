@@ -164,5 +164,14 @@
                 ])
             </div>
         </div>
+
+        @if($hasAttachment && auth()->user()?->isAdmin())
+            <div class="flex justify-end">
+                <a href="{{ route('admin.letters.outgoings.edit', ['letterOutgoing' => $letterOutgoing, 'tab' => 'lampiran']) }}"
+                   class="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                    Edit Lampiran
+                </a>
+            </div>
+        @endif
     </div>
 </x-admin-layout>
