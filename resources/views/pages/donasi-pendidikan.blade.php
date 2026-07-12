@@ -116,7 +116,7 @@
 
                 <div class="mt-6 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
                     <a href="{{ route('donasi-pendidikan.form-donatur') }}"
-                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F6B3A] px-7 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-[#0A4F2B] sm:w-auto">
+                       class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-gradient-to-r from-amber-400 to-yellow-500 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-yellow-500/30 ring-1 ring-yellow-200/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-amber-300 hover:to-yellow-400 hover:shadow-xl hover:shadow-yellow-500/40 active:translate-y-0 active:shadow-lg sm:w-auto">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
                         </svg>
