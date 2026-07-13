@@ -525,6 +525,12 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::delete('/{schoolSubject}', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'destroy'])->name('destroy');
     });
 
+    Route::name('akademik.kalender.')->prefix('akademik/kalender')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'store'])->name('store');
+    });
+
     Route::name('website.pages.')->prefix('website/konten')->group(function () {
         Route::get('/', [WebsitePageController::class, 'index'])->name('index');
         Route::get('/{websitePage}/edit', [WebsitePageController::class, 'edit'])->name('edit');

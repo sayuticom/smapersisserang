@@ -444,6 +444,14 @@
                         Mata Pelajaran
                     </a>
 
+                    <a href="{{ route('admin.akademik.kalender.index') }}"
+                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.kalender.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.akademik.kalender.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Kalender Pendidikan
+                    </a>
+
                     <div class="pt-3 pb-1">
                         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">SISTEM</p>
                     </div>
