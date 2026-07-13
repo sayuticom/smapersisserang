@@ -1,6 +1,6 @@
 <x-admin-layout>
     <div class="mx-auto max-w-7xl space-y-6" x-data="{
-        tab: 'tahunan',
+        tab: '{{ request('view', 'annual') === 'monthly' ? 'bulanan' : (request('view', 'annual') === 'list' ? 'daftar' : (request('view', 'annual') === 'effective' ? 'rekap' : 'tahunan')) }}',
         selectedYear: {{ $academicYearId ?? 'null' }}
     }">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -398,13 +398,199 @@
         </div>
 
         <div x-show="tab === 'bulanan'" x-cloak>
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div class="flex flex-col items-center justify-center py-12 text-center">
-                    <svg class="mb-4 h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <h3 class="text-lg font-semibold text-slate-700">Kalender Bulanan</h3>
-                    <p class="mt-1 text-sm text-slate-500">Tampilan kalender bulanan dengan navigasi antar bulan akan tersedia di tahap berikutnya.</p>
+            @php
+                $selMonth = $selectedMonthDate->month;
+                $selYear = $selectedMonthDate->year;
+                $monthlyDayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+                $queryPrefix = 'academic_year_id=' . ($academicYearId ?? '') . '&view=monthly&month=';
+                $monthlyBaseUrl = route('admin.akademik.kalender.index');
+            @endphp
+            <div class="space-y-4">
+                {{-- Navigation --}}
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        @if($canGoPrevious)
+                            <a href="{{ $monthlyBaseUrl }}?{{ $queryPrefix }}{{ $previousMonthDate->format('Y-m') }}"
+                               class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                <span class="hidden sm:inline">Bulan Sebelumnya</span>
+                                <span class="inline sm:hidden">{{ $indonesianMonths[$previousMonthDate->month] }}</span>
+                            </a>
+                        @else
+                            <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                <span class="hidden sm:inline">Bulan Sebelumnya</span>
+                                <span class="inline sm:hidden">{{ $indonesianMonths[$previousMonthDate->month] }}</span>
+                            </span>
+                        @endif
+                        <h3 class="text-lg font-bold text-slate-900 min-w-[160px] text-center">
+                            {{ $indonesianMonths[$selMonth] }} {{ $selYear }}
+                        </h3>
+                        @if($canGoNext)
+                            <a href="{{ $monthlyBaseUrl }}?{{ $queryPrefix }}{{ $nextMonthDate->format('Y-m') }}"
+                               class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                                <span class="hidden sm:inline">Bulan Berikutnya</span>
+                                <span class="inline sm:hidden">{{ $indonesianMonths[$nextMonthDate->month] }}</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        @else
+                            <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-300 cursor-not-allowed">
+                                <span class="hidden sm:inline">Bulan Berikutnya</span>
+                                <span class="inline sm:hidden">{{ $indonesianMonths[$nextMonthDate->month] }}</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        @endif
+                    </div>
+                    <a href="{{ $monthlyBaseUrl }}?{{ $queryPrefix }}{{ now()->format('Y-m') }}"
+                       class="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition">
+                        Hari Ini
+                    </a>
+                </div>
+
+                {{-- Calendar grid + Agenda side-by-side on desktop --}}
+                <div class="academic-calendar-layout">
+                    <div class="min-w-0">
+                        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
+                            <div style="min-width:700px;">
+                                {{-- Day header --}}
+                                <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
+                                    @foreach($monthlyDayNames as $idx => $dn)
+                                        <div style="min-width:0;"
+                                             class="flex items-center justify-center h-9 text-xs font-semibold border-b border-slate-100 {{ $idx === 0 ? 'text-red-500' : 'text-slate-500' }}">
+                                            {{ $dn }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                {{-- Day cells --}}
+                                <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
+                                    @foreach($monthlyCalendarDays as $day)
+                                        @php
+                                            $ds = $day['date'];
+                                            $dayEvts = $monthlyDayEvents[$ds] ?? collect();
+                                            $dayEvtCount = $dayEvts->count();
+                                            $visibleEvts = $dayEvts->take(3);
+                                            $hiddenCount = $dayEvtCount - 3;
+                                        @endphp
+                                        <div style="min-width:0;min-height:110px;"
+                                             class="border-b border-r border-slate-100 p-1.5
+                                                    {{ $day['isCurrentMonth'] ? '' : 'bg-slate-50' }}
+                                                    {{ $day['isToday'] ? 'ring-2 ring-emerald-400 ring-inset' : '' }}">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-xs font-semibold leading-none
+                                                    {{ $day['isSunday'] ? 'text-red-500' : ($day['isCurrentMonth'] ? 'text-slate-900' : 'text-slate-300') }}
+                                                    {{ $day['isToday'] ? 'bg-emerald-100 text-emerald-700 rounded-full w-5 h-5 flex items-center justify-center' : '' }}">
+                                                    {{ $day['day'] }}
+                                                </span>
+                                                @if($dayEvtCount > 0 && $day['isCurrentMonth'])
+                                                    <span class="text-[10px] font-medium text-slate-400">{{ $dayEvtCount }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="space-y-0.5">
+                                                @foreach($visibleEvts as $evt)
+                                                    @php $ecat = $categoryMap[$evt['category']] ?? $categoryMap['lainnya']; @endphp
+                                                    <a href="{{ route('admin.akademik.kalender.edit', $evt['id']) }}"
+                                                       title="{{ $evt['title'] }} — {{ $evt['start_date'] }} s.d {{ $evt['end_date'] }}{{ $evt['start_time'] ? ' — ' . $evt['start_time'] . '–' . $evt['end_time'] : '' }}{{ $evt['location'] ? ' — ' . $evt['location'] : '' }}"
+                                                       class="block rounded px-1 py-0.5 {{ $ecat['bg_class'] }} {{ $ecat['text_class'] }} hover:opacity-80 transition">
+                                                        <div class="text-[11px] font-medium leading-tight truncate">{{ $evt['title'] }}</div>
+                                                        @if($evt['start_time'])
+                                                            <div class="text-[10px] leading-tight opacity-70 truncate">{{ $evt['start_time'] }}–{{ $evt['end_time'] }}</div>
+                                                        @endif
+                                                    </a>
+                                                @endforeach
+                                                @if($hiddenCount > 0)
+                                                    <span class="block text-[10px] text-slate-400 pl-1">+{{ $hiddenCount }} kegiatan lainnya</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Sidebar: Agenda + Summary --}}
+                    <aside class="academic-calendar-sidebar">
+                        {{-- Agenda Bulan Ini --}}
+                        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <h3 class="mb-3 text-sm font-semibold text-slate-900">Agenda {{ $indonesianMonths[$selMonth] }} {{ $selYear }}</h3>
+                            <div class="space-y-2.5 max-h-[400px] overflow-y-auto">
+                                @forelse($monthlyRawEvents as $evt)
+                                    @php
+                                        $ecat = $categoryMap[$evt['category']] ?? $categoryMap['lainnya'];
+                                        $pic = $evt['person_in_charge'] ?? '';
+                                        if (!$pic && ($evt['teacher'] ?? null)) {
+                                            $pic = $evt['teacher']['name'] ?? $evt['teacher']['full_name'] ?? '';
+                                        }
+                                    @endphp
+                                    <a href="{{ route('admin.akademik.kalender.edit', $evt['id']) }}"
+                                       class="flex items-start gap-2.5 group">
+                                        <div class="academic-legend-box {{ $ecat['bg_class'] }}">
+                                            <span class="academic-legend-dot {{ $ecat['dot_class'] }}"></span>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-medium text-slate-900 group-hover:text-emerald-700 transition leading-tight">
+                                                {{ $evt['title'] }}
+                                            </div>
+                                            <p class="text-xs text-slate-500 leading-tight mt-px">
+                                                {{ $evt['date_formatted'] }}
+                                            </p>
+                                            @if($evt['start_time'] ?? null)
+                                                <p class="text-xs text-slate-400">{{ $evt['start_time'] }}–{{ $evt['end_time'] }}</p>
+                                            @endif
+                                            <div class="flex flex-wrap gap-1 mt-1">
+                                                <span class="inline-flex items-center rounded-full {{ $ecat['bg_class'] }} {{ $ecat['text_class'] }} px-2 py-0.5 text-[10px] font-medium">{{ $ecat['label'] }}</span>
+                                                @if($pic)
+                                                    <span class="inline-flex items-center text-[10px] text-slate-400">{{ $pic }}</span>
+                                                @endif
+                                                @if($evt['location'] ?? null)
+                                                    <span class="inline-flex items-center text-[10px] text-slate-400">{{ $evt['location'] }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </a>
+                                    @if(!$loop->last)
+                                        <div class="border-t border-slate-100"></div>
+                                    @endif
+                                @empty
+                                    <p class="text-sm text-slate-400 text-center py-4">Belum ada kegiatan pada bulan ini.</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- Ringkasan Bulan --}}
+                        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                            <h3 class="mb-3 text-sm font-semibold text-slate-900">Ringkasan Bulan</h3>
+                            <div class="space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Total Kegiatan</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ $monthlySummary['total_events'] }}</span>
+                                </div>
+                                <div class="border-t border-slate-100"></div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Hari Libur</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ $monthlySummary['hari_libur'] }} hari</span>
+                                </div>
+                                <div class="border-t border-slate-100"></div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Hari Asesmen</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ $monthlySummary['hari_asesmen'] }} hari</span>
+                                </div>
+                                <div class="border-t border-slate-100"></div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Hari Berkegiatan</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ $monthlySummary['hari_berkegiatan'] }} hari</span>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </div>
         </div>

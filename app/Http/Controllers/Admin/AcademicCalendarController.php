@@ -78,8 +78,8 @@ class AcademicCalendarController extends Controller
                 'day_status' => $evt->day_status,
                 'description' => $evt->description,
                 'location' => $evt->location,
-                'start_time' => $evt->start_time ? \Carbon\Carbon::parse($evt->start_time)->format('H:i') : null,
-                'end_time' => $evt->end_time ? \Carbon\Carbon::parse($evt->end_time)->format('H:i') : null,
+                'start_time' => $evt->start_time ? \Carbon\Carbon::parse($evt->start_time)->format('H.i') : null,
+                'end_time' => $evt->end_time ? \Carbon\Carbon::parse($evt->end_time)->format('H.i') : null,
                 'person_in_charge' => $evt->person_in_charge,
                 'teacher' => $evt->teacher,
                 'targets' => $evt->targets,
@@ -203,6 +203,101 @@ class AcademicCalendarController extends Controller
 
         $events = $expandedEvents;
 
+        // Monthly calendar data
+        $yearStart = $selectedYear->start_date->copy()->startOfMonth();
+        $yearEnd = $selectedYear->end_date->copy()->startOfMonth();
+        $nowMonth = now()->startOfMonth();
+        $defaultMonthStr = $nowMonth->between($selectedYear->start_date, $selectedYear->end_date)
+            ? $nowMonth->format('Y-m')
+            : $yearStart->format('Y-m');
+
+        $selectedMonthStr = $request->input('month', $defaultMonthStr);
+
+        try {
+            $selectedMonthDate = \Carbon\Carbon::createFromFormat('Y-m-d', $selectedMonthStr . '-01')->startOfMonth();
+        } catch (\Exception $e) {
+            $selectedMonthDate = \Carbon\Carbon::createFromFormat('Y-m-d', $defaultMonthStr . '-01')->startOfMonth();
+        }
+
+        if ($selectedMonthDate->lt($yearStart)) $selectedMonthDate = $yearStart;
+        if ($selectedMonthDate->gt($yearEnd)) $selectedMonthDate = $yearEnd;
+
+        $previousMonthDate = $selectedMonthDate->copy()->subMonth();
+        $nextMonthDate = $selectedMonthDate->copy()->addMonth();
+        $canGoPrevious = $previousMonthDate->gte($yearStart);
+        $canGoNext = $nextMonthDate->lte($yearEnd);
+
+        // Build calendar days grid
+        $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        $daysInMonth = $selectedMonthDate->daysInMonth;
+        $firstDayOfWeek = $selectedMonthDate->dayOfWeek;
+
+        $monthlyCalendarDays = [];
+
+        for ($i = 0; $i < $firstDayOfWeek; $i++) {
+            $dt = $selectedMonthDate->copy()->subDays($firstDayOfWeek - $i);
+            $monthlyCalendarDays[] = [
+                'date' => $dt->format('Y-m-d'), 'day' => (int)$dt->format('j'),
+                'isCurrentMonth' => false, 'isToday' => $dt->isToday(), 'isSunday' => $dt->dayOfWeek === 0,
+            ];
+        }
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $dt = \Carbon\Carbon::createFromDate($selectedMonthDate->year, $selectedMonthDate->month, $d);
+            $monthlyCalendarDays[] = [
+                'date' => $dt->format('Y-m-d'), 'day' => $d,
+                'isCurrentMonth' => true, 'isToday' => $dt->isToday(), 'isSunday' => $dt->dayOfWeek === 0,
+            ];
+        }
+        $rem = 7 - (count($monthlyCalendarDays) % 7);
+        if ($rem < 7) {
+            for ($i = 1; $i <= $rem; $i++) {
+                $dt = \Carbon\Carbon::createFromDate($selectedMonthDate->year, $selectedMonthDate->month, $daysInMonth)->addDays($i);
+                $monthlyCalendarDays[] = [
+                    'date' => $dt->format('Y-m-d'), 'day' => (int)$dt->format('j'),
+                    'isCurrentMonth' => false, 'isToday' => $dt->isToday(), 'isSunday' => $dt->dayOfWeek === 0,
+                ];
+            }
+        }
+
+        // Events that touch this month
+        $monthStart = $selectedMonthDate->format('Y-m-d');
+        $monthEnd = $selectedMonthDate->copy()->endOfMonth()->format('Y-m-d');
+
+        $monthlyRawEvents = $rawEvents->filter(fn($e) => $e['start_date'] <= $monthEnd && $e['end_date'] >= $monthStart)->map(function ($e) use ($indonesianMonths) {
+            $e['date_formatted'] = $this->formatEventDateRange($e['start_date'], $e['end_date'], $indonesianMonths);
+            return $e;
+        })->values();
+
+        // Events per day
+        $monthlyDayEvents = collect();
+        $monthlyHolidayDates = collect();
+        $monthlyAssessmentDates = collect();
+        $monthlyActivityDates = collect();
+
+        foreach ($monthlyCalendarDays as $day) {
+            $ds = $day['date'];
+            $dayEvts = $rawEvents->filter(fn($e) => $e['start_date'] <= $ds && $e['end_date'] >= $ds)->values();
+            $monthlyDayEvents[$ds] = $dayEvts;
+        }
+
+        foreach ($monthlyRawEvents as $evt) {
+            $rangeStart = \Carbon\Carbon::parse($evt['start_date'])->max($monthStart);
+            $rangeEnd = \Carbon\Carbon::parse($evt['end_date'])->min($monthEnd);
+            for ($d = $rangeStart->copy(); $d->lte($rangeEnd); $d->addDay()) {
+                $ds = $d->format('Y-m-d');
+                $monthlyActivityDates->push($ds);
+                if ($evt['is_holiday']) $monthlyHolidayDates->push($ds);
+                if (in_array($evt['category'], ['asesmen-ujian', 'tka-asesmen-nasional'])) $monthlyAssessmentDates->push($ds);
+            }
+        }
+
+        $monthlySummary = [
+            'total_events' => $monthlyRawEvents->count(),
+            'hari_libur' => $monthlyHolidayDates->unique()->count(),
+            'hari_asesmen' => $monthlyAssessmentDates->unique()->count(),
+            'hari_berkegiatan' => $monthlyActivityDates->unique()->count(),
+        ];
+
         return view('admin.academic.calendar.index', compact(
             'academicYears',
             'events',
@@ -213,6 +308,16 @@ class AcademicCalendarController extends Controller
             'rawEvents',
             'months',
             'indonesianMonths',
+            'selectedMonthDate',
+            'previousMonthDate',
+            'nextMonthDate',
+            'canGoPrevious',
+            'canGoNext',
+            'monthlyCalendarDays',
+            'dayNames',
+            'monthlyRawEvents',
+            'monthlyDayEvents',
+            'monthlySummary',
         ) + [
             'academicYear' => $selectedYear,
             'academicYearId' => $selectedYearId,
