@@ -214,9 +214,7 @@ class LetterHtmlSanitizer
                 }
             }
 
-            if (empty($widths)) {
-                return $table;
-            }
+            $hasWidths = !empty($widths);
 
             // 3. Ensure table has table-layout:fixed, border-collapse:collapse (preserve existing width)
             $table = preg_replace_callback('/<table\b([^>]*)>/i', function ($tMatch) {
@@ -252,7 +250,7 @@ class LetterHtmlSanitizer
                     $result .= $seg;
                     $inRow = false;
                 } elseif ($inRow) {
-                    $result .= preg_replace_callback('/<(td|th)\b([^>]*)>/i', function ($m) use ($widths, &$colIndex) {
+                    $result .= preg_replace_callback('/<(td|th)\b([^>]*)>/i', function ($m) use ($widths, $hasWidths, &$colIndex) {
                         $tag = $m[1];
                         $attrs = $m[2];
 
@@ -261,16 +259,18 @@ class LetterHtmlSanitizer
                             $colspan = max(1, (int)$cm[1]);
                         }
 
-                        $ci = $colIndex % count($widths);
-                        $w = $widths[$ci];
+                        $w = null;
+                        if ($hasWidths) {
+                            $ci = $colIndex % count($widths);
+                            $w = $widths[$ci];
+                        }
                         $colIndex += $colspan;
 
                         $clean = '';
 
-                        // Style: preserve existing, ensure width and vertical-align are set
                         if (preg_match('/style\s*=\s*"([^"]*)"/i', $attrs, $sm)) {
                             $existing = $sm[1];
-                            if (!preg_match('/width\s*:/i', $existing)) {
+                            if ($w && !preg_match('/width\s*:/i', $existing)) {
                                 $existing = 'width:' . $w . '; ' . $existing;
                             }
                             if (!preg_match('/vertical-align\s*:/i', $existing)) {
@@ -284,15 +284,18 @@ class LetterHtmlSanitizer
                             }
                             $clean .= ' style="' . $existing . '"';
                         } else {
-                            $clean .= ' style="width:' . $w . '; vertical-align:top; border:1px solid #000; padding:6px;"';
+                            $styleParts = [];
+                            if ($w) { $styleParts[] = 'width:' . $w; }
+                            $styleParts[] = 'vertical-align:top';
+                            $styleParts[] = 'border:1px solid #000';
+                            $styleParts[] = 'padding:6px';
+                            $clean .= ' style="' . implode('; ', $styleParts) . '"';
                         }
 
-                        // Width HTML attribute
-                        if (!preg_match('/width\s*=\s*"([^"]*)"/i', $attrs)) {
+                        if ($w && !preg_match('/width\s*=\s*"([^"]*)"/i', $attrs)) {
                             $clean .= ' width="' . $w . '"';
                         }
 
-                        // Preserve colspan/rowspan
                         if (preg_match('/colspan\s*=\s*"(\d+)"/i', $attrs, $cm)) {
                             $clean .= ' colspan="' . (int)$cm[1] . '"';
                         }
