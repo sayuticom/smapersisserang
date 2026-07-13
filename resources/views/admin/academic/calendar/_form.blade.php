@@ -132,34 +132,24 @@
                                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                         Kegiatan satu hari
                     </label>
-                    <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                        <input type="hidden" name="is_all_day" :value="isAllDay ? '1' : '0'">
-                        <input type="checkbox" x-model="isAllDay"
-                               class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                        Sepanjang hari
-                    </label>
                 </div>
                 <div></div>
-                <template x-if="!isAllDay">
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Mulai</label>
-                        <input type="time" name="start_time" x-model="jamMulai"
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                        @error('start_time')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </template>
-                <template x-if="!isAllDay">
-                    <div>
-                        <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Selesai</label>
-                        <input type="time" name="end_time" x-model="jamSelesai"
-                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                        @error('end_time')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </template>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Mulai</label>
+                    <input type="time" name="start_time" x-model="jamMulai"
+                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('start_time')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Selesai</label>
+                    <input type="time" name="end_time" x-model="jamSelesai"
+                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('end_time')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </div>
 
@@ -370,13 +360,10 @@
                 <div>
                     <p class="text-xs text-slate-400">Jam</p>
                     <p class="font-medium text-slate-900">
-                        <template x-if="isAllDay">
-                            <span>Sepanjang hari</span>
-                        </template>
-                        <template x-if="!isAllDay && (jamMulai || jamSelesai)">
+                        <template x-if="jamMulai || jamSelesai">
                             <span><span x-text="jamMulai || '—'"></span> — <span x-text="jamSelesai || '—'"></span></span>
                         </template>
-                        <template x-if="!isAllDay && !jamMulai && !jamSelesai">
+                        <template x-if="!jamMulai && !jamSelesai">
                             <span class="text-slate-400">—</span>
                         </template>
                     </p>
@@ -412,7 +399,6 @@ function calendarForm() {
         startDate: @js(old('start_date', $event?->start_date?->format('Y-m-d') ?? '')),
         endDate: @js(old('end_date', $event?->end_date?->format('Y-m-d') ?? '')),
         isSingleDay: @js($event && $event->start_date?->toDateString() === $event->end_date?->toDateString()),
-        isAllDay: @js((bool) old('is_all_day', $event?->is_all_day ?? false)),
         jamMulai: @js(old('start_time', $event?->start_time ?? '')),
         jamSelesai: @js(old('end_time', $event?->end_time ?? '')),
         statusDay: @js(old('day_status', $event?->day_status ?? '')),
@@ -448,12 +434,6 @@ function calendarForm() {
             this.$watch('startDate', val => {
                 if (this.isSingleDay) {
                     this.endDate = val;
-                }
-            });
-            this.$watch('isAllDay', val => {
-                if (val) {
-                    this.jamMulai = '';
-                    this.jamSelesai = '';
                 }
             });
             this.$watch('responsibleType', val => {

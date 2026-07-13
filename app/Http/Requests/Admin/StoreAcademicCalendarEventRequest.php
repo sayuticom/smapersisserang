@@ -17,10 +17,6 @@ class StoreAcademicCalendarEventRequest extends FormRequest
     {
         $data = [];
 
-        if ($this->has('is_all_day')) {
-            $data['is_all_day'] = filter_var($this->is_all_day, FILTER_VALIDATE_BOOLEAN);
-        }
-
         if ($this->has('is_holiday')) {
             $data['is_holiday'] = filter_var($this->is_holiday, FILTER_VALIDATE_BOOLEAN);
         }
@@ -37,13 +33,6 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             }
 
             $data['targets'] = array_values(array_unique($normalized));
-        }
-
-        $isAllDay = $data['is_all_day'] ?? filter_var($this->is_all_day, FILTER_VALIDATE_BOOLEAN);
-
-        if ($isAllDay) {
-            $data['start_time'] = null;
-            $data['end_time'] = null;
         }
 
         if (!empty($data)) {
@@ -103,8 +92,8 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'is_all_day' => ['nullable', 'boolean'],
-            'start_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'day_status' => ['required', Rule::in([
                 'efektif',
                 'tidak-efektif',
@@ -151,6 +140,11 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             'academic_year_id.exists' => 'Tahun pelajaran yang dipilih tidak valid.',
             'title.required' => 'Nama kegiatan wajib diisi.',
             'end_date.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+            'start_time.required' => 'Jam mulai wajib diisi.',
+            'start_time.date_format' => 'Format jam mulai tidak valid.',
+            'end_time.required' => 'Jam selesai wajib diisi.',
+            'end_time.date_format' => 'Format jam selesai tidak valid.',
+            'end_time.after' => 'Jam selesai harus setelah jam mulai.',
             'targets.required' => 'Minimal satu sasaran harus dipilih.',
             'targets.min' => 'Minimal satu sasaran harus dipilih.',
             'category.in' => 'Kategori yang dipilih tidak valid.',

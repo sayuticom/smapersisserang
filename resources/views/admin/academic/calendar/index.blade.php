@@ -100,6 +100,9 @@
                         @if($summary['kegiatan_terdekat'])
                             <p class="text-sm font-semibold text-gray-900 truncate leading-tight">{{ $summary['kegiatan_terdekat']['title'] }}</p>
                             <p class="text-xs text-slate-500 leading-tight mt-0.5">{{ $summary['kegiatan_terdekat']['date'] }}</p>
+                            @if($summary['kegiatan_terdekat']['time'] ?? null)
+                                <p class="text-xs text-slate-400 leading-tight">{{ $summary['kegiatan_terdekat']['time'] }}</p>
+                            @endif
                         @else
                             <p class="text-sm text-slate-400 leading-tight">Tidak ada</p>
                         @endif
@@ -375,6 +378,9 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-medium text-slate-900 leading-tight">{{ $ue['title'] }}</p>
                                         <p class="text-xs text-slate-500 leading-tight mt-px">{{ $ue['date'] }}</p>
+                                        @if($ue['time'] ?? null)
+                                            <p class="text-xs text-slate-400 leading-tight">{{ $ue['time'] }}</p>
+                                        @endif
                                     </div>
                                 </div>
                                 @if(!$loop->last)
@@ -434,6 +440,9 @@
                                             – {{ $endDate->format('d') }} {{ $indonesianMonths[$endDate->month] }} {{ $endDate->format('Y') }}
                                         @else
                                             {{ $startDate->format('Y') }}
+                                        @endif
+                                        @if($evt['start_time'] ?? null)
+                                            <br><span class="text-xs text-slate-400">{{ $evt['start_time'] }}–{{ $evt['end_time'] ?? '—' }}</span>
                                         @endif
                                     </td>
                                     <td class="px-5 py-3 font-medium text-slate-900">

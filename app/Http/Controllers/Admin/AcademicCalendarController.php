@@ -78,6 +78,8 @@ class AcademicCalendarController extends Controller
                 'day_status' => $evt->day_status,
                 'description' => $evt->description,
                 'location' => $evt->location,
+                'start_time' => $evt->start_time ? \Carbon\Carbon::parse($evt->start_time)->format('H:i') : null,
+                'end_time' => $evt->end_time ? \Carbon\Carbon::parse($evt->end_time)->format('H:i') : null,
                 'person_in_charge' => $evt->person_in_charge,
                 'teacher' => $evt->teacher,
                 'targets' => $evt->targets,
@@ -152,9 +154,12 @@ class AcademicCalendarController extends Controller
 
         foreach ($sortedEvents->take(4) as $e) {
             $cat = $categoryMap[$e['category']] ?? $categoryMap['lainnya'];
-            $ueDate = \Carbon\Carbon::parse($e['start_date']);
+            $startTime = $e['start_time'] ?? null;
+            $endTime = $e['end_time'] ?? null;
+            $timeStr = $startTime ? $startTime . '–' . $endTime : null;
             $upcomingEvents->push([
-                'date' => $ueDate->format('j') . ' ' . $indonesianMonths[$ueDate->month] . ' ' . $ueDate->format('Y'),
+                'date' => $this->formatEventDateRange($e['start_date'], $e['end_date'], $indonesianMonths),
+                'time' => $timeStr,
                 'title' => $e['title'],
                 'category_label' => $cat['label'],
                 'dot_class' => $cat['dot_class'],
@@ -165,10 +170,13 @@ class AcademicCalendarController extends Controller
         if ($sortedEvents->isNotEmpty()) {
             $first = $sortedEvents->first();
             $cat = $categoryMap[$first['category']] ?? $categoryMap['lainnya'];
-            $nearestDate = \Carbon\Carbon::parse($first['start_date']);
+            $nearestEventStartTime = $first['start_time'] ?? null;
+            $nearestEventEndTime = $first['end_time'] ?? null;
+            $nearestEventTimeStr = $nearestEventStartTime ? $nearestEventStartTime . '–' . $nearestEventEndTime : null;
             $nearestEvent = [
                 'title' => $first['title'],
-                'date' => $nearestDate->format('j') . ' ' . $indonesianMonths[$nearestDate->month] . ' ' . $nearestDate->format('Y'),
+                'date' => $this->formatEventDateRange($first['start_date'], $first['end_date'], $indonesianMonths),
+                'time' => $nearestEventTimeStr,
                 'category' => $first['category'],
                 'cat' => $cat,
             ];
@@ -361,10 +369,7 @@ class AcademicCalendarController extends Controller
             $validated['is_effective_day'] = false;
         }
 
-        if (!empty($validated['is_all_day'])) {
-            $validated['start_time'] = null;
-            $validated['end_time'] = null;
-        }
+        $validated['is_all_day'] = false;
 
         if ($responsibleType === 'teacher') {
             $teacher = Teacher::find($validated['teacher_id']);
@@ -467,10 +472,7 @@ class AcademicCalendarController extends Controller
             $validated['is_effective_day'] = false;
         }
 
-        if (!empty($validated['is_all_day'])) {
-            $validated['start_time'] = null;
-            $validated['end_time'] = null;
-        }
+        $validated['is_all_day'] = false;
 
         if ($responsibleType === 'teacher') {
             $teacher = Teacher::find($validated['teacher_id']);
@@ -499,5 +501,25 @@ class AcademicCalendarController extends Controller
         return redirect()
             ->route('admin.akademik.kalender.index', ['academic_year_id' => $yearId])
             ->with('success', 'Kegiatan kalender berhasil dihapus.');
+    }
+
+    private function formatEventDateRange(string $startDate, string $endDate, array $indonesianMonths): string
+    {
+        $start = \Carbon\Carbon::parse($startDate);
+        $end = \Carbon\Carbon::parse($endDate);
+
+        if ($start->toDateString() === $end->toDateString()) {
+            return $start->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y');
+        }
+
+        if ($start->month === $end->month && $start->year === $end->year) {
+            return $start->format('j') . '–' . $end->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y');
+        }
+
+        if ($start->year === $end->year) {
+            return $start->format('j') . ' ' . $indonesianMonths[$start->month] . '–' . $end->format('j') . ' ' . $indonesianMonths[$end->month] . ' ' . $start->format('Y');
+        }
+
+        return $start->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y') . '–' . $end->format('j') . ' ' . $indonesianMonths[$end->month] . ' ' . $end->format('Y');
     }
 }
