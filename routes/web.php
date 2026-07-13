@@ -529,6 +529,19 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'store'])->name('store');
+        Route::get('/{academicCalendarEvent}/edit', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'edit'])->name('edit');
+        Route::put('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'update'])->name('update');
+        Route::delete('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\AcademicYearController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('store');
+        Route::get('/{academicYear}/edit', [\App\Http\Controllers\Admin\AcademicYearController::class, 'edit'])->name('edit');
+        Route::put('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'update'])->name('update');
+        Route::patch('/{academicYear}/set-current', [\App\Http\Controllers\Admin\AcademicYearController::class, 'setCurrent'])->name('set-current');
+        Route::delete('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('website.pages.')->prefix('website/konten')->group(function () {

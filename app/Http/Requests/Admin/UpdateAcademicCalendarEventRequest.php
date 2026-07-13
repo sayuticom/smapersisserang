@@ -6,7 +6,7 @@ use App\Models\AcademicYear;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreAcademicCalendarEventRequest extends FormRequest
+class UpdateAcademicCalendarEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -129,7 +129,7 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             'teacher_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('teachers', 'id')->where(fn ($q) => $q->where('is_active', true)),
+                Rule::exists('teachers', 'id'),
                 'required_if:responsible_type,teacher',
             ],
             'person_in_charge' => [
@@ -140,7 +140,7 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             ],
             'location' => ['nullable', 'string', 'max:255'],
             'internal_notes' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(['draft', 'published'])],
+            'status' => ['required', Rule::in(['draft', 'published', 'archived'])],
         ];
     }
 
@@ -159,7 +159,7 @@ class StoreAcademicCalendarEventRequest extends FormRequest
             'responsible_type.required' => 'Pilih jenis penanggung jawab.',
             'responsible_type.in' => 'Jenis penanggung jawab tidak valid.',
             'teacher_id.required_if' => 'Pilih guru sebagai penanggung jawab.',
-            'teacher_id.exists' => 'Guru yang dipilih tidak tersedia atau sudah tidak aktif.',
+            'teacher_id.exists' => 'Guru yang dipilih tidak tersedia.',
             'person_in_charge.required_if' => 'Isi nama penanggung jawab lainnya.',
         ];
     }

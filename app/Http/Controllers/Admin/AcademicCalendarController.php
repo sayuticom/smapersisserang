@@ -4,119 +4,216 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAcademicCalendarEventRequest;
+use App\Http\Requests\Admin\UpdateAcademicCalendarEventRequest;
 use App\Models\AcademicCalendarEvent;
+use App\Models\AcademicYear;
+use App\Models\Teacher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AcademicCalendarController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        return $this->renderIndex();
-    }
+        $categoryMap = $this->getCategoryMap();
 
-    public function create(): View
-    {
-        $academicYear = '2026/2027';
-        $academicYears = collect([
-            ['value' => '2026/2027', 'label' => '2026/2027'],
-            ['value' => '2025/2026', 'label' => '2025/2026'],
-            ['value' => '2024/2025', 'label' => '2024/2025'],
-        ]);
+        $indonesianMonths = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
 
-        $categories = collect([
-            ['value' => 'awal-masuk', 'label' => 'Awal Masuk Sekolah'],
-            ['value' => 'libur-nasional', 'label' => 'Libur Nasional / Cuti Bersama'],
-            ['value' => 'penyerahan-rapor', 'label' => 'Penyerahan Rapor'],
-            ['value' => 'libur-ramadan', 'label' => 'Libur Ramadan / Idulfitri'],
-            ['value' => 'asesmen-ujian', 'label' => 'Asesmen / Ujian'],
-            ['value' => 'libur-semester', 'label' => 'Libur Semester'],
-            ['value' => 'tka-anas', 'label' => 'TKA / Asesmen Nasional'],
-            ['value' => 'kegiatan-sekolah', 'label' => 'Kegiatan Sekolah'],
-            ['value' => 'kegiatan-pesantren', 'label' => 'Kegiatan Pesantren'],
-            ['value' => 'lainnya', 'label' => 'Lainnya'],
-        ]);
+        $academicYears = AcademicYear::orderByDesc('start_date')->get();
 
-        $sources = collect([
-            ['value' => 'sekolah', 'label' => 'Sekolah'],
-            ['value' => 'pemerintah', 'label' => 'Pemerintah'],
-        ]);
-
-        $statusDays = collect([
-            ['value' => 'efektif', 'label' => 'Hari Efektif'],
-            ['value' => 'tidak-efektif', 'label' => 'Hari Tidak Efektif'],
-            ['value' => 'libur', 'label' => 'Libur'],
-            ['value' => 'kegiatan-khusus', 'label' => 'Kegiatan Khusus'],
-        ]);
-
-        $targets = collect([
-            ['value' => 'semua', 'label' => 'Semua'],
-            ['value' => 'guru', 'label' => 'Guru'],
-            ['value' => 'siswa', 'label' => 'Siswa'],
-            ['value' => 'orang-tua', 'label' => 'Orang Tua'],
-            ['value' => 'asrama', 'label' => 'Asrama'],
-            ['value' => 'publik', 'label' => 'Publik'],
-        ]);
-
-        return view('admin.academic.calendar.create', compact(
-            'academicYear',
-            'academicYears',
-            'categories',
-            'sources',
-            'statusDays',
-            'targets',
-        ));
-    }
-
-    public function store(StoreAcademicCalendarEventRequest $request)
-    {
-        $validated = $request->validated();
-
-        $dayStatus = $validated['day_status'];
-
-        if ($dayStatus === 'efektif') {
-            $validated['is_holiday'] = false;
-            $validated['is_effective_day'] = true;
-        } elseif ($dayStatus === 'libur') {
-            $validated['is_holiday'] = true;
-            $validated['is_effective_day'] = false;
-        } elseif ($dayStatus === 'tidak-efektif') {
-            $validated['is_holiday'] = false;
-            $validated['is_effective_day'] = false;
+        if ($academicYears->isEmpty()) {
+            return view('admin.academic.calendar.index', [
+                'academicYear' => null,
+                'academicYearId' => null,
+                'academicYears' => collect(),
+                'events' => collect(),
+                'summary' => [
+                    'hari_efektif' => 0,
+                    'hari_libur' => 0,
+                    'asesmen' => 0,
+                    'total' => 0,
+                    'kegiatan_terdekat' => null,
+                ],
+                'categories' => $categoryMap->values()->map(fn($c) => ['key' => '', 'label' => $c['label'], 'dot_class' => $c['dot_class'], 'bg_class' => $c['bg_class'], 'text_class' => $c['text_class'], 'cell_bg' => $c['cell_bg'], 'count' => 0]),
+                'upcomingEvents' => collect(),
+                'categoryMap' => $categoryMap,
+                'rawEvents' => collect(),
+                'months' => [],
+            ]);
         }
 
-        if (!empty($validated['is_all_day'])) {
-            $validated['start_time'] = null;
-            $validated['end_time'] = null;
+        $selectedYearId = $request->integer('academic_year_id');
+
+        if (!$selectedYearId || !$academicYears->contains('id', $selectedYearId)) {
+            $current = $academicYears->firstWhere('is_current', true) ?? $academicYears->first();
+            $selectedYearId = $current->id;
         }
 
-        $validated['created_by'] = auth()->id();
-        $validated['updated_by'] = auth()->id();
+        $selectedYear = $academicYears->firstWhere('id', $selectedYearId);
 
-        $event = DB::transaction(function () use ($validated) {
-            return AcademicCalendarEvent::create($validated);
+        $dbEvents = AcademicCalendarEvent::with('teacher')
+            ->where('academic_year_id', $selectedYearId)
+            ->where('status', 'published')
+            ->orderBy('start_date')
+            ->orderBy('title')
+            ->get();
+
+        $rawEvents = $dbEvents->map(function ($evt) use ($categoryMap) {
+            $cat = $categoryMap[$evt->category] ?? $categoryMap['lainnya'];
+            return [
+                'id' => $evt->id,
+                'title' => $evt->title,
+                'category' => $evt->category,
+                'category_label' => $cat['label'],
+                'source' => $evt->source,
+                'start_date' => $evt->start_date->toDateString(),
+                'end_date' => $evt->end_date->toDateString(),
+                'is_holiday' => $evt->is_holiday,
+                'is_effective_day' => $evt->is_effective_day,
+                'day_status' => $evt->day_status,
+                'description' => $evt->description,
+                'location' => $evt->location,
+                'person_in_charge' => $evt->person_in_charge,
+                'teacher' => $evt->teacher,
+                'targets' => $evt->targets,
+            ];
         });
 
-        $message = $validated['status'] === 'draft'
-            ? 'Draft kegiatan kalender berhasil disimpan.'
-            : 'Kegiatan kalender berhasil dipublikasikan.';
+        // Expand date ranges for calendar
+        $expandedEvents = collect();
+        $holidayDates = collect();
+        $assessmentDates = collect();
 
-        return redirect()
-            ->route('admin.akademik.kalender.index')
-            ->with('success', $message);
+        foreach ($rawEvents as $evt) {
+            $start = \Carbon\Carbon::parse($evt['start_date']);
+            $end = \Carbon\Carbon::parse($evt['end_date']);
+            $cat = $categoryMap[$evt['category']] ?? $categoryMap['lainnya'];
+
+            for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                $dateStr = $d->format('Y-m-d');
+                $expandedEvents->push([
+                    'date' => $dateStr,
+                    'title' => $evt['title'],
+                    'category' => $evt['category'],
+                    'category_label' => $cat['label'],
+                    'dot_class' => $cat['dot_class'],
+                    'bg_class' => $cat['bg_class'],
+                    'text_class' => $cat['text_class'],
+                    'cell_bg' => $cat['cell_bg'],
+                    'source' => $evt['source'],
+                    'is_holiday' => $evt['is_holiday'],
+                    'is_effective_day' => $evt['is_effective_day'],
+                    'description' => $evt['description'],
+                ]);
+
+                if ($evt['is_holiday']) {
+                    $holidayDates->push($dateStr);
+                }
+                if (in_array($evt['category'], ['asesmen-ujian', 'tka-asesmen-nasional'])) {
+                    $assessmentDates->push($dateStr);
+                }
+            }
+        }
+
+        $uniqueHolidayCount = $holidayDates->unique()->count();
+        $uniqueAssessmentCount = $assessmentDates->unique()->count();
+
+        // Categories with date counts
+        $categories = $categoryMap->map(function ($c, $key) use ($expandedEvents) {
+            $uniqueDates = $expandedEvents->where('category', $key)->pluck('date')->unique();
+            return [
+                'key' => $key,
+                'label' => $c['label'],
+                'dot_class' => $c['dot_class'],
+                'bg_class' => $c['bg_class'],
+                'text_class' => $c['text_class'],
+                'cell_bg' => $c['cell_bg'],
+                'count' => $uniqueDates->count(),
+            ];
+        })->values();
+
+        // Upcoming events
+        $today = now()->format('Y-m-d');
+        $upcomingEvents = collect();
+        $nearestEvent = null;
+
+        $sortedEvents = $rawEvents->filter(fn($e) => $e['end_date'] >= $today)->sort(function ($a, $b) use ($today) {
+            $aOngoing = ($a['start_date'] <= $today && $a['end_date'] >= $today) ? 0 : 1;
+            $bOngoing = ($b['start_date'] <= $today && $b['end_date'] >= $today) ? 0 : 1;
+            if ($aOngoing !== $bOngoing) return $aOngoing - $bOngoing;
+            if ($a['start_date'] !== $b['start_date']) return $a['start_date'] <=> $b['start_date'];
+            return $a['title'] <=> $b['title'];
+        });
+
+        foreach ($sortedEvents->take(4) as $e) {
+            $cat = $categoryMap[$e['category']] ?? $categoryMap['lainnya'];
+            $ueDate = \Carbon\Carbon::parse($e['start_date']);
+            $upcomingEvents->push([
+                'date' => $ueDate->format('j') . ' ' . $indonesianMonths[$ueDate->month] . ' ' . $ueDate->format('Y'),
+                'title' => $e['title'],
+                'category_label' => $cat['label'],
+                'dot_class' => $cat['dot_class'],
+                'bg_class' => $cat['bg_class'],
+            ]);
+        }
+
+        if ($sortedEvents->isNotEmpty()) {
+            $first = $sortedEvents->first();
+            $cat = $categoryMap[$first['category']] ?? $categoryMap['lainnya'];
+            $nearestDate = \Carbon\Carbon::parse($first['start_date']);
+            $nearestEvent = [
+                'title' => $first['title'],
+                'date' => $nearestDate->format('j') . ' ' . $indonesianMonths[$nearestDate->month] . ' ' . $nearestDate->format('Y'),
+                'category' => $first['category'],
+                'cat' => $cat,
+            ];
+        }
+
+        $summary = [
+            'hari_efektif' => 220,
+            'hari_libur' => $uniqueHolidayCount,
+            'asesmen' => $uniqueAssessmentCount,
+            'total' => $dbEvents->count(),
+            'kegiatan_terdekat' => $nearestEvent,
+        ];
+
+        $months = [];
+        $startMonth = $selectedYear->start_date->copy()->startOfMonth();
+        for ($i = 0; $i < 12; $i++) {
+            $date = $startMonth->copy()->addMonths($i);
+            $months[] = [
+                'num' => $date->month,
+                'year' => $date->year,
+                'name' => $indonesianMonths[$date->month],
+            ];
+        }
+
+        $events = $expandedEvents;
+
+        return view('admin.academic.calendar.index', compact(
+            'academicYears',
+            'events',
+            'summary',
+            'categories',
+            'upcomingEvents',
+            'categoryMap',
+            'rawEvents',
+            'months',
+            'indonesianMonths',
+        ) + [
+            'academicYear' => $selectedYear,
+            'academicYearId' => $selectedYearId,
+        ]);
     }
 
-    private function renderIndex(): View
+    private function getCategoryMap(): \Illuminate\Support\Collection
     {
-        $academicYear = '2026/2027';
-
-        $academicYears = collect([
-            ['value' => '2026/2027', 'label' => '2026/2027'],
-            ['value' => '2025/2026', 'label' => '2025/2026'],
-            ['value' => '2024/2025', 'label' => '2024/2025'],
-        ]);
-
-        $categoryMap = [
+        return collect([
             'awal-masuk' => [
                 'label' => 'Awal Masuk Sekolah',
                 'dot_class' => 'bg-green-500',
@@ -159,7 +256,7 @@ class AcademicCalendarController extends Controller
                 'text_class' => 'text-yellow-800',
                 'cell_bg' => 'bg-yellow-100',
             ],
-            'tka-anas' => [
+            'tka-asesmen-nasional' => [
                 'label' => 'TKA / Asesmen Nasional',
                 'dot_class' => 'bg-purple-500',
                 'bg_class' => 'bg-purple-100',
@@ -187,261 +284,220 @@ class AcademicCalendarController extends Controller
                 'text_class' => 'text-slate-800',
                 'cell_bg' => 'bg-slate-100',
             ],
-        ];
+        ]);
+    }
 
-        // Data contoh prototipe, bukan data resmi
-        $rawEvents = [
-            [
-                'title' => 'Awal Masuk Sekolah TP 2026/2027',
-                'category' => 'awal-masuk',
-                'start_date' => '2026-07-13',
-                'end_date' => '2026-07-15',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Awal tahun pelajaran baru dan MPLS',
-            ],
-            [
-                'title' => 'Hari Kemerdekaan RI',
-                'category' => 'libur-nasional',
-                'start_date' => '2026-08-17',
-                'end_date' => '2026-08-17',
-                'source' => 'pemerintah',
-                'is_holiday' => true,
-                'is_effective_day' => false,
-                'description' => 'Hari Ulang Tahun RI',
-            ],
-            [
-                'title' => 'Asesmen Tengah Semester Ganjil',
-                'category' => 'asesmen-ujian',
-                'start_date' => '2026-09-28',
-                'end_date' => '2026-10-02',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => true,
-                'description' => 'Penilaian tengah semester ganjil',
-            ],
-            [
-                'title' => 'TKA / Asesmen Nasional',
-                'category' => 'tka-anas',
-                'start_date' => '2026-10-26',
-                'end_date' => '2026-10-30',
-                'source' => 'pemerintah',
-                'is_holiday' => false,
-                'is_effective_day' => true,
-                'description' => 'TKA dan Asesmen Nasional',
-            ],
-            [
-                'title' => 'Penyerahan Rapor Semester Ganjil',
-                'category' => 'penyerahan-rapor',
-                'start_date' => '2026-12-18',
-                'end_date' => '2026-12-18',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Pembagian rapor semester ganjil',
-            ],
-            [
-                'title' => 'Libur Semester Ganjil',
-                'category' => 'libur-semester',
-                'start_date' => '2026-12-21',
-                'end_date' => '2027-01-02',
-                'source' => 'sekolah',
-                'is_holiday' => true,
-                'is_effective_day' => false,
-                'description' => 'Libur setelah semester ganjil',
-            ],
-            [
-                'title' => 'Awal Masuk Semester Genap',
-                'category' => 'awal-masuk',
-                'start_date' => '2027-01-04',
-                'end_date' => '2027-01-06',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Awal semester genap',
-            ],
-            [
-                'title' => 'Kegiatan Pesantren Kilat',
-                'category' => 'kegiatan-pesantren',
-                'start_date' => '2027-02-15',
-                'end_date' => '2027-02-17',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Kegiatan pesantren kilat Ramadan',
-            ],
-            [
-                'title' => 'Libur Awal Ramadan',
-                'category' => 'libur-ramadan',
-                'start_date' => '2027-03-01',
-                'end_date' => '2027-03-01',
-                'source' => 'pemerintah',
-                'is_holiday' => true,
-                'is_effective_day' => false,
-                'description' => 'Libur awal bulan Ramadan',
-            ],
-            [
-                'title' => 'Libur Hari Raya Idulfitri',
-                'category' => 'libur-ramadan',
-                'start_date' => '2027-03-29',
-                'end_date' => '2027-04-07',
-                'source' => 'pemerintah',
-                'is_holiday' => true,
-                'is_effective_day' => false,
-                'description' => 'Libur Idulfitri',
-            ],
-            [
-                'title' => 'Workshop Pengembangan Kurikulum',
-                'category' => 'lainnya',
-                'start_date' => '2027-05-10',
-                'end_date' => '2027-05-12',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Workshop guru',
-            ],
-            [
-                'title' => 'Class Meeting',
-                'category' => 'kegiatan-sekolah',
-                'start_date' => '2027-05-17',
-                'end_date' => '2027-05-21',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Kegiatan class meeting akhir semester',
-            ],
-            [
-                'title' => 'Asesmen Akhir Tahun',
-                'category' => 'asesmen-ujian',
-                'start_date' => '2027-05-24',
-                'end_date' => '2027-05-28',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => true,
-                'description' => 'Penilaian akhir tahun',
-            ],
-            [
-                'title' => 'Penyerahan Rapor Semester Genap',
-                'category' => 'penyerahan-rapor',
-                'start_date' => '2027-06-14',
-                'end_date' => '2027-06-14',
-                'source' => 'sekolah',
-                'is_holiday' => false,
-                'is_effective_day' => false,
-                'description' => 'Pembagian rapor semester genap',
-            ],
-            [
-                'title' => 'Libur Akhir Tahun Pelajaran',
-                'category' => 'libur-semester',
-                'start_date' => '2027-06-16',
-                'end_date' => '2027-06-30',
-                'source' => 'sekolah',
-                'is_holiday' => true,
-                'is_effective_day' => false,
-                'description' => 'Libur akhir tahun pelajaran',
-            ],
-        ];
+    public function create(): View
+    {
+        try {
+            $currentAcademicYear = AcademicYear::where('is_current', true)->first();
+        } catch (\Exception $e) {
+            $currentAcademicYear = null;
+        }
 
-        // --- EXPAND DATE RANGES ---
-        $expandedEvents = collect();
-        $holidayDates = collect();
-        $assessmentDates = collect();
+        $categories = collect([
+            ['value' => 'awal-masuk', 'label' => 'Awal Masuk Sekolah'],
+            ['value' => 'libur-nasional', 'label' => 'Libur Nasional / Cuti Bersama'],
+            ['value' => 'penyerahan-rapor', 'label' => 'Penyerahan Rapor'],
+            ['value' => 'libur-ramadan', 'label' => 'Libur Ramadan / Idulfitri'],
+            ['value' => 'asesmen-ujian', 'label' => 'Asesmen / Ujian'],
+            ['value' => 'libur-semester', 'label' => 'Libur Semester'],
+            ['value' => 'tka-asesmen-nasional', 'label' => 'TKA / Asesmen Nasional'],
+            ['value' => 'kegiatan-sekolah', 'label' => 'Kegiatan Sekolah'],
+            ['value' => 'kegiatan-pesantren', 'label' => 'Kegiatan Pesantren'],
+            ['value' => 'lainnya', 'label' => 'Lainnya'],
+        ]);
 
-        foreach ($rawEvents as $evt) {
-            $start = \Carbon\Carbon::parse($evt['start_date']);
-            $end = \Carbon\Carbon::parse($evt['end_date']);
-            $cat = $categoryMap[$evt['category']];
+        $sources = collect([
+            ['value' => 'sekolah', 'label' => 'Sekolah'],
+            ['value' => 'pemerintah', 'label' => 'Pemerintah'],
+        ]);
 
-            for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                $dateStr = $d->format('Y-m-d');
-                $expandedEvents->push([
-                    'date' => $dateStr,
-                    'title' => $evt['title'],
-                    'category' => $evt['category'],
-                    'category_label' => $cat['label'],
-                    'dot_class' => $cat['dot_class'],
-                    'bg_class' => $cat['bg_class'],
-                    'text_class' => $cat['text_class'],
-                    'cell_bg' => $cat['cell_bg'],
-                    'source' => $evt['source'],
-                    'is_holiday' => $evt['is_holiday'],
-                    'is_effective_day' => $evt['is_effective_day'],
-                    'description' => $evt['description'],
-                ]);
+        $statusDays = collect([
+            ['value' => 'efektif', 'label' => 'Hari Efektif'],
+            ['value' => 'tidak-efektif', 'label' => 'Hari Tidak Efektif'],
+            ['value' => 'libur', 'label' => 'Libur'],
+            ['value' => 'kegiatan-khusus', 'label' => 'Kegiatan Khusus'],
+        ]);
 
-                if ($evt['is_holiday']) {
-                    $holidayDates->push($dateStr);
-                }
-                if ($evt['is_effective_day']) {
-                    $assessmentDates->push($dateStr);
-                }
+        $targets = collect([
+            ['value' => 'semua', 'label' => 'Semua'],
+            ['value' => 'guru', 'label' => 'Guru'],
+            ['value' => 'siswa', 'label' => 'Siswa'],
+            ['value' => 'orang_tua', 'label' => 'Orang Tua'],
+            ['value' => 'asrama', 'label' => 'Asrama'],
+            ['value' => 'publik', 'label' => 'Publik'],
+        ]);
+
+        $teachers = Teacher::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.academic.calendar.create', compact(
+            'categories',
+            'sources',
+            'statusDays',
+            'targets',
+            'teachers',
+            'currentAcademicYear',
+        ));
+    }
+
+    public function store(StoreAcademicCalendarEventRequest $request)
+    {
+        $validated = $request->validated();
+
+        $responsibleType = $validated['responsible_type'];
+        unset($validated['responsible_type']);
+
+        $dayStatus = $validated['day_status'];
+
+        if ($dayStatus === 'efektif') {
+            $validated['is_holiday'] = false;
+            $validated['is_effective_day'] = true;
+        } elseif ($dayStatus === 'libur') {
+            $validated['is_holiday'] = true;
+            $validated['is_effective_day'] = false;
+        } elseif ($dayStatus === 'tidak-efektif') {
+            $validated['is_holiday'] = false;
+            $validated['is_effective_day'] = false;
+        }
+
+        if (!empty($validated['is_all_day'])) {
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+        }
+
+        if ($responsibleType === 'teacher') {
+            $teacher = Teacher::find($validated['teacher_id']);
+            $validated['person_in_charge'] = $teacher?->name;
+        } else {
+            $validated['teacher_id'] = null;
+        }
+
+        $validated['created_by'] = auth()->id();
+        $validated['updated_by'] = auth()->id();
+
+        $event = DB::transaction(function () use ($validated) {
+            return AcademicCalendarEvent::create($validated);
+        });
+
+        $message = $validated['status'] === 'draft'
+            ? 'Draft kegiatan kalender berhasil disimpan.'
+            : 'Kegiatan kalender berhasil dipublikasikan.';
+
+        return redirect()
+            ->route('admin.akademik.kalender.index', ['academic_year_id' => $event->academic_year_id])
+            ->with('success', $message);
+    }
+
+    public function edit(AcademicCalendarEvent $academicCalendarEvent): View
+    {
+        $currentAcademicYear = $academicCalendarEvent->academicYear;
+
+        $categories = collect([
+            ['value' => 'awal-masuk', 'label' => 'Awal Masuk Sekolah'],
+            ['value' => 'libur-nasional', 'label' => 'Libur Nasional / Cuti Bersama'],
+            ['value' => 'penyerahan-rapor', 'label' => 'Penyerahan Rapor'],
+            ['value' => 'libur-ramadan', 'label' => 'Libur Ramadan / Idulfitri'],
+            ['value' => 'asesmen-ujian', 'label' => 'Asesmen / Ujian'],
+            ['value' => 'libur-semester', 'label' => 'Libur Semester'],
+            ['value' => 'tka-asesmen-nasional', 'label' => 'TKA / Asesmen Nasional'],
+            ['value' => 'kegiatan-sekolah', 'label' => 'Kegiatan Sekolah'],
+            ['value' => 'kegiatan-pesantren', 'label' => 'Kegiatan Pesantren'],
+            ['value' => 'lainnya', 'label' => 'Lainnya'],
+        ]);
+
+        $sources = collect([
+            ['value' => 'sekolah', 'label' => 'Sekolah'],
+            ['value' => 'pemerintah', 'label' => 'Pemerintah'],
+        ]);
+
+        $statusDays = collect([
+            ['value' => 'efektif', 'label' => 'Hari Efektif'],
+            ['value' => 'tidak-efektif', 'label' => 'Hari Tidak Efektif'],
+            ['value' => 'libur', 'label' => 'Libur'],
+            ['value' => 'kegiatan-khusus', 'label' => 'Kegiatan Khusus'],
+        ]);
+
+        $targets = collect([
+            ['value' => 'semua', 'label' => 'Semua'],
+            ['value' => 'guru', 'label' => 'Guru'],
+            ['value' => 'siswa', 'label' => 'Siswa'],
+            ['value' => 'orang_tua', 'label' => 'Orang Tua'],
+            ['value' => 'asrama', 'label' => 'Asrama'],
+            ['value' => 'publik', 'label' => 'Publik'],
+        ]);
+
+        $teachers = Teacher::where('is_active', true)->orderBy('name')->get();
+
+        if ($academicCalendarEvent->teacher_id) {
+            $eventTeacher = Teacher::find($academicCalendarEvent->teacher_id);
+            if ($eventTeacher && !$eventTeacher->is_active) {
+                $teachers = $teachers->push($eventTeacher)->sortBy('name');
             }
         }
 
-        $uniqueHolidayCount = $holidayDates->unique()->count();
-        $uniqueAssessmentCount = $assessmentDates->unique()->count();
-
-        // --- UPCOMING EVENTS ---
-        $today = now()->format('Y-m-d');
-        $upcomingEvents = collect($rawEvents)
-            ->filter(fn($e) => $e['end_date'] >= $today)
-            ->sortBy('start_date')
-            ->take(4)
-            ->map(function ($e) use ($categoryMap) {
-                $cat = $categoryMap[$e['category']];
-                return [
-                    'date' => $e['start_date'],
-                    'title' => $e['title'],
-                    'category_label' => $cat['label'],
-                    'dot_class' => $cat['dot_class'],
-                    'bg_class' => $cat['bg_class'],
-                ];
-            })
-            ->values();
-
-        // --- CATEGORIES WITH COUNTS ---
-        $categories = collect($categoryMap)->map(function ($c, $key) use ($expandedEvents) {
-            $uniqueDates = $expandedEvents->where('category', $key)->pluck('date')->unique();
-            return [
-                'key' => $key,
-                'label' => $c['label'],
-                'dot_class' => $c['dot_class'],
-                'bg_class' => $c['bg_class'],
-                'text_class' => $c['text_class'],
-                'cell_bg' => $c['cell_bg'],
-                'count' => $uniqueDates->count(),
-            ];
-        })->values();
-
-        // --- SUMMARY ---
-        $summary = [
-            'hari_efektif' => 220,
-            'hari_libur' => $uniqueHolidayCount,
-            'asesmen' => $uniqueAssessmentCount,
-            'kegiatan_terdekat' => [
-                'title' => $rawEvents[0]['title'],
-                'date' => \Carbon\Carbon::parse($rawEvents[0]['start_date'])->translatedFormat('j F Y'),
-                'end_date' => \Carbon\Carbon::parse($rawEvents[0]['end_date'])->translatedFormat('j F Y'),
-                'days_left' => now()->diffInDays(\Carbon\Carbon::parse($rawEvents[0]['start_date']), false),
-                'category' => $rawEvents[0]['category'],
-            ],
-        ];
-
-        $monthlyEvents = $expandedEvents->groupBy(fn($e) => substr($e['date'], 0, 7));
-
-        $events = $expandedEvents;
-
-        return view('admin.academic.calendar.index', compact(
-            'academicYear',
-            'academicYears',
-            'events',
-            'summary',
+        return view('admin.academic.calendar.edit', compact(
+            'academicCalendarEvent',
             'categories',
-            'upcomingEvents',
-            'monthlyEvents',
-            'rawEvents',
-            'categoryMap',
+            'sources',
+            'statusDays',
+            'targets',
+            'teachers',
+            'currentAcademicYear',
         ));
+    }
+
+    public function update(UpdateAcademicCalendarEventRequest $request, AcademicCalendarEvent $academicCalendarEvent)
+    {
+        $validated = $request->validated();
+
+        $responsibleType = $validated['responsible_type'];
+        unset($validated['responsible_type']);
+
+        $dayStatus = $validated['day_status'];
+
+        if ($dayStatus === 'efektif') {
+            $validated['is_holiday'] = false;
+            $validated['is_effective_day'] = true;
+        } elseif ($dayStatus === 'libur') {
+            $validated['is_holiday'] = true;
+            $validated['is_effective_day'] = false;
+        } elseif ($dayStatus === 'tidak-efektif') {
+            $validated['is_holiday'] = false;
+            $validated['is_effective_day'] = false;
+        }
+
+        if (!empty($validated['is_all_day'])) {
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+        }
+
+        if ($responsibleType === 'teacher') {
+            $teacher = Teacher::find($validated['teacher_id']);
+            $validated['person_in_charge'] = $teacher?->name;
+        } else {
+            $validated['teacher_id'] = null;
+        }
+
+        $validated['updated_by'] = auth()->id();
+
+        DB::transaction(function () use ($validated, $academicCalendarEvent) {
+            $academicCalendarEvent->update($validated);
+        });
+
+        return redirect()
+            ->route('admin.akademik.kalender.index', ['academic_year_id' => $academicCalendarEvent->academic_year_id])
+            ->with('success', 'Kegiatan kalender berhasil diperbarui.');
+    }
+
+    public function destroy(AcademicCalendarEvent $academicCalendarEvent)
+    {
+        $yearId = $academicCalendarEvent->academic_year_id;
+
+        $academicCalendarEvent->delete();
+
+        return redirect()
+            ->route('admin.akademik.kalender.index', ['academic_year_id' => $yearId])
+            ->with('success', 'Kegiatan kalender berhasil dihapus.');
     }
 }

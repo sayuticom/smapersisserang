@@ -34,7 +34,7 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Tambah Kegiatan Kalender</h2>
-                <p class="mt-1 text-sm text-gray-500">Tahun Pelajaran {{ $academicYear }}</p>
+                <p class="mt-1 text-sm text-gray-500">Tahun Pelajaran {{ $currentAcademicYear?->name ?? '—' }}</p>
             </div>
             <a href="{{ route('admin.akademik.kalender.index') }}"
                class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
@@ -45,24 +45,46 @@
             </a>
         </div>
 
-        @include('admin.academic.calendar._form')
+        @if($currentAcademicYear)
+            <form method="POST" action="{{ route('admin.akademik.kalender.store') }}" class="contents">
+                @csrf
+                <input type="hidden" name="academic_year_id" value="{{ old('academic_year_id', $currentAcademicYear->id) }}">
+                @error('academic_year_id')
+                    <p class="text-xs text-red-600">{{ $message }}</p>
+                @enderror
 
-        {{-- STICKY ACTION BAR --}}
-        <div class="sticky bottom-0 z-10 mt-8 border-t border-slate-200 bg-white/95 px-0 py-4 backdrop-blur">
-            <div class="flex flex-wrap items-center justify-end gap-3">
-                <a href="{{ route('admin.akademik.kalender.index') }}"
-                   class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
-                    Batal
-                </a>
-                <button type="button" onclick="alert('Fitur simpan draft masih dalam pengembangan.')"
-                        class="rounded-lg border border-emerald-300 bg-emerald-50 px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition">
-                    Simpan Draft
-                </button>
-                <button type="button" onclick="alert('Fitur simpan masih dalam pengembangan.')"
-                        class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition">
-                    Simpan Kegiatan
-                </button>
+                @include('admin.academic.calendar._form')
+
+                {{-- STICKY ACTION BAR --}}
+                <div class="sticky bottom-0 z-10 mt-8 border-t border-slate-200 bg-white/95 px-0 py-4 backdrop-blur">
+                    <div class="flex flex-wrap items-center justify-end gap-3">
+                        <a href="{{ route('admin.akademik.kalender.index') }}"
+                           class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                            Batal
+                        </a>
+                        <button type="submit" name="status" value="draft"
+                                class="rounded-lg border border-emerald-300 bg-emerald-50 px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition">
+                            Simpan Draft
+                        </button>
+                        <button type="submit" name="status" value="published"
+                                class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition">
+                            Simpan Kegiatan
+                        </button>
+                    </div>
+                </div>
+            </form>
+        @else
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5">
+                <div class="flex items-start gap-3">
+                    <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-amber-800">Belum ada tahun pelajaran aktif</p>
+                        <p class="mt-1 text-sm text-amber-700">Silakan buat tahun pelajaran terlebih dahulu sebelum menambahkan kegiatan kalender.</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        @endif
     </div>
 </x-admin-layout>

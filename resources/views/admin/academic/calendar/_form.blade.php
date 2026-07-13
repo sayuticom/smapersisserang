@@ -1,12 +1,43 @@
 @php
-    $academicYear ??= '2026/2027';
     $categories ??= collect();
     $sources ??= collect();
     $statusDays ??= collect();
     $targets ??= collect();
+    $event ??= null;
+    $isEdit = $event !== null;
+
+    $evtTargets = old('targets', $event?->targets ?? []);
+    if (is_string($evtTargets)) {
+        $evtTargets = json_decode($evtTargets, true) ?? [];
+    }
+    $evtTargets = (array) $evtTargets;
+
+    $evtRespType = old('responsible_type', $event?->teacher_id ? 'teacher' : ($event?->person_in_charge ? 'other' : 'teacher'));
+    $evtTeacherId = old('teacher_id', $event?->teacher_id ?? '');
+    $evtPersonInCharge = old('person_in_charge', $event?->person_in_charge ?? '');
 @endphp
 
 <div x-data="calendarForm()" class="academic-event-form-layout">
+    @if ($errors->any())
+        <div class="academic-event-form-main col-span-full">
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="mt-0.5 h-5 w-5 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-red-800">Form belum dapat disimpan.</p>
+                        <ul class="mt-2 list-inside list-disc text-sm text-red-700 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- LEFT: FORM --}}
     <div class="academic-event-form-main space-y-6">
         {{-- A. Informasi Kegiatan --}}
@@ -20,37 +51,49 @@
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div class="md:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Nama Kegiatan</label>
-                    <input type="text" x-model="nama" placeholder="Masukkan nama kegiatan"
+                    <input type="text" name="title" x-model="nama" placeholder="Masukkan nama kegiatan"
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('title')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                     <p class="mt-1 text-xs text-slate-400">Gunakan nama singkat dan jelas.</p>
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Kategori</label>
-                    <select x-model="kategori"
+                    <select name="category" x-model="kategori"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                         <option value="">Pilih kategori</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat['value'] }}">{{ $cat['label'] }}</option>
                         @endforeach
                     </select>
+                    @error('category')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Sumber</label>
                     <div class="flex flex-wrap gap-4 pt-1">
                         @foreach($sources as $src)
                             <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                <input type="radio" x-model="sumber" value="{{ $src['value'] }}"
+                                <input type="radio" name="source" x-model="sumber" value="{{ $src['value'] }}"
                                        class="rounded-full border-slate-300 text-emerald-600 focus:ring-emerald-500">
                                 {{ $src['label'] }}
                             </label>
                         @endforeach
                     </div>
+                    @error('source')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                     <p class="mt-2 text-xs leading-relaxed text-slate-400">Pilih Sekolah untuk agenda internal, Pemerintah untuk agenda resmi.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Deskripsi</label>
-                    <textarea x-model="deskripsi" rows="3" placeholder="Deskripsi kegiatan"
+                    <textarea name="description" x-model="deskripsi" rows="3" placeholder="Deskripsi kegiatan"
                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                    @error('description')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -66,15 +109,22 @@
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Tanggal Mulai</label>
-                    <input type="date" x-model="startDate"
+                    <input type="date" name="start_date" x-model="startDate"
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('start_date')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Tanggal Selesai</label>
+                    <input type="hidden" name="end_date" :value="endDate">
                     <input type="date" x-model="endDate" :disabled="isSingleDay"
                            :min="startDate"
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
                            :class="isSingleDay ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''">
+                    @error('end_date')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div class="flex flex-wrap items-center gap-6">
                     <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
@@ -83,6 +133,7 @@
                         Kegiatan satu hari
                     </label>
                     <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input type="hidden" name="is_all_day" :value="isAllDay ? '1' : '0'">
                         <input type="checkbox" x-model="isAllDay"
                                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                         Sepanjang hari
@@ -92,15 +143,21 @@
                 <template x-if="!isAllDay">
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Mulai</label>
-                        <input type="time" x-model="jamMulai"
+                        <input type="time" name="start_time" x-model="jamMulai"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        @error('start_time')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </template>
                 <template x-if="!isAllDay">
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-slate-700">Jam Selesai</label>
-                        <input type="time" x-model="jamSelesai"
+                        <input type="time" name="end_time" x-model="jamSelesai"
                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        @error('end_time')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </template>
             </div>
@@ -118,17 +175,21 @@
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Status Hari</label>
-                    <select x-model="statusDay" @change="onStatusChange"
+                    <select name="day_status" x-model="statusDay" @change="onStatusChange"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                         <option value="">Pilih status</option>
                         @foreach($statusDays as $sd)
                             <option value="{{ $sd['value'] }}">{{ $sd['label'] }}</option>
                         @endforeach
                     </select>
+                    @error('day_status')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div class="flex flex-col gap-3 pt-1">
                     <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
                            :class="statusDay && statusDay !== 'kegiatan-khusus' ? 'opacity-60' : ''">
+                        <input type="hidden" name="is_holiday" :value="isHoliday ? '1' : '0'">
                         <input type="checkbox" x-model="isHoliday"
                                :disabled="statusDay && statusDay !== 'kegiatan-khusus'"
                                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -137,6 +198,7 @@
                     </label>
                     <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
                            :class="statusDay && statusDay !== 'kegiatan-khusus' ? 'opacity-60' : ''">
+                        <input type="hidden" name="is_effective_day" :value="isEffective ? '1' : '0'">
                         <input type="checkbox" x-model="isEffective"
                                :disabled="statusDay && statusDay !== 'kegiatan-khusus'"
                                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -160,14 +222,15 @@
                     'semua' => 'semua',
                     'guru' => 'guru',
                     'siswa' => 'siswa',
-                    'orang-tua' => 'orangTua',
+                    'orang_tua' => 'orangTua',
                     'asrama' => 'asrama',
                     'publik' => 'publik',
                 ];
             @endphp
             <div class="flex flex-wrap gap-4">
                 <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                    <input type="checkbox" x-model="targets.semua" @change="onSelectAll"
+                    <input type="checkbox" name="targets[]" value="semua"
+                           x-model="targets.semua" @change="onSelectAll"
                            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                     Semua
                 </label>
@@ -175,7 +238,7 @@
                     @if($t['value'] !== 'semua')
                         <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer"
                                :class="targets.semua ? 'opacity-60' : ''">
-                            <input type="checkbox"
+                            <input type="checkbox" name="targets[]" value="{{ $t['value'] }}"
                                    x-model="targets.{{ $alpineTargetKey[$t['value']] ?? $t['value'] }}"
                                    :disabled="targets.semua"
                                    class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -185,6 +248,12 @@
                     @endif
                 @endforeach
             </div>
+            @error('targets')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+            @error('targets.*')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
         {{-- E. Informasi Tambahan --}}
@@ -198,18 +267,64 @@
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Lokasi</label>
-                    <input type="text" x-model="lokasi" placeholder="Lokasi kegiatan"
+                    <input type="text" name="location" x-model="lokasi" placeholder="Lokasi kegiatan"
                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('location')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Penanggung Jawab</label>
-                    <input type="text" x-model="penanggungJawab" placeholder="Nama penanggung jawab"
-                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <div class="flex flex-wrap gap-4 mb-3">
+                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                            <input type="radio" name="responsible_type" value="teacher"
+                                   x-model="responsibleType"
+                                   class="border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                            Guru
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                            <input type="radio" name="responsible_type" value="other"
+                                   x-model="responsibleType"
+                                   class="border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                            Lainnya
+                        </label>
+                    </div>
+                    @error('responsible_type')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('teacher_id')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('person_in_charge')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                    <template x-if="responsibleType === 'teacher'">
+                        <div>
+                            <select name="teacher_id" x-model="teacherId"
+                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                                <option value="">-- Pilih Guru --</option>
+                                @foreach($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}">
+                                        {{ $teacher->name }}{{ $teacher->position ? ' - ' . $teacher->position : '' }}{{ !$teacher->is_active ? ' (Tidak Aktif)' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </template>
+                    <template x-if="responsibleType === 'other'">
+                        <div>
+                            <input type="text" name="person_in_charge" x-model="penanggungJawab" placeholder="Nama penanggung jawab"
+                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+                    </template>
                 </div>
                 <div class="md:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-slate-700">Catatan Internal</label>
-                    <textarea x-model="catatanInternal" rows="3" placeholder="Catatan internal (tidak tampil di publik)"
+                    <textarea name="internal_notes" x-model="catatanInternal" rows="3" placeholder="Catatan internal (tidak tampil di publik)"
                               class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                    @error('internal_notes')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                     <p class="mt-1 text-xs text-slate-400">Hanya terlihat oleh admin dan tidak tampil di kalender publik.</p>
                 </div>
             </div>
@@ -276,6 +391,11 @@
                     <p class="text-xs text-slate-400">Sasaran</p>
                     <p class="font-medium text-slate-900" x-text="getSelectedTargets() || '—'"></p>
                 </div>
+                <div class="border-t border-slate-100"></div>
+                <div>
+                    <p class="text-xs text-slate-400">Penanggung Jawab</p>
+                    <p class="font-medium text-slate-900" x-text="getPersonInCharge() || '—'"></p>
+                </div>
             </div>
         </div>
     </div>
@@ -284,31 +404,33 @@
 <script>
 function calendarForm() {
     return {
-        // Form data
-        nama: '',
-        kategori: '',
-        sumber: 'sekolah',
-        deskripsi: '',
-        startDate: '',
-        endDate: '',
-        isSingleDay: false,
-        isAllDay: false,
-        jamMulai: '',
-        jamSelesai: '',
-        statusDay: '',
-        isHoliday: false,
-        isEffective: false,
+        // Form data — initialized from old() for validation persistence, falls back to event data
+        nama: @js(old('title', $event?->title ?? '')),
+        kategori: @js(old('category', $event?->category ?? '')),
+        sumber: @js(old('source', $event?->source ?? 'sekolah')),
+        deskripsi: @js(old('description', $event?->description ?? '')),
+        startDate: @js(old('start_date', $event?->start_date?->format('Y-m-d') ?? '')),
+        endDate: @js(old('end_date', $event?->end_date?->format('Y-m-d') ?? '')),
+        isSingleDay: @js($event && $event->start_date?->toDateString() === $event->end_date?->toDateString()),
+        isAllDay: @js((bool) old('is_all_day', $event?->is_all_day ?? false)),
+        jamMulai: @js(old('start_time', $event?->start_time ?? '')),
+        jamSelesai: @js(old('end_time', $event?->end_time ?? '')),
+        statusDay: @js(old('day_status', $event?->day_status ?? '')),
+        isHoliday: @js((bool) old('is_holiday', $event?->is_holiday ?? false)),
+        isEffective: @js((bool) old('is_effective_day', $event?->is_effective_day ?? false)),
         targets: {
-            semua: false,
-            guru: false,
-            siswa: false,
-            orangTua: false,
-            asrama: false,
-            publik: false
+            semua: @js(in_array('semua', $evtTargets)),
+            guru: @js(in_array('guru', $evtTargets)),
+            siswa: @js(in_array('siswa', $evtTargets)),
+            orangTua: @js(in_array('orang_tua', $evtTargets)),
+            asrama: @js(in_array('asrama', $evtTargets)),
+            publik: @js(in_array('publik', $evtTargets)),
         },
-        lokasi: '',
-        penanggungJawab: '',
-        catatanInternal: '',
+        lokasi: @js(old('location', $event?->location ?? '')),
+        responsibleType: @js($evtRespType),
+        teacherId: @js($evtTeacherId),
+        penanggungJawab: @js($evtPersonInCharge),
+        catatanInternal: @js(old('internal_notes', $event?->internal_notes ?? '')),
 
         // Category labels from server
         categoryLabels: {
@@ -332,6 +454,13 @@ function calendarForm() {
                 if (val) {
                     this.jamMulai = '';
                     this.jamSelesai = '';
+                }
+            });
+            this.$watch('responsibleType', val => {
+                if (val === 'teacher') {
+                    this.penanggungJawab = '';
+                } else if (val === 'other') {
+                    this.teacherId = '';
                 }
             });
         },
@@ -391,6 +520,20 @@ function calendarForm() {
             if (labels.length === 0) return '';
             if (labels.includes('Semua')) return 'Semua';
             return labels.join(', ');
+        },
+
+        getPersonInCharge() {
+            if (this.responsibleType === 'teacher' && this.teacherId) {
+                const select = document.querySelector('select[name="teacher_id"]');
+                if (select) {
+                    const opt = select.querySelector(`option[value="${this.teacherId}"]`);
+                    return opt ? opt.text : '—';
+                }
+            }
+            if (this.responsibleType === 'other' && this.penanggungJawab) {
+                return this.penanggungJawab;
+            }
+            return '—';
         },
 
         formatDate(dateStr) {

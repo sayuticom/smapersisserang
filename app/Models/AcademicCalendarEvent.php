@@ -26,6 +26,7 @@ class AcademicCalendarEvent extends Model
         'is_holiday',
         'is_effective_day',
         'targets',
+        'teacher_id',
         'location',
         'person_in_charge',
         'internal_notes',
@@ -59,6 +60,11 @@ class AcademicCalendarEvent extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class)->withDefault();
     }
 
     public function isSingleDay(): bool

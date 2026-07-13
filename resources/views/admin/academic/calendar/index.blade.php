@@ -1,20 +1,29 @@
 <x-admin-layout>
     <div class="mx-auto max-w-7xl space-y-6" x-data="{
         tab: 'tahunan',
-        selectedYear: '{{ $academicYear }}'
+        selectedYear: {{ $academicYearId ?? 'null' }}
     }">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Kalender Pendidikan</h2>
-                <p class="mt-1 text-sm text-gray-500">Tahun Pelajaran {{ $academicYear }}</p>
+                <p class="mt-1 text-sm text-gray-500">{{ $academicYear?->name ?? '-' }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-                <select x-model="selectedYear"
-                        class="rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    @foreach($academicYears as $year)
-                        <option value="{{ $year['value'] }}">{{ $year['label'] }}</option>
-                    @endforeach
-                </select>
+                <form method="GET" action="{{ url()->current() }}">
+                    <select name="academic_year_id" onchange="this.form.submit()"
+                            class="rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        @foreach($academicYears as $year)
+                            <option value="{{ $year->id }}" {{ ($academicYearId ?? null) == $year->id ? 'selected' : '' }}>{{ $year->name }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <a href="{{ route('admin.akademik.tahun-pelajaran.index') }}"
+                   class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6h12M6 12h12M6 18h12"/>
+                    </svg>
+                    Kelola Tahun Pelajaran
+                </a>
                 <button type="button" disabled
                         class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-500 opacity-60 cursor-not-allowed">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,8 +97,12 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <p class="text-xs text-amber-600 font-medium leading-tight mb-0.5">Kegiatan Terdekat</p>
-                        <p class="text-sm font-semibold text-gray-900 truncate leading-tight">{{ $summary['kegiatan_terdekat']['title'] }}</p>
-                        <p class="text-xs text-slate-500 leading-tight mt-0.5">{{ $summary['kegiatan_terdekat']['date'] }}</p>
+                        @if($summary['kegiatan_terdekat'])
+                            <p class="text-sm font-semibold text-gray-900 truncate leading-tight">{{ $summary['kegiatan_terdekat']['title'] }}</p>
+                            <p class="text-xs text-slate-500 leading-tight mt-0.5">{{ $summary['kegiatan_terdekat']['date'] }}</p>
+                        @else
+                            <p class="text-sm text-slate-400 leading-tight">Tidak ada</p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -252,20 +265,6 @@
 
         <div x-show="tab === 'tahunan'" x-cloak>
             @php
-                $months = [
-                    ['num' => 7, 'year' => 2026, 'name' => 'Juli'],
-                    ['num' => 8, 'year' => 2026, 'name' => 'Agustus'],
-                    ['num' => 9, 'year' => 2026, 'name' => 'September'],
-                    ['num' => 10, 'year' => 2026, 'name' => 'Oktober'],
-                    ['num' => 11, 'year' => 2026, 'name' => 'November'],
-                    ['num' => 12, 'year' => 2026, 'name' => 'Desember'],
-                    ['num' => 1, 'year' => 2027, 'name' => 'Januari'],
-                    ['num' => 2, 'year' => 2027, 'name' => 'Februari'],
-                    ['num' => 3, 'year' => 2027, 'name' => 'Maret'],
-                    ['num' => 4, 'year' => 2027, 'name' => 'April'],
-                    ['num' => 5, 'year' => 2027, 'name' => 'Mei'],
-                    ['num' => 6, 'year' => 2027, 'name' => 'Juni'],
-                ];
                 $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
             @endphp
             <div class="academic-calendar-layout">
@@ -360,7 +359,7 @@
                             <div class="border-t border-slate-100"></div>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm text-slate-600">Total Kegiatan</span>
-                                <span class="text-sm font-semibold text-slate-900">{{ $events->count() }} kegiatan</span>
+                                <span class="text-sm font-semibold text-slate-900">{{ $rawEvents->count() }} kegiatan</span>
                             </div>
                         </div>
                     </div>
@@ -375,7 +374,7 @@
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-medium text-slate-900 leading-tight">{{ $ue['title'] }}</p>
-                                        <p class="text-xs text-slate-500 leading-tight mt-px">{{ \Carbon\Carbon::parse($ue['date'])->translatedFormat('d F Y') }}</p>
+                                        <p class="text-xs text-slate-500 leading-tight mt-px">{{ $ue['date'] }}</p>
                                     </div>
                                 </div>
                                 @if(!$loop->last)
@@ -413,34 +412,47 @@
                                 <th class="px-5 py-3 font-semibold text-slate-700">Tanggal</th>
                                 <th class="px-5 py-3 font-semibold text-slate-700">Kegiatan</th>
                                 <th class="px-5 py-3 font-semibold text-slate-700">Kategori</th>
+                                <th class="px-5 py-3 font-semibold text-slate-700">Penanggung Jawab</th>
                                 <th class="px-5 py-3 font-semibold text-slate-700">Sumber</th>
+                                <th class="px-5 py-3 font-semibold text-slate-700">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @foreach($rawEvents as $evt)
+                            @forelse($rawEvents as $evt)
+                                @php
+                                    $pic = $evt['person_in_charge'] ?? '';
+                                    if (!$pic && ($evt['teacher'] ?? null)) {
+                                        $pic = $evt['teacher']['name'] ?? $evt['teacher']['full_name'] ?? '';
+                                    }
+                                    $startDate = \Carbon\Carbon::parse($evt['start_date']);
+                                    $endDate = \Carbon\Carbon::parse($evt['end_date']);
+                                @endphp
                                 <tr class="hover:bg-slate-50">
                                     <td class="whitespace-nowrap px-5 py-3 text-slate-600">
-                                        {{ \Carbon\Carbon::parse($evt['start_date'])->translatedFormat('d M') }}
+                                        {{ $startDate->format('d') }} {{ $indonesianMonths[$startDate->month] }}
                                         @if($evt['start_date'] !== $evt['end_date'])
-                                            – {{ \Carbon\Carbon::parse($evt['end_date'])->translatedFormat('d M Y') }}
+                                            – {{ $endDate->format('d') }} {{ $indonesianMonths[$endDate->month] }} {{ $endDate->format('Y') }}
                                         @else
-                                            {{ \Carbon\Carbon::parse($evt['start_date'])->translatedFormat('Y') }}
+                                            {{ $startDate->format('Y') }}
                                         @endif
                                     </td>
                                     <td class="px-5 py-3 font-medium text-slate-900">
                                         <div class="flex items-center gap-2">
-                                            <span class="inline-block h-2 w-2 rounded-full {{ $categoryMap[$evt['category']]['dot_class'] }}"></span>
+                                            <span class="inline-block h-2 w-2 rounded-full {{ ($categoryMap[$evt['category']] ?? $categoryMap['lainnya'])['dot_class'] }}"></span>
                                             <span>{{ $evt['title'] }}</span>
                                         </div>
                                     </td>
                                     <td class="px-5 py-3">
-                                        <span class="inline-flex rounded-full {{ $categoryMap[$evt['category']]['bg_class'] }} {{ $categoryMap[$evt['category']]['text_class'] }} px-2.5 py-0.5 text-xs font-medium">
-                                            {{ $categoryMap[$evt['category']]['label'] }}
+                                        <span class="inline-flex rounded-full {{ ($categoryMap[$evt['category']] ?? $categoryMap['lainnya'])['bg_class'] }} {{ ($categoryMap[$evt['category']] ?? $categoryMap['lainnya'])['text_class'] }} px-2.5 py-0.5 text-xs font-medium">
+                                            {{ ($categoryMap[$evt['category']] ?? $categoryMap['lainnya'])['label'] }}
                                         </span>
+                                    </td>
+                                    <td class="px-5 py-3 text-sm text-slate-600">
+                                        {{ $pic ?: '-' }}
                                     </td>
                                     <td class="px-5 py-3">
                                         <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
-                                            @if($evt['source'] === 'pemerintah')
+                                            @if(($evt['source'] ?? 'sekolah') === 'pemerintah')
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M3 7l9-4 9 4M3 10v11m18-11v11"/>
                                                 </svg>
@@ -453,13 +465,42 @@
                                             @endif
                                         </span>
                                     </td>
+                                    <td class="px-5 py-3">
+                                        <div class="flex items-center gap-1.5">
+                                            <a href="{{ route('admin.akademik.kalender.edit', $evt['id']) }}"
+                                               class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                                Edit
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.akademik.kalender.destroy', $evt['id']) }}" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        class="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                                                        onclick="return confirm('Hapus kegiatan kalender ini?')">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-5 py-12 text-center text-sm text-slate-400">
+                                        Belum ada kegiatan untuk tahun ajaran ini.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
-                    Menampilkan {{ count($rawEvents) }} kegiatan
+                    Menampilkan {{ $rawEvents->count() }} kegiatan
                 </div>
             </div>
         </div>
