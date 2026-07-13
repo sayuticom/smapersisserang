@@ -33,7 +33,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['academic_year_id', 'status', 'start_date']);
+            $table->index(['academic_year_id', 'status', 'start_date'], 'ace_year_status_start_idx');
             $table->index('category');
             $table->index('day_status');
         });
