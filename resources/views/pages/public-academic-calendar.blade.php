@@ -237,7 +237,7 @@
                         {{ $academicYear->name }}
                     </p>
                 @endif
-                <p class="mt-2 sm:mt-3 text-sm sm:text-base leading-6 sm:leading-7 text-emerald-50/90 line-clamp-3 sm:line-clamp-none">
+                <p style="color:#F8FAFC;" class="mt-2 sm:mt-3 text-sm sm:text-base leading-6 sm:leading-7 line-clamp-3 sm:line-clamp-none">
                     {{ $pageDescription }}
                 </p>
             </div>
