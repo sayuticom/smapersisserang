@@ -221,6 +221,70 @@
     </div>
 </section>
 
+@if($agendaEvents->isNotEmpty())
+<section class="bg-white py-16 lg:py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between">
+            <div class="max-w-3xl">
+                <p class="text-sm font-bold uppercase tracking-[0.24em] text-[#D4A017]">Agenda Pendidikan</p>
+                <h2 class="mt-3 font-serif text-3xl font-bold leading-tight text-[#052E1F] sm:text-4xl">
+                    Kegiatan Terdekat
+                </h2>
+                <p class="mt-4 text-lg leading-8 text-emerald-900/70">
+                    Agenda dan kegiatan sekolah yang akan datang.
+                </p>
+            </div>
+            <a href="{{ route('public.academic-calendar') }}"
+               class="hidden shrink-0 items-center gap-1.5 rounded-xl bg-[#0F6B3A] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 transition hover:bg-[#0A4F2B] sm:inline-flex">
+                Lihat Semua
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </a>
+        </div>
+
+        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach($agendaEvents as $event)
+                <a href="{{ route('public.academic-calendar', ['month' => \Carbon\Carbon::parse($event['start_date'])->format('Y-m')]) }}"
+                   class="group relative flex flex-col rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-md shadow-emerald-950/5 transition hover:-translate-y-1 hover:border-amber-200 hover:shadow-lg hover:shadow-emerald-950/10">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block h-2.5 w-2.5 rounded-full {{ $event['dot_class'] }}"></span>
+                        <span class="text-xs font-semibold uppercase tracking-wider {{ $event['text_class'] }}">{{ $event['category_label'] }}</span>
+                    </div>
+                    <h3 class="mt-4 font-bold text-[#052E1F] group-hover:text-[#0F6B3A]">{{ $event['title'] }}</h3>
+                    <div class="mt-auto pt-4">
+                        <div class="flex items-center gap-1.5 text-sm text-gray-500">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span>{{ $event['date_formatted'] }}</span>
+                        </div>
+                        @if($event['start_time'])
+                            <div class="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>{{ $event['start_time'] }}@if($event['end_time'])–{{ $event['end_time'] }}@endif</span>
+                            </div>
+                        @endif
+                    </div>
+                </a>
+            @endforeach
+        </div>
+
+        <div class="mt-8 text-center sm:hidden">
+            <a href="{{ route('public.academic-calendar') }}"
+               class="inline-flex items-center gap-1.5 rounded-xl bg-[#0F6B3A] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 transition hover:bg-[#0A4F2B]">
+                Lihat Semua
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+@endif
+
 <section class="bg-white py-16 lg:py-20">
     <div class="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>

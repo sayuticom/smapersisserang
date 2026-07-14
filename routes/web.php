@@ -30,6 +30,7 @@ use App\Http\Controllers\WaqfController;
 use App\Http\Controllers\Admin\WaqfSettingController;
 use App\Http\Controllers\Admin\WaqfTransactionController;
 use App\Models\AdmissionYear;
+use App\Models\AcademicCalendarEvent;
 use App\Models\NavigationMenu;
 use App\Models\SchoolImage;
 use App\Models\SchoolSetting;
@@ -71,6 +72,83 @@ Route::get('/', function () {
             ->whereHas('categories', fn($q) => $q->where('slug', 'fasilitas'))
             ->orderBy('sort_order')
             ->get();
+        $agendaEvents = collect();
+        try {
+            $indonesianMonths = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+            ];
+
+            $calendarCategoryMap = collect([
+                'awal-masuk' => ['label' => 'Awal Masuk Sekolah', 'dot_class' => 'bg-green-500', 'bg_class' => 'bg-green-100', 'text_class' => 'text-green-800'],
+                'libur-nasional' => ['label' => 'Libur Nasional / Cuti Bersama', 'dot_class' => 'bg-red-500', 'bg_class' => 'bg-red-100', 'text_class' => 'text-red-800'],
+                'penyerahan-rapor' => ['label' => 'Penyerahan Rapor', 'dot_class' => 'bg-orange-500', 'bg_class' => 'bg-orange-100', 'text_class' => 'text-orange-800'],
+                'libur-ramadan' => ['label' => 'Libur Ramadan / Idulfitri', 'dot_class' => 'bg-amber-500', 'bg_class' => 'bg-amber-100', 'text_class' => 'text-amber-800'],
+                'asesmen-ujian' => ['label' => 'Asesmen / Ujian', 'dot_class' => 'bg-blue-500', 'bg_class' => 'bg-blue-100', 'text_class' => 'text-blue-800'],
+                'libur-semester' => ['label' => 'Libur Semester', 'dot_class' => 'bg-yellow-500', 'bg_class' => 'bg-yellow-100', 'text_class' => 'text-yellow-800'],
+                'tka-asesmen-nasional' => ['label' => 'TKA / Asesmen Nasional', 'dot_class' => 'bg-purple-500', 'bg_class' => 'bg-purple-100', 'text_class' => 'text-purple-800'],
+                'kegiatan-sekolah' => ['label' => 'Kegiatan Sekolah', 'dot_class' => 'bg-violet-500', 'bg_class' => 'bg-violet-100', 'text_class' => 'text-violet-800'],
+                'kegiatan-pesantren' => ['label' => 'Kegiatan Pesantren', 'dot_class' => 'bg-teal-500', 'bg_class' => 'bg-teal-100', 'text_class' => 'text-teal-800'],
+                'lainnya' => ['label' => 'Lainnya', 'dot_class' => 'bg-slate-500', 'bg_class' => 'bg-slate-100', 'text_class' => 'text-slate-800'],
+            ]);
+
+            $formatDateRange = function ($startDate, $endDate, $months) {
+                $start = \Carbon\Carbon::parse($startDate);
+                $end = \Carbon\Carbon::parse($endDate);
+
+                if ($start->toDateString() === $end->toDateString()) {
+                    return $start->format('j') . ' ' . $months[$start->month] . ' ' . $start->format('Y');
+                }
+
+                if ($start->month === $end->month && $start->year === $end->year) {
+                    return $start->format('j') . '–' . $end->format('j') . ' ' . $months[$start->month] . ' ' . $start->format('Y');
+                }
+
+                if ($start->year === $end->year) {
+                    return $start->format('j') . ' ' . $months[$start->month] . '–' . $end->format('j') . ' ' . $months[$end->month] . ' ' . $start->format('Y');
+                }
+
+                return $start->format('j') . ' ' . $months[$start->month] . ' ' . $start->format('Y') . '–' . $end->format('j') . ' ' . $months[$end->month] . ' ' . $end->format('Y');
+            };
+
+            $rawEvents = AcademicCalendarEvent::where('status', 'published')
+                ->where(function ($q) {
+                    $q->whereJsonContains('targets', 'semua')
+                      ->orWhereJsonContains('targets', 'publik');
+                })
+                ->where('end_date', '>=', now()->toDateString())
+                ->whereNull('deleted_at')
+                ->orderByRaw("CASE WHEN ? BETWEEN start_date AND end_date THEN 0 ELSE 1 END", [now()->toDateString()])
+                ->orderBy('start_date')
+                ->orderBy('start_time')
+                ->orderBy('title')
+                ->limit(4)
+                ->get();
+
+            $agendaEvents = $rawEvents->map(function ($evt) use ($calendarCategoryMap, $formatDateRange, $indonesianMonths) {
+                $cat = $calendarCategoryMap->get($evt->category, $calendarCategoryMap->get('lainnya'));
+
+                return [
+                    'id' => $evt->id,
+                    'title' => $evt->title,
+                    'category' => $evt->category,
+                    'category_label' => $cat['label'],
+                    'dot_class' => $cat['dot_class'],
+                    'bg_class' => $cat['bg_class'],
+                    'text_class' => $cat['text_class'],
+                    'start_date' => $evt->start_date->toDateString(),
+                    'end_date' => $evt->end_date->toDateString(),
+                    'date_formatted' => $formatDateRange($evt->start_date->toDateString(), $evt->end_date->toDateString(), $indonesianMonths),
+                    'start_time' => $evt->start_time ? \Carbon\Carbon::parse($evt->start_time)->format('H.i') : null,
+                    'end_time' => $evt->end_time ? \Carbon\Carbon::parse($evt->end_time)->format('H.i') : null,
+                    'description' => $evt->description,
+                    'location' => $evt->location,
+                ];
+            });
+        } catch (\Exception $e) {
+            $agendaEvents = collect();
+        }
     } catch (\Exception $e) {
         $schoolSetting = null;
         $currentAdmissionYear = null;
@@ -79,10 +157,11 @@ Route::get('/', function () {
         $homePage = null;
         $schoolValues = collect();
         $buildingImages = collect();
+        $agendaEvents = collect();
     }
 
     return view('pages.welcome', compact(
-        'schoolSetting', 'heroImages', 'currentAdmissionYear', 'currentAdmissionProgram', 'admissionStats', 'homePage', 'schoolValues', 'buildingImages'
+        'schoolSetting', 'heroImages', 'currentAdmissionYear', 'currentAdmissionProgram', 'admissionStats', 'homePage', 'schoolValues', 'buildingImages', 'agendaEvents'
     ));
 })->middleware('track.visitor');
 
@@ -178,6 +257,7 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/tokoh-pembina', [PublicPageController::class, 'figures'])->name('public.figures');
     Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
     Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
+    Route::get('/kalender-pendidikan', [PublicPageController::class, 'academicCalendar'])->name('public.academic-calendar');
     Route::get('/struktur-organisasi', function () {
         return redirect()->route('public.teachers', ['tab' => 'struktur'], 301);
     })->name('public.struktur-organisasi');

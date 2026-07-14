@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicCalendarEvent;
+use App\Models\AcademicYear;
 use App\Models\DonationTransaction;
 use App\Models\Faq;
 use App\Models\DonationEducationSetting;
@@ -898,6 +900,379 @@ class PublicPageController extends Controller
         }
 
         return view('pages.teachers', compact('schoolSetting', 'websitePage', 'headmaster', 'groupedByCategory', 'orphanTeachers', 'heroImages', 'tab', 'organisasi', 'strukturWebsitePage'));
+    }
+
+    public function academicCalendar(Request $request)
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        $indonesianMonths = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
+        $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        $categoryMap = $this->getPublicCalendarCategoryMap();
+
+        $academicYear = AcademicYear::current()->first();
+
+        $selectedMonthDate = null;
+        $previousMonthDate = null;
+        $nextMonthDate = null;
+        $canGoPrevious = false;
+        $canGoNext = false;
+        $showTodayButton = false;
+        $calendarDays = [];
+        $dayEvents = collect();
+        $categories = collect();
+        $monthlySummary = ['total_events' => 0, 'hari_libur' => 0, 'hari_asesmen' => 0, 'hari_berkegiatan' => 0];
+        $monthlyRawEvents = collect();
+        $upcomingEvents = collect();
+        $selectedDayDate = null;
+        $mobileEventData = [];
+
+        if ($academicYear) {
+            $yearStart = $academicYear->start_date;
+            $yearEnd = $academicYear->end_date;
+            $today = now();
+
+            $defaultMonth = $today->copy()->startOfMonth();
+            if ($defaultMonth->lt($yearStart->copy()->startOfMonth())) {
+                $defaultMonth = $yearStart->copy()->startOfMonth();
+            } elseif ($defaultMonth->gt($yearEnd->copy()->startOfMonth())) {
+                $defaultMonth = $yearEnd->copy()->startOfMonth();
+            }
+
+            $selectedMonth = $defaultMonth;
+            $monthParam = $request->query('month');
+
+            if ($monthParam && preg_match('/^(\d{4})-(\d{2})$/', $monthParam, $matches)) {
+                $y = (int) $matches[1];
+                $m = (int) $matches[2];
+                $parsed = \Carbon\Carbon::createFromDate($y, $m, 1)->startOfMonth();
+                if ($parsed->between($yearStart->copy()->startOfMonth(), $yearEnd->copy()->endOfMonth(), true)) {
+                    $selectedMonth = $parsed;
+                }
+            }
+
+            $selectedMonthDate = $selectedMonth;
+            $monthStart = $selectedMonth->copy()->startOfMonth();
+            $monthEnd = $selectedMonth->copy()->endOfMonth();
+
+            $previousMonthDate = $selectedMonth->copy()->subMonth()->startOfMonth();
+            $nextMonthDate = $selectedMonth->copy()->addMonth()->startOfMonth();
+            $canGoPrevious = $previousMonthDate->gte($yearStart->copy()->startOfMonth());
+            $canGoNext = $nextMonthDate->lte($yearEnd->copy()->endOfMonth());
+            $showTodayButton = $today->between($yearStart, $yearEnd);
+
+            $dbEvents = AcademicCalendarEvent::with('teacher')
+                ->where('academic_year_id', $academicYear->id)
+                ->where('status', 'published')
+                ->where(function ($q) {
+                    $q->whereJsonContains('targets', 'publik')
+                      ->orWhereJsonContains('targets', 'semua');
+                })
+                ->where('start_date', '<=', $monthEnd)
+                ->where('end_date', '>=', $monthStart)
+                ->orderBy('start_date')
+                ->orderBy('start_time')
+                ->get();
+
+            $mappedEvents = $dbEvents->map(function ($evt) use ($categoryMap) {
+                $cat = $categoryMap[$evt->category] ?? $categoryMap['lainnya'];
+                return [
+                    'id' => $evt->id,
+                    'title' => $evt->title,
+                    'category' => $evt->category,
+                    'category_label' => $cat['label'],
+                    'dot_class' => $cat['dot_class'],
+                    'bg_class' => $cat['bg_class'],
+                    'text_class' => $cat['text_class'],
+                    'cell_bg' => $cat['cell_bg'],
+                    'start_date' => $evt->start_date->toDateString(),
+                    'end_date' => $evt->end_date->toDateString(),
+                    'is_holiday' => $evt->is_holiday,
+                    'description' => $evt->description,
+                    'location' => $evt->location,
+                    'start_time' => $evt->start_time ? \Carbon\Carbon::parse($evt->start_time)->format('H.i') : null,
+                    'end_time' => $evt->end_time ? \Carbon\Carbon::parse($evt->end_time)->format('H.i') : null,
+                ];
+            });
+
+            $seenEventIds = collect();
+            $uniqueHolidayDates = collect();
+            $uniqueAssessmentDates = collect();
+            $uniqueActivityDates = collect();
+
+            foreach ($mappedEvents as $evt) {
+                $start = \Carbon\Carbon::parse($evt['start_date']);
+                $end = \Carbon\Carbon::parse($evt['end_date']);
+
+                if (!$seenEventIds->contains($evt['id'])) {
+                    $seenEventIds->push($evt['id']);
+                    $dateFormatted = $this->formatCalendarDateRange($evt['start_date'], $evt['end_date'], $indonesianMonths);
+                    $monthlyRawEvents->push($evt + ['date_formatted' => $dateFormatted]);
+                }
+
+                for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                    $dateStr = $d->format('Y-m-d');
+
+                    if ($d->month !== $selectedMonth->month || $d->year !== $selectedMonth->year) {
+                        continue;
+                    }
+
+                    if (!$dayEvents->has($dateStr)) {
+                        $dayEvents->put($dateStr, collect());
+                    }
+                    $dayEvents->get($dateStr)->push($evt);
+
+                    if ($evt['is_holiday']) {
+                        $uniqueHolidayDates->push($dateStr);
+                    }
+                    if (in_array($evt['category'], ['asesmen-ujian', 'tka-asesmen-nasional'])) {
+                        $uniqueAssessmentDates->push($dateStr);
+                    }
+                    $uniqueActivityDates->push($dateStr);
+                }
+            }
+
+            $daysInMonth = $monthStart->daysInMonth;
+            $firstDayOfWeek = $monthStart->dayOfWeek;
+
+            if ($firstDayOfWeek > 0) {
+                $prevMonth = $selectedMonth->copy()->subMonth();
+                $daysInPrevMonth = $prevMonth->daysInMonth;
+                for ($i = $firstDayOfWeek - 1; $i >= 0; $i--) {
+                    $dayNum = $daysInPrevMonth - $i;
+                    $dateStr = sprintf('%04d-%02d-%02d', $prevMonth->year, $prevMonth->month, $dayNum);
+                    $calendarDays[] = [
+                        'day' => $dayNum,
+                        'date' => $dateStr,
+                        'isCurrentMonth' => false,
+                        'isToday' => false,
+                        'isSunday' => false,
+                    ];
+                }
+            }
+
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dateObj = \Carbon\Carbon::createFromDate($selectedMonth->year, $selectedMonth->month, $d);
+                $dateStr = $dateObj->format('Y-m-d');
+                $calendarDays[] = [
+                    'day' => $d,
+                    'date' => $dateStr,
+                    'isCurrentMonth' => true,
+                    'isToday' => $dateObj->isToday(),
+                    'isSunday' => $dateObj->dayOfWeek === 0,
+                ];
+            }
+
+            $totalCells = count($calendarDays);
+            $remaining = 7 - ($totalCells % 7);
+            if ($remaining < 7) {
+                $nextMonth = $selectedMonth->copy()->addMonth();
+                for ($d = 1; $d <= $remaining; $d++) {
+                    $dateStr = sprintf('%04d-%02d-%02d', $nextMonth->year, $nextMonth->month, $d);
+                    $calendarDays[] = [
+                        'day' => $d,
+                        'date' => $dateStr,
+                        'isCurrentMonth' => false,
+                        'isToday' => false,
+                        'isSunday' => false,
+                    ];
+                }
+            }
+
+            $categories = $categoryMap->map(function ($c, $key) use ($dayEvents) {
+                $uniqueDates = collect();
+                foreach ($dayEvents as $dateStr => $evts) {
+                    $hasCat = $evts->first(fn($e) => $e['category'] === $key);
+                    if ($hasCat) {
+                        $uniqueDates->push($dateStr);
+                    }
+                }
+                return [
+                    'key' => $key,
+                    'label' => $c['label'],
+                    'dot_class' => $c['dot_class'],
+                    'bg_class' => $c['bg_class'],
+                    'text_class' => $c['text_class'],
+                    'cell_bg' => $c['cell_bg'],
+                    'count' => $uniqueDates->unique()->count(),
+                ];
+            })->values();
+
+            $monthlySummary = [
+                'total_events' => $monthlyRawEvents->count(),
+                'hari_libur' => $uniqueHolidayDates->unique()->count(),
+                'hari_asesmen' => $uniqueAssessmentDates->unique()->count(),
+                'hari_berkegiatan' => $uniqueActivityDates->unique()->count(),
+            ];
+
+            $todayStr = now()->format('Y-m-d');
+            $upcomingEvents = $monthlyRawEvents
+                ->filter(fn($e) => $e['end_date'] >= $todayStr)
+                ->sort(function ($a, $b) use ($todayStr) {
+                    $aOngoing = ($a['start_date'] <= $todayStr && $a['end_date'] >= $todayStr) ? 0 : 1;
+                    $bOngoing = ($b['start_date'] <= $todayStr && $b['end_date'] >= $todayStr) ? 0 : 1;
+                    if ($aOngoing !== $bOngoing) return $aOngoing - $bOngoing;
+                    if ($a['start_date'] !== $b['start_date']) return $a['start_date'] <=> $b['start_date'];
+                    return ($a['start_time'] ?? '') <=> ($b['start_time'] ?? '');
+                })
+                ->take(4)
+                ->values();
+
+            $todayStr = now()->toDateString();
+            $foundToday = false;
+            foreach ($calendarDays as $d) {
+                if ($d['date'] === $todayStr && $d['isCurrentMonth']) {
+                    $foundToday = true;
+                    break;
+                }
+            }
+            if ($foundToday) {
+                $selectedDayDate = $todayStr;
+            } else {
+                foreach ($calendarDays as $d) {
+                    if ($d['isCurrentMonth'] && $dayEvents->has($d['date'])) {
+                        $selectedDayDate = $d['date'];
+                        break;
+                    }
+                }
+                if (!$selectedDayDate) {
+                    $selectedDayDate = sprintf('%04d-%02d-01', $selectedMonth->year, $selectedMonth->month);
+                }
+            }
+
+            foreach ($dayEvents as $date => $events) {
+                $mobileEventData[$date] = $events->map(function ($e) use ($indonesianMonths) {
+                    return [
+                        'title' => $e['title'],
+                        'category_label' => $e['category_label'],
+                        'dot_class' => $e['dot_class'],
+                        'bg_class' => $e['bg_class'],
+                        'text_class' => $e['text_class'],
+                        'start_date' => $e['start_date'],
+                        'end_date' => $e['end_date'],
+                        'start_time' => $e['start_time'],
+                        'end_time' => $e['end_time'],
+                        'location' => $e['location'],
+                        'description' => $e['description'],
+                        'date_formatted' => $this->formatCalendarDateRange($e['start_date'], $e['end_date'], $indonesianMonths),
+                    ];
+                })->values()->toArray();
+            }
+        }
+
+        return view('pages.public-academic-calendar', compact(
+            'schoolSetting', 'academicYear', 'indonesianMonths', 'dayNames', 'categoryMap',
+            'selectedMonthDate', 'previousMonthDate', 'nextMonthDate',
+            'canGoPrevious', 'canGoNext', 'showTodayButton',
+            'calendarDays', 'dayEvents', 'categories', 'monthlySummary',
+            'monthlyRawEvents', 'upcomingEvents', 'selectedDayDate', 'mobileEventData'
+        ));
+    }
+
+    private function getPublicCalendarCategoryMap(): \Illuminate\Support\Collection
+    {
+        return collect([
+            'awal-masuk' => [
+                'label' => 'Awal Masuk Sekolah',
+                'dot_class' => 'bg-green-500',
+                'bg_class' => 'bg-green-100',
+                'text_class' => 'text-green-800',
+                'cell_bg' => 'bg-green-100',
+            ],
+            'libur-nasional' => [
+                'label' => 'Libur Nasional / Cuti Bersama',
+                'dot_class' => 'bg-red-500',
+                'bg_class' => 'bg-red-100',
+                'text_class' => 'text-red-800',
+                'cell_bg' => 'bg-red-100',
+            ],
+            'penyerahan-rapor' => [
+                'label' => 'Penyerahan Rapor',
+                'dot_class' => 'bg-orange-500',
+                'bg_class' => 'bg-orange-100',
+                'text_class' => 'text-orange-800',
+                'cell_bg' => 'bg-orange-100',
+            ],
+            'libur-ramadan' => [
+                'label' => 'Libur Ramadan / Idulfitri',
+                'dot_class' => 'bg-amber-500',
+                'bg_class' => 'bg-amber-100',
+                'text_class' => 'text-amber-800',
+                'cell_bg' => 'bg-amber-100',
+            ],
+            'asesmen-ujian' => [
+                'label' => 'Asesmen / Ujian',
+                'dot_class' => 'bg-blue-500',
+                'bg_class' => 'bg-blue-100',
+                'text_class' => 'text-blue-800',
+                'cell_bg' => 'bg-blue-100',
+            ],
+            'libur-semester' => [
+                'label' => 'Libur Semester',
+                'dot_class' => 'bg-yellow-500',
+                'bg_class' => 'bg-yellow-100',
+                'text_class' => 'text-yellow-800',
+                'cell_bg' => 'bg-yellow-100',
+            ],
+            'tka-asesmen-nasional' => [
+                'label' => 'TKA / Asesmen Nasional',
+                'dot_class' => 'bg-purple-500',
+                'bg_class' => 'bg-purple-100',
+                'text_class' => 'text-purple-800',
+                'cell_bg' => 'bg-purple-100',
+            ],
+            'kegiatan-sekolah' => [
+                'label' => 'Kegiatan Sekolah',
+                'dot_class' => 'bg-violet-500',
+                'bg_class' => 'bg-violet-100',
+                'text_class' => 'text-violet-800',
+                'cell_bg' => 'bg-violet-100',
+            ],
+            'kegiatan-pesantren' => [
+                'label' => 'Kegiatan Pesantren',
+                'dot_class' => 'bg-teal-500',
+                'bg_class' => 'bg-teal-100',
+                'text_class' => 'text-teal-800',
+                'cell_bg' => 'bg-teal-100',
+            ],
+            'lainnya' => [
+                'label' => 'Lainnya',
+                'dot_class' => 'bg-slate-500',
+                'bg_class' => 'bg-slate-100',
+                'text_class' => 'text-slate-800',
+                'cell_bg' => 'bg-slate-100',
+            ],
+        ]);
+    }
+
+    private function formatCalendarDateRange(string $startDate, string $endDate, array $indonesianMonths): string
+    {
+        $start = \Carbon\Carbon::parse($startDate);
+        $end = \Carbon\Carbon::parse($endDate);
+
+        if ($start->toDateString() === $end->toDateString()) {
+            return $start->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y');
+        }
+
+        if ($start->month === $end->month && $start->year === $end->year) {
+            return $start->format('j') . '–' . $end->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y');
+        }
+
+        if ($start->year === $end->year) {
+            return $start->format('j') . ' ' . $indonesianMonths[$start->month] . '–' . $end->format('j') . ' ' . $indonesianMonths[$end->month] . ' ' . $start->format('Y');
+        }
+
+        return $start->format('j') . ' ' . $indonesianMonths[$start->month] . ' ' . $start->format('Y') . '–' . $end->format('j') . ' ' . $indonesianMonths[$end->month] . ' ' . $end->format('Y');
     }
 
     public function sebarkan()
