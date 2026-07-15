@@ -64,7 +64,7 @@
             @else
                 <div>
                     <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Jadwal Mingguan</p>
-                    <form method="GET" action="{{ route('public.lesson-schedule') }}" class="mt-1 w-full sm:w-[260px]">
+                    <form method="GET" action="{{ route('public.lesson-schedule') }}" class="mt-1 w-full sm:max-w-xs">
                         <select name="class" onchange="this.form.submit()"
                                 class="w-full rounded-lg border-slate-300 bg-white text-sm font-semibold text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach($classes as $class)
