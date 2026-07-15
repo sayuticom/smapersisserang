@@ -7,20 +7,6 @@
         ? asset('storage/' . $schoolSetting->meta_image)
         : asset('images/og-sma-persis-serang.jpg');
     $schedulableTypes = ['pelajaran', 'kegiatan_khusus'];
-    $specialStyles = [
-        'istirahat' => 'border-amber-200 bg-amber-50 text-amber-900',
-        'ishoma' => 'border-sky-200 bg-sky-50 text-sky-900',
-        'upacara' => 'border-rose-200 bg-rose-50 text-rose-900',
-        'pembiasaan' => 'border-violet-200 bg-violet-50 text-violet-900',
-    ];
-    $dayCardStyles = [
-        'Senin' => 'border-emerald-200 bg-emerald-50/70',
-        'Selasa' => 'border-sky-200 bg-sky-50/70',
-        'Rabu' => 'border-amber-100 bg-amber-50/70',
-        'Kamis' => 'border-violet-200 bg-violet-50/70',
-        'Jumat' => 'border-yellow-200 bg-yellow-50/70',
-        'Sabtu' => 'border-pink-200 bg-pink-50/70',
-    ];
     $slotsByOrder = $timeSlotsByDay->flatten()->groupBy('sort_order')->sortKeys();
 @endphp
 
@@ -99,9 +85,23 @@
                                 @php
                                     $entry = $schedules->get($day . '|' . $slot->id);
                                     $isSchedulable = in_array($slot->type, $schedulableTypes, true);
-                                    $specialStyle = $specialStyles[$slot->type] ?? 'border-slate-200 bg-slate-100 text-slate-800';
+                                    $specialStyle = match($slot->type) {
+                                        'istirahat' => 'border-amber-200 bg-amber-50 text-amber-900',
+                                        'ishoma' => 'border-sky-200 bg-sky-50 text-sky-900',
+                                        'upacara' => 'border-rose-200 bg-rose-50 text-rose-900',
+                                        'pembiasaan' => 'border-violet-200 bg-violet-50 text-violet-900',
+                                        default => 'border-slate-200 bg-slate-100 text-slate-800',
+                                    };
+                                    $dayStyle = match($day) {
+                                        'Senin' => 'border-emerald-200 bg-emerald-50/70',
+                                        'Selasa' => 'border-sky-200 bg-sky-50/70',
+                                        'Rabu' => 'border-amber-100 bg-amber-50/70',
+                                        'Kamis' => 'border-violet-200 bg-violet-50/70',
+                                        'Jumat' => 'border-yellow-200 bg-yellow-50/70',
+                                        'Sabtu' => 'border-pink-200 bg-pink-50/70',
+                                    };
                                 @endphp
-                                <article class="rounded-xl border p-3.5 transition-all duration-150 {{ $isSchedulable ? ($entry ? $dayCardStyles[$day].' shadow-sm' : 'border-slate-200 bg-white/70') : $specialStyle }}">
+                                <article class="rounded-xl border p-3.5 transition-all duration-150 {{ $isSchedulable ? ($entry ? $dayStyle.' shadow-sm' : 'border-slate-200 bg-white/70') : $specialStyle }}">
                                     <div class="flex items-start justify-between gap-3">
                                         <div>
                                             @if($entry)
@@ -156,7 +156,21 @@
                                                 $slot = $timeSlotsByDay->get($day, collect())->firstWhere('sort_order', $sortOrder);
                                                 $entry = $slot ? $schedules->get($day . '|' . $slot->id) : null;
                                                 $isSchedulable = $slot && in_array($slot->type, $schedulableTypes, true);
-                                                $specialStyle = $slot ? ($specialStyles[$slot->type] ?? 'border-slate-200 bg-slate-100 text-slate-800') : '';
+                                                $specialStyle = $slot ? match($slot->type) {
+                                                    'istirahat' => 'border-amber-200 bg-amber-50 text-amber-900',
+                                                    'ishoma' => 'border-sky-200 bg-sky-50 text-sky-900',
+                                                    'upacara' => 'border-rose-200 bg-rose-50 text-rose-900',
+                                                    'pembiasaan' => 'border-violet-200 bg-violet-50 text-violet-900',
+                                                    default => 'border-slate-200 bg-slate-100 text-slate-800',
+                                                } : '';
+                                                $dayStyle = match($day) {
+                                                    'Senin' => 'border-emerald-200 bg-emerald-50/70',
+                                                    'Selasa' => 'border-sky-200 bg-sky-50/70',
+                                                    'Rabu' => 'border-amber-100 bg-amber-50/70',
+                                                    'Kamis' => 'border-violet-200 bg-violet-50/70',
+                                                    'Jumat' => 'border-yellow-200 bg-yellow-50/70',
+                                                    'Sabtu' => 'border-pink-200 bg-pink-50/70',
+                                                };
                                             @endphp
                                             <td class="h-28 border-r border-slate-200 p-2 last:border-r-0">
                                                 @if(!$slot)
@@ -167,7 +181,7 @@
                                                         <span class="mt-1 text-[10px] font-semibold opacity-75">{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}</span>
                                                     </div>
                                                 @else
-                                                    <div class="flex h-full min-h-24 flex-col rounded-lg p-2.5 transition-all duration-150 {{ $entry ? $dayCardStyles[$day].' shadow-sm hover:shadow-md' : 'border border-dashed border-slate-200 bg-white/60' }}">
+                                                    <div class="flex h-full min-h-24 flex-col rounded-lg p-2.5 transition-all duration-150 {{ $entry ? $dayStyle.' shadow-sm hover:shadow-md' : 'border border-dashed border-slate-200 bg-white/60' }}">
                                                         @if($entry)
                                                             <span class="text-[10px] font-semibold text-slate-400">{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}</span>
                                                             <p class="mt-1 text-sm font-extrabold leading-snug text-slate-950">{{ $entry->schoolSubject->name }}</p>
