@@ -62,27 +62,17 @@
                     <p class="mt-1 text-sm text-slate-600">Gunakan pilihan kelas di atas untuk menampilkan jadwal pelajaran.</p>
                 </div>
             @else
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Jadwal Mingguan</p>
-                        <form method="GET" action="{{ route('public.lesson-schedule') }}" class="mt-1 w-full sm:w-[260px]">
-                            <select name="class" onchange="this.form.submit()"
-                                    class="w-full rounded-lg border-slate-300 bg-white text-sm font-semibold text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                                @foreach($classes as $class)
-                                    <option value="{{ $class->name }}" @selected($selectedClassValue === $class->name)>{{ $class->name }}</option>
-                                @endforeach
-                            </select>
-                        </form>
-                        <p class="mt-1 text-sm text-slate-600">Tahun Ajaran {{ $selectedAcademicYear->academic_year }} · Semester {{ ucfirst($semester) }}</p>
-                    </div>
-                    @if($hasSchedules)
-                    <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-600" aria-label="Keterangan kegiatan umum">
-                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1">Istirahat</span>
-                        <span class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1">Ishoma</span>
-                        <span class="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1">Upacara</span>
-                        <span class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1">Pembiasaan</span>
-                    </div>
-                    @endif
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Jadwal Mingguan</p>
+                    <form method="GET" action="{{ route('public.lesson-schedule') }}" class="mt-1 w-full sm:w-[260px]">
+                        <select name="class" onchange="this.form.submit()"
+                                class="w-full rounded-lg border-slate-300 bg-white text-sm font-semibold text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            @foreach($classes as $class)
+                                <option value="{{ $class->name }}" @selected($selectedClassValue === $class->name)>{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                    <p class="mt-1 text-sm text-slate-600">Tahun Ajaran {{ $selectedAcademicYear->academic_year }} · Semester {{ ucfirst($semester) }}</p>
                 </div>
 
                 @if(!$hasSchedules)

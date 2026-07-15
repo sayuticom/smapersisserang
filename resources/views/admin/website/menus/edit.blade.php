@@ -110,6 +110,8 @@
                     <option value="public.gallery" {{ old('route_name', $selectedRoute) === 'public.gallery' ? 'selected' : '' }}>Galeri (/galeri)</option>
                     <option value="public.figures" {{ old('route_name', $selectedRoute) === 'public.figures' ? 'selected' : '' }}>Tokoh (/tokoh-pembina)</option>
                     <option value="public.faq" {{ old('route_name', $selectedRoute) === 'public.faq' ? 'selected' : '' }}>FAQ (/faq)</option>
+                    <option value="public.academic-calendar" {{ old('route_name', $selectedRoute) === 'public.academic-calendar' ? 'selected' : '' }}>Kalender Pendidikan (/kalender-pendidikan)</option>
+                    <option value="public.lesson-schedule" {{ old('route_name', $selectedRoute) === 'public.lesson-schedule' ? 'selected' : '' }}>Jadwal Pelajaran (/jadwal-pelajaran)</option>
                 </select>
                 @error('route_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
