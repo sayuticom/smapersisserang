@@ -444,13 +444,34 @@
                         Mata Pelajaran
                     </a>
 
-                    <a href="{{ route('admin.akademik.kalender.index') }}"
-                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.kalender.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.akademik.kalender.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        Kalender Pendidikan
-                    </a>
+                    <div x-data="{ open: {{ request()->routeIs('admin.akademik.kalender.*') || request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open" type="button"
+                                class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.kalender.*') || request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.akademik.kalender.*') || request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="flex-1 text-left">Kalender dan Jadwal</span>
+                            <svg class="h-4 w-4 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" class="ml-6 space-y-0.5 mt-0.5">
+                            <a href="{{ route('admin.akademik.kalender.index') }}"
+                               class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.kalender.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                                <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.akademik.kalender.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Kalender Pendidikan
+                            </a>
+                            <a href="{{ route('admin.akademik.jadwal-pelajaran.index') }}"
+                               class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                                <svg class="w-4 h-4 flex-shrink-0 {{ request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                Jadwal Pelajaran
+                            </a>
+                        </div>
+                    </div>
 
                     <a href="{{ route('admin.akademik.tahun-pelajaran.index') }}"
                        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.tahun-pelajaran.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
@@ -479,14 +500,6 @@
                         Jam Pelajaran
                     </a>
                     @endif
-
-                    <a href="{{ route('admin.akademik.jadwal-pelajaran.index') }}"
-                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                        <svg class="w-5 h-5 flex-shrink-0 {{ request()->routeIs('admin.akademik.jadwal-pelajaran.*') ? 'text-green-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                        </svg>
-                        Jadwal Pelajaran
-                    </a>
 
                     <div class="pt-3 pb-1">
                         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">SISTEM</p>
