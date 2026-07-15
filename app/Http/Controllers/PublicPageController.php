@@ -743,6 +743,61 @@ class PublicPageController extends Controller
             ->with('error', 'QRIS belum tersedia.');
     }
 
+    public function downloadQrisHero()
+    {
+        $setting = DonationEducationSetting::activeSetting();
+
+        if (!$setting?->donation_qris_image) {
+            abort(404, 'QRIS belum tersedia.');
+        }
+
+        $resizedPath = 'qris/download/QRIS-Infaq-SMA-Persis-Serang.png';
+
+        if (!Storage::disk('public')->exists($resizedPath)) {
+            $sourcePath = $setting->donation_qris_image;
+
+            if (!Storage::disk('public')->exists($sourcePath)) {
+                abort(404, 'Gambar QRIS tidak ditemukan.');
+            }
+
+            $originalBinary = Storage::disk('public')->get($sourcePath);
+            $source = @imagecreatefromstring($originalBinary);
+
+            if (!$source) {
+                abort(500, 'Format gambar QRIS tidak valid.');
+            }
+
+            $sourceWidth = imagesx($source);
+            $sourceHeight = imagesy($source);
+            $maxWidth = 1080;
+
+            $scale = $sourceWidth > $maxWidth ? $maxWidth / $sourceWidth : 1;
+            $targetWidth = max(1, (int) round($sourceWidth * $scale));
+            $targetHeight = max(1, (int) round($sourceHeight * $scale));
+
+            $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+            imagesavealpha($canvas, true);
+            $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+            imagefill($canvas, 0, 0, $transparent);
+            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+
+            ob_start();
+            imagepng($canvas, null, 9);
+            $binary = (string) ob_get_clean();
+            imagedestroy($canvas);
+            imagedestroy($source);
+
+            $dir = dirname($resizedPath);
+            if (!Storage::disk('public')->exists($dir)) {
+                Storage::disk('public')->makeDirectory($dir);
+            }
+
+            Storage::disk('public')->put($resizedPath, $binary);
+        }
+
+        return Storage::disk('public')->download($resizedPath, 'QRIS-Infaq-SMA-Persis-Serang.png');
+    }
+
     private function optimizedQrisImageBinary(string $path): string
     {
         if (!Storage::disk('public')->exists($path)) {

@@ -272,6 +272,7 @@ Route::middleware('track.visitor')->group(function () {
     Route::post('/donasi-pendidikan/qris/preview', [PublicPageController::class, 'previewQrisInline'])->name('donasi-pendidikan.qris.preview');
     Route::get('/donasi-pendidikan/qris', [PublicPageController::class, 'qris'])->name('donasi-pendidikan.qris');
     Route::get('/donasi-pendidikan/qris/download', [PublicPageController::class, 'downloadQris'])->name('donasi-pendidikan.qris.download');
+    Route::get('/donasi-pendidikan/qris/download-hero', [PublicPageController::class, 'downloadQrisHero'])->name('donasi-pendidikan.qris.download-hero');
     Route::get('/donasi-pendidikan/sebarkan', [PublicPageController::class, 'sebarkan'])->name('donasi-pendidikan.sebarkan');
     Route::post('/donasi-pendidikan/sebarkan', [PublicPageController::class, 'submitSebarkan'])->name('donasi-pendidikan.sebarkan.submit');
 

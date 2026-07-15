@@ -81,66 +81,48 @@
          style="background-image: linear-gradient(135deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 42px 42px;"></div>
     <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/30 via-transparent to-emerald-950/20"></div>
 
-    @php
-        $qrisUrl = $setting?->donation_qris_image
-            ? \Illuminate\Support\Facades\Storage::url($setting->donation_qris_image)
-            : null;
-    @endphp
-
     <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-12 lg:pb-24">
 
         <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
 
             @if($heroBg)
-                <div class="flex justify-center lg:self-start">
-                    <img src="{{ $heroBg }}" alt="{{ $heroTitle }}" class="w-full max-w-md lg:max-w-lg aspect-square object-cover rounded-3xl shadow-2xl border border-amber-300/30">
+                <div class="flex flex-col items-center">
+                    <div class="w-full max-w-md lg:max-w-lg">
+                        <img src="{{ $heroBg }}" alt="{{ $heroTitle }}" class="w-full h-auto object-contain rounded-3xl shadow-2xl border border-amber-300/30">
+                    </div>
+                    @if($setting?->donation_qris_image)
+                    <a href="{{ route('donasi-pendidikan.qris.download-hero') }}"
+                       class="mt-4 inline-flex w-full max-w-md lg:max-w-lg items-center justify-center gap-2 rounded-xl border border-white/30 px-7 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                        </svg>
+                        Download QRIS
+                    </a>
+                    @endif
                 </div>
             @endif
 
             <div class="text-center lg:text-left">
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 lg:gap-8">
-                    <div class="flex-1">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
-                            <span class="h-2 w-2 rounded-full bg-amber-300"></span>
-                            LADANG AMAL JARIYAH
-                        </div>
-                        <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
-                            {{ $heroTitle }}
-                        </h1>
-                        <div class="mt-4 lg:mx-0">
-                            <a href="{{ route('donasi-pendidikan.form-donatur') }}"
-                               class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-gradient-to-r from-amber-400 to-yellow-500 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-yellow-500/30 ring-1 ring-yellow-200/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-amber-300 hover:to-yellow-400 hover:shadow-xl hover:shadow-yellow-500/40 active:translate-y-0 active:shadow-lg sm:w-auto">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
-                                </svg>
-                                Donasi Sekarang
-                            </a>
-                        </div>
-                        <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
-                            {{ $heroSubtitle }}
-                        </p>
+                <div>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950/60 px-4 py-2 text-sm font-semibold text-amber-300 shadow-lg shadow-emerald-950/20 backdrop-blur-sm">
+                        <span class="h-2 w-2 rounded-full bg-amber-300"></span>
+                        LADANG AMAL JARIYAH
                     </div>
-                    @if($qrisUrl)
-                        @php
-                            $merchantName = $schoolSetting?->school_name
-                                ? strtoupper($schoolSetting->school_name) . ', CURUG'
-                                : 'SMA PERSIS SERANG, CURUG';
-                        @endphp
-                        <div class="flex-shrink-0 mx-auto lg:mx-0">
-                            <div class="w-36 sm:w-40 lg:w-44 rounded-xl border border-amber-300/30 bg-white/10 p-2.5 shadow-lg shadow-emerald-950/20 backdrop-blur">
-                                <div class="overflow-hidden rounded-lg bg-white p-1.5 shadow-inner">
-                                    <img src="{{ $qrisUrl }}" alt="QRIS Donasi"
-                                         class="w-full aspect-square object-contain">
-                                </div>
-                                <p class="mt-2 text-center text-xs font-bold text-white leading-tight">
-                                    {{ $merchantName }}
-                                </p>
-                                <p class="mt-0.5 text-center text-[10px] font-medium text-amber-300/80 leading-tight">
-                                    Scan untuk Donasi
-                                </p>
-                            </div>
-                        </div>
-                    @endif
+                    <h1 class="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl lg:mx-0">
+                        {{ $heroTitle }}
+                    </h1>
+                    <div class="mt-4 lg:mx-0">
+                        <a href="{{ route('donasi-pendidikan.form-donatur') }}"
+                           class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-gradient-to-r from-amber-400 to-yellow-500 px-7 py-4 text-sm font-bold text-white shadow-lg shadow-yellow-500/30 ring-1 ring-yellow-200/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-amber-300 hover:to-yellow-400 hover:shadow-xl hover:shadow-yellow-500/40 active:translate-y-0 active:shadow-lg sm:w-auto">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                            </svg>
+                            Donasi Sekarang
+                        </a>
+                    </div>
+                    <p class="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-amber-300 sm:text-xl lg:mx-0">
+                        {{ $heroSubtitle }}
+                    </p>
                 </div>
 
                 <div class="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-300/30 bg-white/10 p-5 text-emerald-50 shadow-lg shadow-emerald-950/20 backdrop-blur lg:mx-0">
