@@ -25,6 +25,7 @@ use App\Http\Controllers\FosterParentController;
 use App\Http\Controllers\PPDBController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
+use App\Http\Controllers\PublicLessonScheduleController;
 use App\Http\Controllers\PublicProgressController;
 use App\Http\Controllers\WaqfController;
 use App\Http\Controllers\Admin\WaqfSettingController;
@@ -258,6 +259,7 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/faq', [PublicPageController::class, 'faq'])->name('public.faq');
     Route::get('/guru', [PublicPageController::class, 'teachers'])->name('public.teachers');
     Route::get('/kalender-pendidikan', [PublicPageController::class, 'academicCalendar'])->name('public.academic-calendar');
+    Route::get('/jadwal-pelajaran', [PublicLessonScheduleController::class, 'index'])->name('public.lesson-schedule');
     Route::get('/struktur-organisasi', function () {
         return redirect()->route('public.teachers', ['tab' => 'struktur'], 301);
     })->name('public.struktur-organisasi');
@@ -622,6 +624,35 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::put('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'update'])->name('update');
         Route::patch('/{academicYear}/set-current', [\App\Http\Controllers\Admin\AcademicYearController::class, 'setCurrent'])->name('set-current');
         Route::delete('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('akademik.kelas.')->prefix('akademik/kelas')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\SchoolClassController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'store'])->name('store');
+        Route::get('/{schoolClass}/edit', [\App\Http\Controllers\Admin\SchoolClassController::class, 'edit'])->name('edit');
+        Route::put('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'update'])->name('update');
+        Route::patch('/{schoolClass}/toggle', [\App\Http\Controllers\Admin\SchoolClassController::class, 'toggle'])->name('toggle');
+        Route::delete('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'store'])->name('store');
+        Route::get('/{lessonScheduleSetting}/edit', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'edit'])->name('edit');
+        Route::put('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'update'])->name('update');
+        Route::patch('/{lessonScheduleSetting}/toggle', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'toggle'])->name('toggle');
+        Route::delete('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'store'])->name('store');
+        Route::get('/{lessonSchedule}/edit', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'edit'])->name('edit');
+        Route::put('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'update'])->name('update');
+        Route::delete('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'destroy'])->name('destroy');
     });
 
     Route::name('website.pages.')->prefix('website/konten')->group(function () {
