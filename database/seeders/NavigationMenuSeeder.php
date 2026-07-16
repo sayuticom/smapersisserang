@@ -9,6 +9,8 @@ class NavigationMenuSeeder extends Seeder
 {
     public function run(): void
     {
+        NavigationMenu::where('menu_key', 'donasi_pendidikan')->delete();
+
         $menus = [
             [
                 'menu_key' => 'home',
@@ -161,8 +163,8 @@ class NavigationMenuSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'menu_key' => 'donasi_pendidikan',
-                'label' => 'Infaq',
+                'menu_key' => 'dukung_pendidikan',
+                'label' => 'Dukung Pendidikan',
                 'route_name' => 'donasi-pendidikan',
                 'url' => '/donasi-pendidikan',
                 'parent_key' => 'dukung_kami',
@@ -171,12 +173,32 @@ class NavigationMenuSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'menu_key' => 'infaq_uang',
+                'label' => 'Infaq Uang',
+                'route_name' => 'public.infaq-money',
+                'url' => '/infaq-uang',
+                'parent_key' => 'dukung_kami',
+                'sort_order' => 2,
+                'location' => 'public_header',
+                'is_active' => true,
+            ],
+            [
+                'menu_key' => 'infaq_barang',
+                'label' => 'Infaq Barang',
+                'route_name' => 'public.infaq-goods',
+                'url' => '/infaq-barang',
+                'parent_key' => 'dukung_kami',
+                'sort_order' => 3,
+                'location' => 'public_header',
+                'is_active' => true,
+            ],
+            [
                 'menu_key' => 'wakaf_uang',
-                'label' => 'Wakaf',
+                'label' => 'Wakaf Uang',
                 'route_name' => 'wakaf-uang.index',
                 'url' => '/wakaf-uang',
                 'parent_key' => 'dukung_kami',
-                'sort_order' => 2,
+                'sort_order' => 4,
                 'location' => 'public_header',
                 'is_active' => true,
             ],
@@ -186,7 +208,7 @@ class NavigationMenuSeeder extends Seeder
                 'route_name' => 'orang-tua-asuh',
                 'url' => '/orang-tua-asuh',
                 'parent_key' => 'dukung_kami',
-                'sort_order' => 3,
+                'sort_order' => 5,
                 'location' => 'public_header',
                 'is_active' => true,
             ],

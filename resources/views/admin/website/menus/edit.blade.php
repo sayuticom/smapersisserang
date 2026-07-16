@@ -104,7 +104,9 @@
                     <option value="public.boarding" {{ old('route_name', $selectedRoute) === 'public.boarding' ? 'selected' : '' }}>Boarding (/boarding-school)</option>
                     <option value="public.teachers" {{ old('route_name', $selectedRoute) === 'public.teachers' ? 'selected' : '' }}>Guru (/guru)</option>
                     <option value="ppdb.info" {{ old('route_name', $selectedRoute) === 'ppdb.info' ? 'selected' : '' }}>SPMB (/ppdb)</option>
-                    <option value="donasi-pendidikan" {{ old('route_name', $selectedRoute) === 'donasi-pendidikan' ? 'selected' : '' }}>Donasi Pendidikan (/donasi-pendidikan)</option>
+                    <option value="public.infaq-money" {{ old('route_name', $selectedRoute) === 'public.infaq-money' ? 'selected' : '' }}>Infaq Uang (/infaq-uang)</option>
+                    <option value="public.infaq-goods" {{ old('route_name', $selectedRoute) === 'public.infaq-goods' ? 'selected' : '' }}>Infaq Barang (/infaq-barang)</option>
+                    <option value="donasi-pendidikan" {{ old('route_name', $selectedRoute) === 'donasi-pendidikan' ? 'selected' : '' }}>Donasi Pendidikan (/donasi-pendidikan — redirect)</option>
                     <option value="wakaf-uang.index" {{ old('route_name', $selectedRoute) === 'wakaf-uang.index' ? 'selected' : '' }}>Wakaf Uang (/wakaf-uang)</option>
                     <option value="contact" {{ old('route_name', $selectedRoute) === 'contact' ? 'selected' : '' }}>Kontak (/#kontak)</option>
                     <option value="public.gallery" {{ old('route_name', $selectedRoute) === 'public.gallery' ? 'selected' : '' }}>Galeri (/galeri)</option>
