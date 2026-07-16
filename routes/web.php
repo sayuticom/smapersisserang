@@ -263,6 +263,8 @@ Route::middleware('track.visitor')->group(function () {
     Route::get('/struktur-organisasi', function () {
         return redirect()->route('public.teachers', ['tab' => 'struktur'], 301);
     })->name('public.struktur-organisasi');
+    Route::get('/infaq-uang', [PublicPageController::class, 'infaqUang'])->name('public.infaq-money');
+    Route::get('/infaq-barang', [PublicPageController::class, 'infaqBarang'])->name('public.infaq-goods');
     Route::get('/donasi-pendidikan', [PublicPageController::class, 'donasiPendidikan'])->name('donasi-pendidikan');
     Route::get('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'formDonatur'])->name('donasi-pendidikan.form-donatur');
     Route::post('/donasi-pendidikan/form-donatur', [PublicPageController::class, 'submitDonatur'])

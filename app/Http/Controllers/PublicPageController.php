@@ -361,6 +361,32 @@ class PublicPageController extends Controller
         return view('pages.donasi-pendidikan', compact('schoolSetting', 'setting'));
     }
 
+    public function infaqUang()
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        $setting = DonationEducationSetting::activeSetting();
+
+        return view('pages.infaq-uang', compact('schoolSetting', 'setting'));
+    }
+
+    public function infaqBarang()
+    {
+        try {
+            $schoolSetting = SchoolSetting::current();
+        } catch (\Exception $e) {
+            $schoolSetting = null;
+        }
+
+        $setting = DonationEducationSetting::activeSetting();
+
+        return view('pages.infaq-barang', compact('schoolSetting', 'setting'));
+    }
+
     public function formDonatur()
     {
         try {
@@ -427,10 +453,10 @@ class PublicPageController extends Controller
 
         $amount = $this->resolveDonationAmount($data['amount'] ?? null, $data['custom_amount'] ?? null);
 
-        if ($amount < 10000 || $amount > 50000000) {
+        if ($amount < 1000 || $amount > 50000000) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pilih nominal donasi minimal Rp10.000 terlebih dahulu.',
+                'message' => 'Pilih nominal donasi minimal Rp1.000 terlebih dahulu.',
             ]);
         }
 
