@@ -449,6 +449,14 @@ return [
                     'roles' => ['superadmin'],
                 ],
                 [
+                    'key' => 'system.roles',
+                    'label' => 'Pengaturan Role',
+                    'route' => 'admin.roles.index',
+                    'route_active' => 'admin.roles.*',
+                    'icon' => 'shield',
+                    'roles' => ['superadmin'],
+                ],
+                [
                     'key' => 'system.menu-access',
                     'label' => 'Pengaturan Menu',
                     'route' => 'admin.menu-access.index',

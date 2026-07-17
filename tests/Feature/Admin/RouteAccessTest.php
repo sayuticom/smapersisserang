@@ -51,7 +51,11 @@ class RouteAccessTest extends TestCase
             $table->id();
             $table->string('name', 50)->unique();
             $table->string('display_name', 100);
+            $table->text('description')->nullable();
             $table->string('guard_name', 30)->default('web');
+            $table->boolean('is_system')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedSmallInteger('sort_order')->default(0);
             $table->timestamps();
         });
 
@@ -64,21 +68,27 @@ class RouteAccessTest extends TestCase
 
     private function seedRoles(): void
     {
-        $displayNames = [
-            'superadmin' => 'Superadmin',
-            'admin' => 'Admin',
-            'kepala_sekolah' => 'Kepala Sekolah',
-            'guru' => 'Guru',
-            'staf_tata_usaha' => 'Staf Tata Usaha',
-            'staf_keuangan' => 'Staf Keuangan',
-            'staf_kesiswaan' => 'Staf Kesiswaan',
-            'staf_sarpras' => 'Staf Sarpras',
+        $systemRoles = [
+            'superadmin' => ['display_name' => 'Superadmin', 'sort_order' => 1],
+            'admin' => ['display_name' => 'Admin', 'sort_order' => 2],
+            'kepala_sekolah' => ['display_name' => 'Kepala Sekolah', 'sort_order' => 3],
+            'guru' => ['display_name' => 'Guru', 'sort_order' => 4],
+            'staf_tata_usaha' => ['display_name' => 'Staf Tata Usaha', 'sort_order' => 5],
+            'staf_keuangan' => ['display_name' => 'Staf Keuangan', 'sort_order' => 6],
+            'staf_kesiswaan' => ['display_name' => 'Staf Kesiswaan', 'sort_order' => 7],
+            'staf_sarpras' => ['display_name' => 'Staf Sarpras', 'sort_order' => 8],
         ];
 
-        foreach ($displayNames as $name => $displayName) {
+        foreach ($systemRoles as $name => $config) {
             Role::firstOrCreate(
                 ['name' => $name],
-                ['display_name' => $displayName, 'guard_name' => 'web']
+                [
+                    'display_name' => $config['display_name'],
+                    'guard_name' => 'web',
+                    'is_system' => true,
+                    'is_active' => true,
+                    'sort_order' => $config['sort_order'],
+                ]
             );
         }
     }

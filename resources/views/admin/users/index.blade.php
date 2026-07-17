@@ -42,15 +42,30 @@
                                         <div class="flex flex-wrap gap-1">
                                             @forelse($user->roles as $role)
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                    {{ $role->name === 'superadmin' ? 'bg-amber-100 text-amber-800' : '' }}
-                                                    {{ $role->name === 'admin' ? 'bg-emerald-100 text-emerald-800' : '' }}
-                                                    {{ $role->name === 'guru' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                    {{ $role->name === 'kepala_sekolah' ? 'bg-purple-100 text-purple-800' : '' }}
-                                                    {{ $role->name === 'staf_tata_usaha' ? 'bg-slate-100 text-slate-800' : '' }}
-                                                    {{ $role->name === 'staf_keuangan' ? 'bg-cyan-100 text-cyan-800' : '' }}
-                                                    {{ $role->name === 'staf_kesiswaan' ? 'bg-indigo-100 text-indigo-800' : '' }}
-                                                    {{ $role->name === 'staf_sarpras' ? 'bg-rose-100 text-rose-800' : '' }}
-                                                    {{ !in_array($role->name, ['superadmin','admin','guru','kepala_sekolah','staf_tata_usaha','staf_keuangan','staf_kesiswaan','staf_sarpras']) ? 'bg-gray-100 text-gray-800' : '' }}">
+                                                    @php
+                                                        $colorMap = [
+                                                            'superadmin' => 'bg-amber-100 text-amber-800',
+                                                            'admin' => 'bg-emerald-100 text-emerald-800',
+                                                            'guru' => 'bg-blue-100 text-blue-800',
+                                                            'kepala_sekolah' => 'bg-purple-100 text-purple-800',
+                                                            'staf_tata_usaha' => 'bg-slate-100 text-slate-800',
+                                                            'staf_keuangan' => 'bg-cyan-100 text-cyan-800',
+                                                            'staf_kesiswaan' => 'bg-indigo-100 text-indigo-800',
+                                                            'staf_sarpras' => 'bg-rose-100 text-rose-800',
+                                                        ];
+                                                        $palette = [
+                                                            'bg-orange-100 text-orange-800',
+                                                            'bg-teal-100 text-teal-800',
+                                                            'bg-pink-100 text-pink-800',
+                                                            'bg-lime-100 text-lime-800',
+                                                            'bg-violet-100 text-violet-800',
+                                                            'bg-yellow-100 text-yellow-800',
+                                                            'bg-sky-100 text-sky-800',
+                                                            'bg-red-100 text-red-800',
+                                                        ];
+                                                        $badgeClass = $colorMap[$role->name] ?? $palette[crc32($role->name) % count($palette)];
+                                                    @endphp
+                                                    {{ $badgeClass }}">
                                                     {{ $role->display_name }}
                                                 </span>
                                             @empty

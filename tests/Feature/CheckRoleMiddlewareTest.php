@@ -64,7 +64,11 @@ class CheckRoleMiddlewareTest extends TestCase
             $table->id();
             $table->string('name', 50)->unique();
             $table->string('display_name', 100);
+            $table->text('description')->nullable();
             $table->string('guard_name', 30)->default('web');
+            $table->boolean('is_system')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedSmallInteger('sort_order')->default(0);
             $table->timestamps();
         });
     }
@@ -80,16 +84,22 @@ class CheckRoleMiddlewareTest extends TestCase
 
     private function seedDefaultRoles(): void
     {
-        $roleNames = [
-            'superadmin' => 'Superadmin',
-            'admin' => 'Admin',
-            'guru' => 'Guru',
+        $systemRoles = [
+            'superadmin' => ['display_name' => 'Superadmin', 'sort_order' => 1],
+            'admin' => ['display_name' => 'Admin', 'sort_order' => 2],
+            'guru' => ['display_name' => 'Guru', 'sort_order' => 4],
         ];
 
-        foreach ($roleNames as $name => $displayName) {
+        foreach ($systemRoles as $name => $config) {
             Role::firstOrCreate(
                 ['name' => $name],
-                ['display_name' => $displayName, 'guard_name' => 'web']
+                [
+                    'display_name' => $config['display_name'],
+                    'guard_name' => 'web',
+                    'is_system' => true,
+                    'is_active' => true,
+                    'sort_order' => $config['sort_order'],
+                ]
             );
         }
     }

@@ -59,11 +59,15 @@ class User extends Authenticatable
         if ($this->relationLoaded('roles') || $this->exists) {
             $this->loadMissing('roles');
             if ($this->roles->isNotEmpty()) {
-                return $this->roles->contains('name', $role);
+                return $this->roles->contains(fn(Role $r) => $r->name === $role && ($r->is_active ?? true));
             }
         }
 
-        return $this->role === $role;
+        if ($this->role === $role) {
+            return Role::where('name', $role)->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     public function hasAnyRole(array $roles): bool
@@ -71,11 +75,15 @@ class User extends Authenticatable
         if ($this->relationLoaded('roles') || $this->exists) {
             $this->loadMissing('roles');
             if ($this->roles->isNotEmpty()) {
-                return $this->roles->whereIn('name', $roles)->isNotEmpty();
+                return $this->roles->filter(fn(Role $r) => $r->is_active ?? true)->whereIn('name', $roles)->isNotEmpty();
             }
         }
 
-        return in_array($this->role, $roles);
+        if (in_array($this->role, $roles)) {
+            return Role::where('name', $this->role)->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     public function isSuperadmin(): bool
@@ -83,11 +91,15 @@ class User extends Authenticatable
         if ($this->relationLoaded('roles') || $this->exists) {
             $this->loadMissing('roles');
             if ($this->roles->isNotEmpty()) {
-                return $this->roles->contains('name', 'superadmin');
+                return $this->roles->contains(fn(Role $r) => $r->name === 'superadmin' && ($r->is_active ?? true));
             }
         }
 
-        return $this->role === 'superadmin';
+        if ($this->role === 'superadmin') {
+            return Role::where('name', 'superadmin')->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     public function isAdmin(): bool
@@ -95,11 +107,15 @@ class User extends Authenticatable
         if ($this->relationLoaded('roles') || $this->exists) {
             $this->loadMissing('roles');
             if ($this->roles->isNotEmpty()) {
-                return $this->hasAnyRole(['superadmin', 'admin']);
+                return $this->roles->filter(fn(Role $r) => $r->is_active ?? true)->whereIn('name', ['superadmin', 'admin'])->isNotEmpty();
             }
         }
 
-        return in_array($this->role, ['admin', 'superadmin']);
+        if (in_array($this->role, ['admin', 'superadmin'])) {
+            return Role::where('name', $this->role)->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     public function syncRoles(array $roleIds): void

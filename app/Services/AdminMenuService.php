@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MenuRoleOverride;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
@@ -19,14 +20,18 @@ class AdminMenuService
 
     protected array $lockedKeys = ['dashboard', 'account.profile', 'system.users'];
 
-    protected array $validRoleNames = [
-        'superadmin', 'admin', 'kepala_sekolah', 'guru',
-        'staf_tata_usaha', 'staf_keuangan', 'staf_kesiswaan', 'staf_sarpras',
-    ];
+    protected ?array $validRoleNamesCache = null;
 
     public function getValidRoleNames(): array
     {
-        return $this->validRoleNames;
+        if ($this->validRoleNamesCache === null) {
+            $this->validRoleNamesCache = Role::where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray();
+        }
+        return $this->validRoleNamesCache;
     }
 
     public function getValidMenuKeys(): array
@@ -72,6 +77,7 @@ class AdminMenuService
     {
         $this->overrides = null;
         $this->routeRolesCache = [];
+        $this->validRoleNamesCache = null;
     }
 
     public function getOverrides(): Collection

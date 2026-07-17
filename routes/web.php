@@ -884,6 +884,16 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\MenuAccessController::class, 'index'])->name('index');
             Route::put('/', [\App\Http\Controllers\Admin\MenuAccessController::class, 'update'])->name('update');
         });
+
+    Route::name('roles.')->prefix('roles')
+        ->middleware('role:superadmin')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\RoleController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\RoleController::class, 'store'])->name('store');
+            Route::put('/{role}', [\App\Http\Controllers\Admin\RoleController::class, 'update'])->name('update');
+            Route::patch('/{role}/toggle-active', [\App\Http\Controllers\Admin\RoleController::class, 'toggleActive'])->name('toggle-active');
+            Route::delete('/{role}', [\App\Http\Controllers\Admin\RoleController::class, 'destroy'])->name('destroy');
+        });
 });
 
 Route::get('/progress/{token}', [PublicProgressController::class, 'show'])->name('public.progress');

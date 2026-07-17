@@ -9,6 +9,7 @@ use App\Services\AdminMenuService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class MenuAccessController extends Controller
@@ -19,10 +20,10 @@ class MenuAccessController extends Controller
 
     public function index(): View
     {
-        $roleOrder = ['superadmin', 'admin', 'kepala_sekolah', 'guru', 'staf_tata_usaha', 'staf_keuangan', 'staf_kesiswaan', 'staf_sarpras'];
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::active()->ordered()->get();
         $menuItems = $this->menuService->getAllMenuItems();
-        $roleNames = $roles->pluck('name')->unique()->sortBy(fn($r) => array_search($r, $roleOrder) !== false ? array_search($r, $roleOrder) : 99)->values()->toArray();
+        $roleNames = $roles->pluck('name')->toArray();
+        $roleNames = array_unique(array_merge(['superadmin'], $roleNames));
 
         return view('admin.menu-access.index', compact('roles', 'menuItems', 'roleNames'));
     }

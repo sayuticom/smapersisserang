@@ -53,14 +53,28 @@
                             @endif
                             @php
                                 $checked = in_array($role->id, old('roles', $user->roles->pluck('id')->toArray()));
+                                $isInactiveRole = !$role->is_active;
                             @endphp
-                            <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
-                                {{ $checked ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300' }}">
-                                <input type="checkbox" name="roles[]" value="{{ $role->id }}"
-                                       {{ $checked ? 'checked' : '' }}
-                                       class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
-                                <span class="text-sm font-medium text-gray-700">{{ $role->display_name }}</span>
-                            </label>
+                            @if ($isInactiveRole && !$checked)
+                                @continue
+                            @elseif ($isInactiveRole && $checked)
+                                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
+                                    <input type="checkbox" name="roles[]" value="{{ $role->id }}" checked disabled
+                                           class="rounded border-gray-300 text-gray-400 opacity-50">
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-500">{{ $role->display_name }}</span>
+                                        <span class="text-xs text-gray-400 ml-2">(nonaktif — pencabutan permanen)</span>
+                                    </div>
+                                </div>
+                            @else
+                                <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                                    {{ $checked ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300' }}">
+                                    <input type="checkbox" name="roles[]" value="{{ $role->id }}"
+                                           {{ $checked ? 'checked' : '' }}
+                                           class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                    <span class="text-sm font-medium text-gray-700">{{ $role->display_name }}</span>
+                                </label>
+                            @endif
                         @endforeach
                     </div>
                 @endif

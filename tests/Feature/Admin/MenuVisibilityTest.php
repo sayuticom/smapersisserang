@@ -49,7 +49,11 @@ class MenuVisibilityTest extends TestCase
             $table->id();
             $table->string('name', 50)->unique();
             $table->string('display_name', 100);
+            $table->text('description')->nullable();
             $table->string('guard_name', 30)->default('web');
+            $table->boolean('is_system')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedSmallInteger('sort_order')->default(0);
             $table->timestamps();
         });
 
@@ -80,21 +84,27 @@ class MenuVisibilityTest extends TestCase
 
     private function seedRoles(): void
     {
-        $displayNames = [
-            'superadmin' => 'Superadmin',
-            'admin' => 'Admin',
-            'kepala_sekolah' => 'Kepala Sekolah',
-            'guru' => 'Guru',
-            'staf_tata_usaha' => 'Staf Tata Usaha',
-            'staf_keuangan' => 'Staf Keuangan',
-            'staf_kesiswaan' => 'Staf Kesiswaan',
-            'staf_sarpras' => 'Staf Sarpras',
+        $systemRoles = [
+            'superadmin' => ['display_name' => 'Superadmin', 'sort_order' => 1],
+            'admin' => ['display_name' => 'Admin', 'sort_order' => 2],
+            'kepala_sekolah' => ['display_name' => 'Kepala Sekolah', 'sort_order' => 3],
+            'guru' => ['display_name' => 'Guru', 'sort_order' => 4],
+            'staf_tata_usaha' => ['display_name' => 'Staf Tata Usaha', 'sort_order' => 5],
+            'staf_keuangan' => ['display_name' => 'Staf Keuangan', 'sort_order' => 6],
+            'staf_kesiswaan' => ['display_name' => 'Staf Kesiswaan', 'sort_order' => 7],
+            'staf_sarpras' => ['display_name' => 'Staf Sarpras', 'sort_order' => 8],
         ];
 
-        foreach ($displayNames as $name => $displayName) {
+        foreach ($systemRoles as $name => $config) {
             Role::firstOrCreate(
                 ['name' => $name],
-                ['display_name' => $displayName, 'guard_name' => 'web']
+                [
+                    'display_name' => $config['display_name'],
+                    'guard_name' => 'web',
+                    'is_system' => true,
+                    'is_active' => true,
+                    'sort_order' => $config['sort_order'],
+                ]
             );
         }
     }
@@ -263,7 +273,7 @@ class MenuVisibilityTest extends TestCase
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran', 'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
-                    'FAQ AI', 'Kelola User', 'Pengaturan Menu',
+                    'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ]),
                 [],
             ],
@@ -281,7 +291,7 @@ class MenuVisibilityTest extends TestCase
                     'Profil Guru', 'Mata Pelajaran', 'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI',
                 ]),
-                ['Kelola User', 'Pengaturan Menu'],
+                ['Kelola User', 'Pengaturan Role', 'Pengaturan Menu'],
             ],
             'kepala_sekolah' => [
                 'kepala_sekolah',
@@ -304,7 +314,7 @@ class MenuVisibilityTest extends TestCase
                     'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
-                    'FAQ AI', 'Kelola User', 'Pengaturan Menu',
+                    'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
             'guru' => [
@@ -323,7 +333,7 @@ class MenuVisibilityTest extends TestCase
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran', 'Tahun Pelajaran',
-                    'Kelola User', 'Pengaturan Menu',
+                    'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
             'staf_tata_usaha' => [
@@ -342,7 +352,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengajuan OTA',
                     'Pengaturan Wakaf', 'Wakaf Masuk', 'Buat Bukti Penerimaan',
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
-                    'Kelola User', 'Pengaturan Menu',
+                    'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
             'staf_keuangan' => [
@@ -360,7 +370,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
                     'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
-                    'FAQ AI', 'Kelola User', 'Pengaturan Menu',
+                    'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
             'staf_kesiswaan' => [
@@ -379,7 +389,7 @@ class MenuVisibilityTest extends TestCase
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
-                    'FAQ AI', 'Kelola User', 'Pengaturan Menu',
+                    'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
             'staf_sarpras' => [
@@ -397,7 +407,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
                     'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
-                    'FAQ AI', 'Kelola User', 'Pengaturan Menu',
+                    'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
         ];

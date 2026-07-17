@@ -19,7 +19,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::active()->ordered()->get();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -30,7 +30,12 @@ class UserController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'exists:roles,id',
+            'roles.*' => ['exists:roles,id', function ($attribute, $value, $fail) {
+                $role = Role::find($value);
+                if ($role && !$role->is_active) {
+                    $fail("Role \"{$role->display_name}\" tidak aktif dan tidak dapat diberikan.");
+                }
+            }],
         ]);
 
         if (! $request->user()->isSuperadmin()) {
@@ -56,7 +61,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $user->load('roles');
-        $roles = Role::orderBy('name')->get();
+        $activeRoles = Role::active()->ordered()->get();
+        $inactiveRoles = Role::where('is_active', false)->ordered()->get();
+        $roles = $activeRoles->concat($inactiveRoles);
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -67,7 +74,15 @@ class UserController extends Controller
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'exists:roles,id',
+            'roles.*' => ['exists:roles,id', function ($attribute, $value, $fail) use ($user) {
+                $role = Role::find($value);
+                if ($role && !$role->is_active) {
+                    $userAlreadyHasIt = $user->roles()->where('role_id', $value)->exists();
+                    if (!$userAlreadyHasIt) {
+                        $fail("Role \"{$role->display_name}\" tidak aktif dan tidak dapat diberikan.");
+                    }
+                }
+            }],
         ];
 
         $validated = $request->validate($rules);
