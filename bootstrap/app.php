@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\EnsureUserIsSuperadmin::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
             'track.visitor' => \App\Http\Middleware\TrackVisitorMiddleware::class,
         ]);
 

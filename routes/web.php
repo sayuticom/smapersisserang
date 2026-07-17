@@ -330,361 +330,528 @@ Route::middleware('track.visitor')->group(function () {
 });
 
 Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
-    Route::get('/ppdb', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'dashboard'])->name('ppdb.dashboard');
+    Route::get('/ppdb', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'dashboard'])
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+        ->name('ppdb.dashboard');
 
-    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'index'])->name('index');
-        Route::get('/export', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'export'])->name('export');
-        Route::get('/export-pdf', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'exportPdf'])->name('export-pdf');
-        Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])->name('show');
-        Route::get('/{studentApplication}/print', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'print'])->name('print');
-        Route::get('/{studentApplication}/requirements/download', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'downloadRequirements'])->name('requirements.download');
-        Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])->name('update-status');
-        Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])->name('update-follow-up');
-        Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])->name('mark-data-complete');
-        Route::post('/{studentApplication}/generate-update-link', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'generateUpdateLink'])->name('generate-update-link');
-        Route::delete('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+        ->group(function () {
+            Route::get('/export', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'export'])->name('export');
+            Route::get('/export-pdf', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'exportPdf'])->name('export-pdf');
+            Route::get('/{studentApplication}/print', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'print'])->name('print');
+            Route::get('/{studentApplication}/requirements/download', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'downloadRequirements'])->name('requirements.download');
+            Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])->name('update-status');
+            Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])->name('update-follow-up');
+            Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])->name('mark-data-complete');
+            Route::post('/{studentApplication}/generate-update-link', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'generateUpdateLink'])->name('generate-update-link');
+        });
 
-    Route::name('ppdb.settings.')->prefix('ppdb/pengaturan')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsEdit'])->name('edit');
-        Route::put('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsUpdate'])->name('update');
-    });
-    Route::name('website.settings.')->prefix('website/pengaturan')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'edit'])->name('edit');
-        Route::put('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'update'])->name('update');
-        Route::post('/generate-token', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'generateToken'])->name('public-dashboard-token.generate');
-    });
+    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'index'])->name('index');
+            Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])->name('show');
+        });
 
-    Route::name('website.boarding.')->prefix('website/boarding')->group(function () {
-        Route::get('/', [BoardingContentController::class, 'index'])->name('index');
-        Route::put('/settings', [BoardingContentController::class, 'updateSettings'])->name('settings.update');
-        Route::post('/cards', [BoardingContentController::class, 'storeCard'])->name('cards.store');
-        Route::put('/cards/{boardingCard}', [BoardingContentController::class, 'updateCard'])->name('cards.update');
-        Route::delete('/cards/{boardingCard}', [BoardingContentController::class, 'destroyCard'])->name('cards.destroy');
-        Route::post('/schedules', [BoardingContentController::class, 'storeSchedule'])->name('schedules.store');
-        Route::put('/schedules/{boardingSchedule}', [BoardingContentController::class, 'updateSchedule'])->name('schedules.update');
-        Route::delete('/schedules/{boardingSchedule}', [BoardingContentController::class, 'destroySchedule'])->name('schedules.destroy');
-    });
+    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::delete('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::name('ppdb.settings.')->prefix('ppdb/pengaturan')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsEdit'])->name('edit');
+            Route::put('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsUpdate'])->name('update');
+        });
+
+    Route::name('website.settings.')->prefix('website/pengaturan')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'edit'])->name('edit');
+            Route::put('/', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'update'])->name('update');
+        });
+
+    Route::name('website.settings.')->prefix('website/pengaturan')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::post('/generate-token', [\App\Http\Controllers\Admin\WebsiteSettingController::class, 'generateToken'])->name('public-dashboard-token.generate');
+        });
+
+    Route::name('website.boarding.')->prefix('website/boarding')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [BoardingContentController::class, 'index'])->name('index');
+            Route::put('/settings', [BoardingContentController::class, 'updateSettings'])->name('settings.update');
+            Route::post('/cards', [BoardingContentController::class, 'storeCard'])->name('cards.store');
+            Route::put('/cards/{boardingCard}', [BoardingContentController::class, 'updateCard'])->name('cards.update');
+            Route::delete('/cards/{boardingCard}', [BoardingContentController::class, 'destroyCard'])->name('cards.destroy');
+            Route::post('/schedules', [BoardingContentController::class, 'storeSchedule'])->name('schedules.store');
+            Route::put('/schedules/{boardingSchedule}', [BoardingContentController::class, 'updateSchedule'])->name('schedules.update');
+            Route::delete('/schedules/{boardingSchedule}', [BoardingContentController::class, 'destroySchedule'])->name('schedules.destroy');
+        });
 
     Route::get('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'edit'])
+        ->middleware('role:superadmin,admin,staf_keuangan')
         ->name('website.donasi-pendidikan.edit');
     Route::put('/website/donasi-pendidikan', [DonationEducationSettingController::class, 'update'])
+        ->middleware('role:superadmin,admin,staf_keuangan')
         ->name('website.donasi-pendidikan.update');
 
-    Route::name('donasi-transactions.')->prefix('donasi-transactions')->group(function () {
-        Route::get('/', [DonationTransactionController::class, 'index'])->name('index');
-        Route::get('/buat-bukti-penerimaan', [DonationTransactionController::class, 'createReceipt'])->name('create-receipt');
-        Route::post('/buat-bukti-penerimaan/parse', [DonationTransactionController::class, 'parseReceipt'])->name('parse-receipt');
-        Route::post('/buat-bukti-penerimaan', [DonationTransactionController::class, 'storeReceipt'])->name('store-receipt');
-        Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
-        Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
-        Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+    Route::name('donasi-transactions.')->prefix('donasi-transactions')
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/buat-bukti-penerimaan', [DonationTransactionController::class, 'createReceipt'])->name('create-receipt');
+            Route::post('/buat-bukti-penerimaan/parse', [DonationTransactionController::class, 'parseReceipt'])->name('parse-receipt');
+            Route::post('/buat-bukti-penerimaan', [DonationTransactionController::class, 'storeReceipt'])->name('store-receipt');
+            Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
+            Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+        });
+
+    Route::name('donasi-transactions.')->prefix('donasi-transactions')
+        ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [DonationTransactionController::class, 'index'])->name('index');
+            Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
+        });
+
+    Route::middleware('role:superadmin,admin,staf_keuangan')->group(function () {
+        Route::resource('infaq-barang', DonationItemReceiptController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->parameters(['infaq-barang' => 'infaqBarang']);
+
+        Route::get('/infaq-barang-wa', [DonationItemCommitmentController::class, 'index'])->name('infaq-barang-wa.index');
+        Route::get('/infaq-barang-wa/create', [DonationItemCommitmentController::class, 'create'])->name('infaq-barang-wa.create');
+        Route::post('/infaq-barang-wa/parse', [DonationItemCommitmentController::class, 'parse'])->name('infaq-barang-wa.parse');
+        Route::post('/infaq-barang-wa', [DonationItemCommitmentController::class, 'store'])->name('infaq-barang-wa.store');
+        Route::get('/infaq-barang-wa/{infaqBarangWa}', [DonationItemCommitmentController::class, 'show'])->name('infaq-barang-wa.show');
+        Route::patch('/infaq-barang-wa/{infaqBarangWa}/status', [DonationItemCommitmentController::class, 'updateStatus'])->name('infaq-barang-wa.update-status');
     });
 
-    Route::resource('infaq-barang', DonationItemReceiptController::class)
-        ->only(['index', 'create', 'store', 'show'])
-        ->parameters(['infaq-barang' => 'infaqBarang']);
+    Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
+            Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
+        });
 
-    Route::get('/infaq-barang-wa', [DonationItemCommitmentController::class, 'index'])->name('infaq-barang-wa.index');
-    Route::get('/infaq-barang-wa/create', [DonationItemCommitmentController::class, 'create'])->name('infaq-barang-wa.create');
-    Route::post('/infaq-barang-wa/parse', [DonationItemCommitmentController::class, 'parse'])->name('infaq-barang-wa.parse');
-    Route::post('/infaq-barang-wa', [DonationItemCommitmentController::class, 'store'])->name('infaq-barang-wa.store');
-    Route::get('/infaq-barang-wa/{infaqBarangWa}', [DonationItemCommitmentController::class, 'show'])->name('infaq-barang-wa.show');
-    Route::patch('/infaq-barang-wa/{infaqBarangWa}/status', [DonationItemCommitmentController::class, 'updateStatus'])->name('infaq-barang-wa.update-status');
+    Route::name('wakaf.settings.')->prefix('wakaf/settings')
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/', [WaqfSettingController::class, 'edit'])->name('edit');
+            Route::put('/', [WaqfSettingController::class, 'update'])->name('update');
+        });
 
-    Route::name('donasi-pendidikan.')->prefix('donasi-pendidikan')->group(function () {
-        Route::get('/share-template', [DonationEducationSettingController::class, 'shareTemplate'])->name('share-template');
-        Route::put('/share-template', [DonationEducationSettingController::class, 'updateShareTemplate'])->name('share-template.update');
-    });
+    Route::name('wakaf.transactions.')->prefix('wakaf/transactions')
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'createReceipt'])->name('create-receipt');
+            Route::post('/buat-bukti-penerimaan/parse', [WaqfTransactionController::class, 'parseReceipt'])->name('parse-receipt');
+            Route::post('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'storeReceipt'])->name('store-receipt');
+            Route::patch('/{transaction}/mark-paid', [WaqfTransactionController::class, 'markPaid'])->name('mark-paid');
+            Route::patch('/{transaction}/mark-cancelled', [WaqfTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+        });
 
-    Route::name('wakaf.settings.')->prefix('wakaf/settings')->group(function () {
-        Route::get('/', [WaqfSettingController::class, 'edit'])->name('edit');
-        Route::put('/', [WaqfSettingController::class, 'update'])->name('update');
-    });
+    Route::name('wakaf.transactions.')->prefix('wakaf/transactions')
+        ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [WaqfTransactionController::class, 'index'])->name('index');
+            Route::get('/{transaction}', [WaqfTransactionController::class, 'show'])->name('show');
+        });
 
-    Route::name('wakaf.transactions.')->prefix('wakaf/transactions')->group(function () {
-        Route::get('/', [WaqfTransactionController::class, 'index'])->name('index');
-        Route::get('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'createReceipt'])->name('create-receipt');
-        Route::post('/buat-bukti-penerimaan/parse', [WaqfTransactionController::class, 'parseReceipt'])->name('parse-receipt');
-        Route::post('/buat-bukti-penerimaan', [WaqfTransactionController::class, 'storeReceipt'])->name('store-receipt');
-        Route::get('/{transaction}', [WaqfTransactionController::class, 'show'])->name('show');
-        Route::patch('/{transaction}/mark-paid', [WaqfTransactionController::class, 'markPaid'])->name('mark-paid');
-        Route::patch('/{transaction}/mark-cancelled', [WaqfTransactionController::class, 'markCancelled'])->name('mark-cancelled');
-    });
+    Route::name('finance.')->prefix('finance')
+        ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+            Route::get('/laporan', [FinanceController::class, 'report'])->name('report');
+        });
 
-    Route::name('finance.')->prefix('finance')->group(function () {
-        Route::get('/', [FinanceController::class, 'dashboard'])->name('dashboard');
+    Route::name('finance.')->prefix('finance')
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/pemasukan', [FinanceController::class, 'incomesIndex'])->name('incomes.index');
+            Route::get('/pemasukan/create', [FinanceController::class, 'incomesCreate'])->name('incomes.create');
+            Route::post('/pemasukan', [FinanceController::class, 'incomesStore'])->name('incomes.store');
+            Route::get('/pemasukan/{financeIncome}/edit', [FinanceController::class, 'incomesEdit'])->name('incomes.edit');
+            Route::put('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesUpdate'])->name('incomes.update');
 
-        Route::get('/pemasukan', [FinanceController::class, 'incomesIndex'])->name('incomes.index');
-        Route::get('/pemasukan/create', [FinanceController::class, 'incomesCreate'])->name('incomes.create');
-        Route::post('/pemasukan', [FinanceController::class, 'incomesStore'])->name('incomes.store');
-        Route::get('/pemasukan/{financeIncome}/edit', [FinanceController::class, 'incomesEdit'])->name('incomes.edit');
-        Route::put('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesUpdate'])->name('incomes.update');
-        Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
+            Route::get('/pengeluaran', [FinanceController::class, 'expensesIndex'])->name('expenses.index');
+            Route::get('/pengeluaran/create', [FinanceController::class, 'expensesCreate'])->name('expenses.create');
+            Route::post('/pengeluaran', [FinanceController::class, 'expensesStore'])->name('expenses.store');
+            Route::get('/pengeluaran/{financeExpense}/edit', [FinanceController::class, 'expensesEdit'])->name('expenses.edit');
+            Route::put('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesUpdate'])->name('expenses.update');
+        });
 
-        Route::get('/pengeluaran', [FinanceController::class, 'expensesIndex'])->name('expenses.index');
-        Route::get('/pengeluaran/create', [FinanceController::class, 'expensesCreate'])->name('expenses.create');
-        Route::post('/pengeluaran', [FinanceController::class, 'expensesStore'])->name('expenses.store');
-        Route::get('/pengeluaran/{financeExpense}/edit', [FinanceController::class, 'expensesEdit'])->name('expenses.edit');
-        Route::put('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesUpdate'])->name('expenses.update');
-        Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
+    Route::name('finance.')->prefix('finance')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
+            Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
+        });
 
-        Route::get('/laporan', [FinanceController::class, 'report'])->name('report');
-    });
+    Route::name('letters.outgoings.')->prefix('surat/keluar')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [LetterOutgoingController::class, 'create'])->name('create');
+            Route::post('/', [LetterOutgoingController::class, 'store'])->name('store');
+            Route::get('/{letterOutgoing}/edit', [LetterOutgoingController::class, 'edit'])->name('edit');
+            Route::get('/{letterOutgoing}/print', [LetterOutgoingController::class, 'print'])->name('print');
+            Route::get('/{letterOutgoing}/print-all', [LetterOutgoingController::class, 'printAll'])->name('print-all');
+            Route::get('/{letterOutgoing}/print/{recipient}', [LetterOutgoingController::class, 'printRecipient'])->name('print-recipient');
+            Route::put('/{letterOutgoing}', [LetterOutgoingController::class, 'update'])->name('update');
+            Route::get('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issueGet'])->name('issue.get');
+            Route::post('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issue'])->name('issue');
+            Route::put('/{letterOutgoing}/attachment', [LetterOutgoingController::class, 'updateAttachment'])->name('update-attachment');
+        });
 
-    Route::name('letters.outgoings.')->prefix('surat/keluar')->group(function () {
-        Route::get('/', [LetterOutgoingController::class, 'index'])->name('index');
-        Route::get('/create', [LetterOutgoingController::class, 'create'])->name('create');
-        Route::post('/', [LetterOutgoingController::class, 'store'])->name('store');
-        Route::get('/{letterOutgoing}', [LetterOutgoingController::class, 'show'])->name('show');
-        Route::get('/{letterOutgoing}/edit', [LetterOutgoingController::class, 'edit'])->name('edit');
-        Route::get('/{letterOutgoing}/preview', [LetterOutgoingController::class, 'preview'])->name('preview');
-        Route::get('/{letterOutgoing}/print', [LetterOutgoingController::class, 'print'])->name('print');
-        Route::get('/{letterOutgoing}/print-all', [LetterOutgoingController::class, 'printAll'])->name('print-all');
-        Route::get('/{letterOutgoing}/print/{recipient}', [LetterOutgoingController::class, 'printRecipient'])->name('print-recipient');
-        Route::put('/{letterOutgoing}', [LetterOutgoingController::class, 'update'])->name('update');
-        Route::get('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issueGet'])->name('issue.get');
-        Route::post('/{letterOutgoing}/issue', [LetterOutgoingController::class, 'issue'])->name('issue');
-        Route::put('/{letterOutgoing}/attachment', [LetterOutgoingController::class, 'updateAttachment'])->name('update-attachment');
-    });
+    Route::name('letters.outgoings.')->prefix('surat/keluar')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [LetterOutgoingController::class, 'index'])->name('index');
+            Route::get('/{letterOutgoing}', [LetterOutgoingController::class, 'show'])->name('show');
+            Route::get('/{letterOutgoing}/preview', [LetterOutgoingController::class, 'preview'])->name('preview');
+        });
 
-    Route::name('letters.signers.')->prefix('surat/signers')->group(function () {
-        Route::get('/', [LetterSignerController::class, 'index'])->name('index');
-        Route::post('/', [LetterSignerController::class, 'store'])->name('store');
-        Route::get('/{letterSigner}/edit', [LetterSignerController::class, 'edit'])->name('edit');
-        Route::put('/{letterSigner}', [LetterSignerController::class, 'update'])->name('update');
-        Route::delete('/{letterSigner}', [LetterSignerController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('letters.signers.')->prefix('surat/signers')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [LetterSignerController::class, 'index'])->name('index');
+            Route::post('/', [LetterSignerController::class, 'store'])->name('store');
+            Route::get('/{letterSigner}/edit', [LetterSignerController::class, 'edit'])->name('edit');
+            Route::put('/{letterSigner}', [LetterSignerController::class, 'update'])->name('update');
+            Route::delete('/{letterSigner}', [LetterSignerController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('letters.templates.')->prefix('surat/templates')->group(function () {
-        Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
-        Route::get('/create', [LetterTemplateController::class, 'create'])->name('create');
-        Route::post('/', [LetterTemplateController::class, 'store'])->name('store');
-        Route::get('/{letterTemplate}', [LetterTemplateController::class, 'show'])->name('show');
-        Route::get('/{letterTemplate}/edit', [LetterTemplateController::class, 'edit'])->name('edit');
-        Route::put('/{letterTemplate}', [LetterTemplateController::class, 'update'])->name('update');
-        Route::delete('/{letterTemplate}', [LetterTemplateController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('letters.templates.')->prefix('surat/templates')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
+            Route::get('/create', [LetterTemplateController::class, 'create'])->name('create');
+            Route::post('/', [LetterTemplateController::class, 'store'])->name('store');
+            Route::get('/{letterTemplate}', [LetterTemplateController::class, 'show'])->name('show');
+            Route::get('/{letterTemplate}/edit', [LetterTemplateController::class, 'edit'])->name('edit');
+            Route::put('/{letterTemplate}', [LetterTemplateController::class, 'update'])->name('update');
+            Route::delete('/{letterTemplate}', [LetterTemplateController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('letters.types.')->prefix('surat/types')->group(function () {
-        Route::get('/', [LetterTypeController::class, 'index'])->name('index');
-        Route::post('/', [LetterTypeController::class, 'store'])->name('store');
-        Route::get('/{letterType}/edit', [LetterTypeController::class, 'edit'])->name('edit');
-        Route::put('/{letterType}', [LetterTypeController::class, 'update'])->name('update');
-        Route::delete('/{letterType}', [LetterTypeController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('letters.types.')->prefix('surat/types')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [LetterTypeController::class, 'index'])->name('index');
+            Route::post('/', [LetterTypeController::class, 'store'])->name('store');
+            Route::get('/{letterType}/edit', [LetterTypeController::class, 'edit'])->name('edit');
+            Route::put('/{letterType}', [LetterTypeController::class, 'update'])->name('update');
+            Route::delete('/{letterType}', [LetterTypeController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('letters.settings.')->prefix('surat/settings')->group(function () {
-        Route::get('/', [LetterSettingController::class, 'edit'])->name('edit');
-        Route::put('/', [LetterSettingController::class, 'update'])->name('update');
-    });
+    Route::name('letters.settings.')->prefix('surat/settings')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [LetterSettingController::class, 'edit'])->name('edit');
+            Route::put('/', [LetterSettingController::class, 'update'])->name('update');
+        });
 
-    Route::name('letters.incomings.')->prefix('surat/masuk')->group(function () {
-        Route::get('/', [LetterIncomingController::class, 'index'])->name('index');
-        Route::get('/create', [LetterIncomingController::class, 'create'])->name('create');
-        Route::post('/', [LetterIncomingController::class, 'store'])->name('store');
-        Route::get('/{letterIncoming}', [LetterIncomingController::class, 'show'])->name('show');
-        Route::get('/{letterIncoming}/edit', [LetterIncomingController::class, 'edit'])->name('edit');
-        Route::put('/{letterIncoming}', [LetterIncomingController::class, 'update'])->name('update');
-        Route::delete('/{letterIncoming}', [LetterIncomingController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('letters.incomings.')->prefix('surat/masuk')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [LetterIncomingController::class, 'create'])->name('create');
+            Route::post('/', [LetterIncomingController::class, 'store'])->name('store');
+            Route::get('/{letterIncoming}/edit', [LetterIncomingController::class, 'edit'])->name('edit');
+            Route::put('/{letterIncoming}', [LetterIncomingController::class, 'update'])->name('update');
+            Route::delete('/{letterIncoming}', [LetterIncomingController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('sarpras.')->prefix('sarpras')->group(function () {
-        Route::get('/', [SarprasController::class, 'dashboard'])->name('dashboard');
+    Route::name('letters.incomings.')->prefix('surat/masuk')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [LetterIncomingController::class, 'index'])->name('index');
+            Route::get('/{letterIncoming}', [LetterIncomingController::class, 'show'])->name('show');
+        });
 
-        Route::get('/aset', [SarprasController::class, 'assetsIndex'])->name('assets.index');
-        Route::get('/aset/create', [SarprasController::class, 'assetsCreate'])->name('assets.create');
-        Route::post('/aset', [SarprasController::class, 'assetsStore'])->name('assets.store');
-        Route::get('/aset/{asset}', [SarprasController::class, 'assetsShow'])->name('assets.show');
-        Route::get('/aset/{asset}/edit', [SarprasController::class, 'assetsEdit'])->name('assets.edit');
-        Route::put('/aset/{asset}', [SarprasController::class, 'assetsUpdate'])->name('assets.update');
-        Route::delete('/aset/{asset}', [SarprasController::class, 'assetsDestroy'])->name('assets.destroy');
+    Route::name('sarpras.')->prefix('sarpras')
+        ->middleware('role:superadmin,admin,staf_sarpras,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [SarprasController::class, 'dashboard'])->name('dashboard');
+            Route::get('/laporan', [SarprasController::class, 'laporan'])->name('laporan');
+        });
 
-        Route::get('/ruangan', [SarprasController::class, 'roomsIndex'])->name('rooms.index');
-        Route::get('/ruangan/create', [SarprasController::class, 'roomsCreate'])->name('rooms.create');
-        Route::post('/ruangan', [SarprasController::class, 'roomsStore'])->name('rooms.store');
-        Route::get('/ruangan/{room}/edit', [SarprasController::class, 'roomsEdit'])->name('rooms.edit');
-        Route::put('/ruangan/{room}', [SarprasController::class, 'roomsUpdate'])->name('rooms.update');
-        Route::delete('/ruangan/{room}', [SarprasController::class, 'roomsDestroy'])->name('rooms.destroy');
+    Route::name('sarpras.')->prefix('sarpras')
+        ->middleware('role:superadmin,admin,staf_sarpras')
+        ->group(function () {
+            Route::get('/aset', [SarprasController::class, 'assetsIndex'])->name('assets.index');
+            Route::get('/aset/create', [SarprasController::class, 'assetsCreate'])->name('assets.create');
+            Route::post('/aset', [SarprasController::class, 'assetsStore'])->name('assets.store');
+            Route::get('/aset/{asset}', [SarprasController::class, 'assetsShow'])->name('assets.show');
+            Route::get('/aset/{asset}/edit', [SarprasController::class, 'assetsEdit'])->name('assets.edit');
+            Route::put('/aset/{asset}', [SarprasController::class, 'assetsUpdate'])->name('assets.update');
 
-        Route::get('/kebutuhan', [SarprasController::class, 'needsIndex'])->name('needs.index');
-        Route::get('/kebutuhan/create', [SarprasController::class, 'needsCreate'])->name('needs.create');
-        Route::post('/kebutuhan', [SarprasController::class, 'needsStore'])->name('needs.store');
-        Route::get('/kebutuhan/{need}/edit', [SarprasController::class, 'needsEdit'])->name('needs.edit');
-        Route::put('/kebutuhan/{need}', [SarprasController::class, 'needsUpdate'])->name('needs.update');
-        Route::delete('/kebutuhan/{need}', [SarprasController::class, 'needsDestroy'])->name('needs.destroy');
+            Route::get('/ruangan', [SarprasController::class, 'roomsIndex'])->name('rooms.index');
+            Route::get('/ruangan/create', [SarprasController::class, 'roomsCreate'])->name('rooms.create');
+            Route::post('/ruangan', [SarprasController::class, 'roomsStore'])->name('rooms.store');
+            Route::get('/ruangan/{room}/edit', [SarprasController::class, 'roomsEdit'])->name('rooms.edit');
+            Route::put('/ruangan/{room}', [SarprasController::class, 'roomsUpdate'])->name('rooms.update');
 
-        Route::get('/perbaikan', [SarprasController::class, 'maintenancesIndex'])->name('maintenances.index');
-        Route::get('/perbaikan/create', [SarprasController::class, 'maintenancesCreate'])->name('maintenances.create');
-        Route::post('/perbaikan', [SarprasController::class, 'maintenancesStore'])->name('maintenances.store');
-        Route::get('/perbaikan/{maintenance}/edit', [SarprasController::class, 'maintenancesEdit'])->name('maintenances.edit');
-        Route::put('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesUpdate'])->name('maintenances.update');
-        Route::delete('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesDestroy'])->name('maintenances.destroy');
+            Route::get('/kebutuhan', [SarprasController::class, 'needsIndex'])->name('needs.index');
+            Route::get('/kebutuhan/create', [SarprasController::class, 'needsCreate'])->name('needs.create');
+            Route::post('/kebutuhan', [SarprasController::class, 'needsStore'])->name('needs.store');
+            Route::get('/kebutuhan/{need}/edit', [SarprasController::class, 'needsEdit'])->name('needs.edit');
+            Route::put('/kebutuhan/{need}', [SarprasController::class, 'needsUpdate'])->name('needs.update');
 
-        Route::get('/pengadaan', [SarprasController::class, 'procurementsIndex'])->name('procurements.index');
-        Route::get('/pengadaan/create', [SarprasController::class, 'procurementsCreate'])->name('procurements.create');
-        Route::post('/pengadaan', [SarprasController::class, 'procurementsStore'])->name('procurements.store');
-        Route::get('/pengadaan/{procurement}/edit', [SarprasController::class, 'procurementsEdit'])->name('procurements.edit');
-        Route::put('/pengadaan/{procurement}', [SarprasController::class, 'procurementsUpdate'])->name('procurements.update');
-        Route::delete('/pengadaan/{procurement}', [SarprasController::class, 'procurementsDestroy'])->name('procurements.destroy');
+            Route::get('/perbaikan', [SarprasController::class, 'maintenancesIndex'])->name('maintenances.index');
+            Route::get('/perbaikan/create', [SarprasController::class, 'maintenancesCreate'])->name('maintenances.create');
+            Route::post('/perbaikan', [SarprasController::class, 'maintenancesStore'])->name('maintenances.store');
+            Route::get('/perbaikan/{maintenance}/edit', [SarprasController::class, 'maintenancesEdit'])->name('maintenances.edit');
+            Route::put('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesUpdate'])->name('maintenances.update');
 
-        Route::get('/laporan', [SarprasController::class, 'laporan'])->name('laporan');
-    });
+            Route::get('/pengadaan', [SarprasController::class, 'procurementsIndex'])->name('procurements.index');
+            Route::get('/pengadaan/create', [SarprasController::class, 'procurementsCreate'])->name('procurements.create');
+            Route::post('/pengadaan', [SarprasController::class, 'procurementsStore'])->name('procurements.store');
+            Route::get('/pengadaan/{procurement}/edit', [SarprasController::class, 'procurementsEdit'])->name('procurements.edit');
+            Route::put('/pengadaan/{procurement}', [SarprasController::class, 'procurementsUpdate'])->name('procurements.update');
+        });
 
-    Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')->group(function () {
-        Route::get('/', [FosterStudentController::class, 'index'])->name('index');
-        Route::get('/{submission}', [FosterStudentController::class, 'show'])->name('show');
-        Route::patch('/{submission}/status', [FosterStudentController::class, 'updateStatus'])->name('update-status');
-        Route::delete('/{submission}', [FosterStudentController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('sarpras.')->prefix('sarpras')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::delete('/aset/{asset}', [SarprasController::class, 'assetsDestroy'])->name('assets.destroy');
+            Route::delete('/ruangan/{room}', [SarprasController::class, 'roomsDestroy'])->name('rooms.destroy');
+            Route::delete('/kebutuhan/{need}', [SarprasController::class, 'needsDestroy'])->name('needs.destroy');
+            Route::delete('/perbaikan/{maintenance}', [SarprasController::class, 'maintenancesDestroy'])->name('maintenances.destroy');
+            Route::delete('/pengadaan/{procurement}', [SarprasController::class, 'procurementsDestroy'])->name('procurements.destroy');
+        });
 
-    Route::name('website.media.')->prefix('website/media')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'index'])->name('index');
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'mediaStore'])->name('store');
-        Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')
+        ->middleware('role:superadmin,admin,staf_kesiswaan')
+        ->group(function () {
+            Route::get('/', [FosterStudentController::class, 'index'])->name('index');
+            Route::get('/{submission}', [FosterStudentController::class, 'show'])->name('show');
+            Route::patch('/{submission}/status', [FosterStudentController::class, 'updateStatus'])->name('update-status');
+        });
 
-    Route::name('website.hero-images.')->prefix('website/hero-images')->group(function () {
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'store'])->name('store');
-        Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('orang-tua-asuh.')->prefix('orang-tua-asuh')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::delete('/{submission}', [FosterStudentController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.gallery-images.')->prefix('website/gallery-images')->group(function () {
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'galleryStore'])->name('store');
-        Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.media.')->prefix('website/media')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'mediaStore'])->name('store');
+            Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.categories.')->prefix('website/kategori-galeri')->group(function () {
-        Route::get('/', [GalleryCategoryController::class, 'index'])->name('index');
-        Route::get('/create', [GalleryCategoryController::class, 'create'])->name('create');
-        Route::post('/', [GalleryCategoryController::class, 'store'])->name('store');
-        Route::get('/{galleryCategory}/edit', [GalleryCategoryController::class, 'edit'])->name('edit');
-        Route::put('/{galleryCategory}', [GalleryCategoryController::class, 'update'])->name('update');
-        Route::patch('/{galleryCategory}/toggle', [GalleryCategoryController::class, 'toggle'])->name('toggle');
-        Route::delete('/{galleryCategory}', [GalleryCategoryController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.hero-images.')->prefix('website/hero-images')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'store'])->name('store');
+            Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.figures.')->prefix('website/tokoh')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'store'])->name('store');
-        Route::get('/{schoolFigure}/edit', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'edit'])->name('edit');
-        Route::put('/{schoolFigure}', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'update'])->name('update');
-        Route::patch('/{schoolFigure}/toggle', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolFigure}', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.gallery-images.')->prefix('website/gallery-images')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'galleryStore'])->name('store');
+            Route::patch('/{schoolImage}/toggle', [\App\Http\Controllers\Admin\SchoolImageController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolImage}', [\App\Http\Controllers\Admin\SchoolImageController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.faq.')->prefix('website/faq')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
-        Route::get('/{faq}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
-        Route::put('/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
-        Route::patch('/{faq}/toggle', [\App\Http\Controllers\Admin\FaqController::class, 'toggle'])->name('toggle');
-        Route::delete('/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.categories.')->prefix('website/kategori-galeri')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [GalleryCategoryController::class, 'index'])->name('index');
+            Route::get('/create', [GalleryCategoryController::class, 'create'])->name('create');
+            Route::post('/', [GalleryCategoryController::class, 'store'])->name('store');
+            Route::get('/{galleryCategory}/edit', [GalleryCategoryController::class, 'edit'])->name('edit');
+            Route::put('/{galleryCategory}', [GalleryCategoryController::class, 'update'])->name('update');
+            Route::patch('/{galleryCategory}/toggle', [GalleryCategoryController::class, 'toggle'])->name('toggle');
+            Route::delete('/{galleryCategory}', [GalleryCategoryController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.teachers.')->prefix('website/guru')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\TeacherController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\TeacherController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\TeacherController::class, 'store'])->name('store');
-        Route::get('/{teacher}/edit', [\App\Http\Controllers\Admin\TeacherController::class, 'edit'])->name('edit');
-        Route::put('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'update'])->name('update');
-        Route::patch('/{teacher}/toggle', [\App\Http\Controllers\Admin\TeacherController::class, 'toggle'])->name('toggle');
-        Route::delete('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'destroy'])->name('destroy');
-        Route::post('/{teacher}/generate-token', [\App\Http\Controllers\Admin\TeacherController::class, 'generateToken'])->name('generate-token');
-        Route::post('/{teacher}/reset-token', [\App\Http\Controllers\Admin\TeacherController::class, 'resetToken'])->name('reset-token');
-    });
+    Route::name('website.figures.')->prefix('website/tokoh')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'store'])->name('store');
+            Route::get('/{schoolFigure}/edit', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'edit'])->name('edit');
+            Route::put('/{schoolFigure}', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'update'])->name('update');
+            Route::patch('/{schoolFigure}/toggle', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolFigure}', [\App\Http\Controllers\Admin\SchoolFigureController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.subjects.')->prefix('website/mata-pelajaran')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'store'])->name('store');
-        Route::get('/{schoolSubject}/edit', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'edit'])->name('edit');
-        Route::put('/{schoolSubject}', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'update'])->name('update');
-        Route::patch('/{schoolSubject}/toggle', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolSubject}', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.faq.')->prefix('website/faq')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
+            Route::get('/{faq}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
+            Route::put('/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
+            Route::patch('/{faq}/toggle', [\App\Http\Controllers\Admin\FaqController::class, 'toggle'])->name('toggle');
+            Route::delete('/{faq}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('akademik.kalender.')->prefix('akademik/kalender')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'store'])->name('store');
-        Route::get('/{academicCalendarEvent}/edit', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'edit'])->name('edit');
-        Route::put('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'update'])->name('update');
-        Route::delete('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.teachers.')->prefix('website/guru')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\TeacherController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\TeacherController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\TeacherController::class, 'store'])->name('store');
+            Route::get('/{teacher}/edit', [\App\Http\Controllers\Admin\TeacherController::class, 'edit'])->name('edit');
+            Route::put('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'update'])->name('update');
+            Route::patch('/{teacher}/toggle', [\App\Http\Controllers\Admin\TeacherController::class, 'toggle'])->name('toggle');
+            Route::delete('/{teacher}', [\App\Http\Controllers\Admin\TeacherController::class, 'destroy'])->name('destroy');
+            Route::post('/{teacher}/generate-token', [\App\Http\Controllers\Admin\TeacherController::class, 'generateToken'])->name('generate-token');
+            Route::post('/{teacher}/reset-token', [\App\Http\Controllers\Admin\TeacherController::class, 'resetToken'])->name('reset-token');
+        });
 
-    Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\AcademicYearController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('store');
-        Route::get('/{academicYear}/edit', [\App\Http\Controllers\Admin\AcademicYearController::class, 'edit'])->name('edit');
-        Route::put('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'update'])->name('update');
-        Route::patch('/{academicYear}/set-current', [\App\Http\Controllers\Admin\AcademicYearController::class, 'setCurrent'])->name('set-current');
-        Route::delete('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('website.subjects.')->prefix('website/mata-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'store'])->name('store');
+            Route::get('/{schoolSubject}/edit', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'edit'])->name('edit');
+            Route::put('/{schoolSubject}', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'update'])->name('update');
+            Route::patch('/{schoolSubject}/toggle', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolSubject}', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('akademik.kelas.')->prefix('akademik/kelas')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\SchoolClassController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'store'])->name('store');
-        Route::get('/{schoolClass}/edit', [\App\Http\Controllers\Admin\SchoolClassController::class, 'edit'])->name('edit');
-        Route::put('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'update'])->name('update');
-        Route::patch('/{schoolClass}/toggle', [\App\Http\Controllers\Admin\SchoolClassController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('akademik.kalender.')->prefix('akademik/kalender')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'index'])->name('index');
+        });
 
-    Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'store'])->name('store');
-        Route::get('/{lessonScheduleSetting}/edit', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'edit'])->name('edit');
-        Route::put('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'update'])->name('update');
-        Route::patch('/{lessonScheduleSetting}/toggle', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'toggle'])->name('toggle');
-        Route::delete('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('akademik.kalender.')->prefix('akademik/kalender')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'store'])->name('store');
+            Route::get('/{academicCalendarEvent}/edit', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'edit'])->name('edit');
+            Route::put('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'update'])->name('update');
+            Route::delete('/{academicCalendarEvent}', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'store'])->name('store');
-        Route::get('/{lessonSchedule}/edit', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'edit'])->name('edit');
-        Route::put('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'update'])->name('update');
-        Route::delete('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('index');
+        });
 
-    Route::name('website.pages.')->prefix('website/konten')->group(function () {
-        Route::get('/', [WebsitePageController::class, 'index'])->name('index');
-        Route::get('/{websitePage}/edit', [WebsitePageController::class, 'edit'])->name('edit');
-        Route::put('/{websitePage}', [WebsitePageController::class, 'update'])->name('update');
-    });
+    Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\AcademicYearController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('store');
+            Route::get('/{academicYear}/edit', [\App\Http\Controllers\Admin\AcademicYearController::class, 'edit'])->name('edit');
+            Route::put('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'update'])->name('update');
+            Route::patch('/{academicYear}/set-current', [\App\Http\Controllers\Admin\AcademicYearController::class, 'setCurrent'])->name('set-current');
+            Route::delete('/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'destroy'])->name('destroy');
+        });
 
-    Route::name('website.menus.')->prefix('website/menu')->group(function () {
-        Route::get('/', [NavigationMenuController::class, 'index'])->name('index');
-        Route::get('/{navigationMenu}/edit', [NavigationMenuController::class, 'edit'])->name('edit');
-        Route::put('/{navigationMenu}', [NavigationMenuController::class, 'update'])->name('update');
-        Route::patch('/{navigationMenu}/toggle', [NavigationMenuController::class, 'toggle'])->name('toggle');
-    });
+    Route::name('akademik.kelas.')->prefix('akademik/kelas')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'index'])->name('index');
+        });
+
+    Route::name('akademik.kelas.')->prefix('akademik/kelas')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\SchoolClassController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'store'])->name('store');
+            Route::get('/{schoolClass}/edit', [\App\Http\Controllers\Admin\SchoolClassController::class, 'edit'])->name('edit');
+            Route::put('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'update'])->name('update');
+        });
+
+    Route::name('akademik.kelas.')->prefix('akademik/kelas')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::patch('/{schoolClass}/toggle', [\App\Http\Controllers\Admin\SchoolClassController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'index'])->name('index');
+        });
+
+    Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'store'])->name('store');
+            Route::get('/{lessonScheduleSetting}/edit', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'edit'])->name('edit');
+            Route::put('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'update'])->name('update');
+        });
+
+    Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
+        ->middleware('role:superadmin,admin')
+        ->group(function () {
+            Route::patch('/{lessonScheduleSetting}/toggle', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'toggle'])->name('toggle');
+            Route::delete('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'index'])->name('index');
+        });
+
+    Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'store'])->name('store');
+            Route::get('/{lessonSchedule}/edit', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'edit'])->name('edit');
+            Route::put('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'update'])->name('update');
+            Route::delete('/{lessonSchedule}', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::name('website.pages.')->prefix('website/konten')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [WebsitePageController::class, 'index'])->name('index');
+            Route::get('/{websitePage}/edit', [WebsitePageController::class, 'edit'])->name('edit');
+            Route::put('/{websitePage}', [WebsitePageController::class, 'update'])->name('update');
+        });
+
+    Route::name('website.menus.')->prefix('website/menu')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [NavigationMenuController::class, 'index'])->name('index');
+            Route::get('/{navigationMenu}/edit', [NavigationMenuController::class, 'edit'])->name('edit');
+            Route::put('/{navigationMenu}', [NavigationMenuController::class, 'update'])->name('update');
+            Route::patch('/{navigationMenu}/toggle', [NavigationMenuController::class, 'toggle'])->name('toggle');
+        });
 
     Route::put('organization-structures/page', [OrganizationStructureController::class, 'updatePage'])
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
         ->name('organization-structures.page.update');
-    Route::resource('organization-structures', OrganizationStructureController::class)
-        ->except(['show']);
 
-    Route::name('website.values.')->prefix('website/nilai-utama')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\SchoolValueController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\SchoolValueController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\SchoolValueController::class, 'store'])->name('store');
-        Route::get('/{schoolValue}/edit', [\App\Http\Controllers\Admin\SchoolValueController::class, 'edit'])->name('edit');
-        Route::put('/{schoolValue}', [\App\Http\Controllers\Admin\SchoolValueController::class, 'update'])->name('update');
-        Route::patch('/{schoolValue}/toggle', [\App\Http\Controllers\Admin\SchoolValueController::class, 'toggle'])->name('toggle');
-        Route::delete('/{schoolValue}', [\App\Http\Controllers\Admin\SchoolValueController::class, 'destroy'])->name('destroy');
-    });
+    Route::resource('organization-structures', OrganizationStructureController::class)
+        ->except(['show'])
+        ->middleware('role:superadmin,admin,staf_tata_usaha');
+
+    Route::name('website.values.')->prefix('website/nilai-utama')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SchoolValueController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\SchoolValueController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\SchoolValueController::class, 'store'])->name('store');
+            Route::get('/{schoolValue}/edit', [\App\Http\Controllers\Admin\SchoolValueController::class, 'edit'])->name('edit');
+            Route::put('/{schoolValue}', [\App\Http\Controllers\Admin\SchoolValueController::class, 'update'])->name('update');
+            Route::patch('/{schoolValue}/toggle', [\App\Http\Controllers\Admin\SchoolValueController::class, 'toggle'])->name('toggle');
+            Route::delete('/{schoolValue}', [\App\Http\Controllers\Admin\SchoolValueController::class, 'destroy'])->name('destroy');
+        });
 
     Route::name('users.')->prefix('users')->middleware('superadmin')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
@@ -694,14 +861,21 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
     });
 
-    Route::name('ai-faqs.')->prefix('ai-faqs')->middleware('auth')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\AiFaqController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'store'])->name('store');
-        Route::get('/{aiFaq}/edit', [\App\Http\Controllers\Admin\AiFaqController::class, 'edit'])->name('edit');
-        Route::put('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'update'])->name('update');
-        Route::delete('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'destroy'])->name('destroy');
-    });
+    Route::name('ai-faqs.')->prefix('ai-faqs')
+        ->middleware('role:superadmin,admin,staf_tata_usaha,guru')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'index'])->name('index');
+        });
+
+    Route::name('ai-faqs.')->prefix('ai-faqs')
+        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->group(function () {
+            Route::get('/create', [\App\Http\Controllers\Admin\AiFaqController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\AiFaqController::class, 'store'])->name('store');
+            Route::get('/{aiFaq}/edit', [\App\Http\Controllers\Admin\AiFaqController::class, 'edit'])->name('edit');
+            Route::put('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'update'])->name('update');
+            Route::delete('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'destroy'])->name('destroy');
+        });
 });
 
 Route::get('/progress/{token}', [PublicProgressController::class, 'show'])->name('public.progress');
