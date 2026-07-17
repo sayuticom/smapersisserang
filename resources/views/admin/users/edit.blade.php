@@ -35,21 +35,37 @@
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
             </div>
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Level Akses</label>
-                @if(Auth::id() === $user->id)
-                    <input type="hidden" name="role" value="{{ $user->role }}">
-                    <div class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                        {{ $user->isSuperadmin() ? 'Superadmin' : 'Admin' }}
-                        <span class="text-xs text-gray-400 ml-2">(Tidak dapat mengubah level diri sendiri)</span>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Level Akses <span class="text-red-500">*</span></label>
+                @if(Auth::id() === $user->id && $user->isSuperadmin())
+                    <div class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 mb-3">
+                        Anda adalah Superadmin. Role tidak dapat diubah untuk diri sendiri.
                     </div>
+                    @foreach($roles as $role)
+                        @if(in_array($role->id, old('roles', $user->roles->pluck('id')->toArray())))
+                            <input type="hidden" name="roles[]" value="{{ $role->id }}">
+                        @endif
+                    @endforeach
                 @else
-                    <select name="role" id="role"
-                            class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                        <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="superadmin" {{ old('role', $user->role) === 'superadmin' ? 'selected' : '' }}>Superadmin</option>
-                    </select>
+                    <div class="space-y-2">
+                        @foreach($roles as $role)
+                            @if($role->name === 'superadmin' && !auth()->user()->isSuperadmin())
+                                @continue
+                            @endif
+                            @php
+                                $checked = in_array($role->id, old('roles', $user->roles->pluck('id')->toArray()));
+                            @endphp
+                            <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                                {{ $checked ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300' }}">
+                                <input type="checkbox" name="roles[]" value="{{ $role->id }}"
+                                       {{ $checked ? 'checked' : '' }}
+                                       class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm font-medium text-gray-700">{{ $role->display_name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
                 @endif
-                @error('role')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('roles')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('roles.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="flex justify-end gap-3">
                 <a href="{{ route('admin.users.index') }}"

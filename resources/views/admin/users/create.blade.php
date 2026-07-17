@@ -34,13 +34,23 @@
                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
             </div>
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Level Akses <span class="text-red-500">*</span></label>
-                <select name="role" id="role"
-                        class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm" required>
-                    <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="superadmin" {{ old('role') === 'superadmin' ? 'selected' : '' }}>Superadmin</option>
-                </select>
-                @error('role')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                <label class="block text-sm font-medium text-gray-700 mb-2">Level Akses <span class="text-red-500">*</span></label>
+                <div class="space-y-2">
+                    @foreach($roles as $role)
+                        @if($role->name === 'superadmin' && !auth()->user()->isSuperadmin())
+                            @continue
+                        @endif
+                        <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors
+                            {{ in_array($role->id, old('roles', [])) ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300' }}">
+                            <input type="checkbox" name="roles[]" value="{{ $role->id }}"
+                                   {{ in_array($role->id, old('roles', [])) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-sm font-medium text-gray-700">{{ $role->display_name }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('roles')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('roles.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div class="flex justify-end gap-3">
                 <a href="{{ route('admin.users.index') }}"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,13 +13,14 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('created_at', 'desc')->get();
+        $users = User::with('roles')->orderBy('created_at', 'desc')->get();
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        return view('admin.users.create');
+        $roles = Role::orderBy('name')->get();
+        return view('admin.users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -27,15 +29,25 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in(['admin', 'superadmin'])],
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,id',
         ]);
 
-        User::create([
+        if (! $request->user()->isSuperadmin()) {
+            $superadminRole = Role::where('name', 'superadmin')->first();
+            if ($superadminRole && in_array($superadminRole->id, $validated['roles'])) {
+                abort(403, 'Anda tidak memiliki izin untuk menetapkan role Superadmin.');
+            }
+        }
+
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
+            'role' => 'admin',
         ]);
+
+        $user->roles()->attach($validated['roles']);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -43,7 +55,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $user->load('roles');
+        $roles = Role::orderBy('name')->get();
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
@@ -52,28 +66,59 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,id',
         ];
 
-        if ($request->user()->isSuperadmin() && $request->user()->id !== $user->id) {
-            $rules['role'] = ['required', Rule::in(['admin', 'superadmin'])];
+        $validated = $request->validate($rules);
+
+        $currentUser = $request->user();
+        $superadminRole = Role::where('name', 'superadmin')->first();
+        $requestedRoles = Role::whereIn('id', $validated['roles'])->pluck('name')->toArray();
+        $requestedSuperadmin = in_array('superadmin', $requestedRoles);
+        $userHasSuperadmin = $user->isSuperadmin();
+
+        if (!$currentUser->isSuperadmin()) {
+            abort(403, 'Hanya superadmin yang dapat mengubah role.');
         }
 
-        $validated = $request->validate($rules);
+        if ($currentUser->id !== $user->id && $userHasSuperadmin && !$currentUser->isSuperadmin()) {
+            abort(403, 'Anda tidak memiliki izin untuk mengubah user Superadmin.');
+        }
+
+        if ($currentUser->id === $user->id && !$requestedSuperadmin) {
+            abort(403, 'Anda tidak dapat mencabut role Superadmin dari diri sendiri.');
+        }
+
+        if ($userHasSuperadmin && !$requestedSuperadmin) {
+            $otherSuperadminExists = User::whereHas('roles', fn($q) => $q->where('name', 'superadmin'))
+                ->where('id', '!=', $user->id)
+                ->exists();
+            if (!$otherSuperadminExists) {
+                abort(403, 'Tidak dapat mencabut Superadmin. Harus ada setidaknya satu Superadmin.');
+            }
+        }
+
+        if (!$currentUser->isSuperadmin() && $requestedSuperadmin) {
+            abort(403, 'Anda tidak memiliki izin untuk menetapkan role Superadmin.');
+        }
 
         $data = [
             'name' => $validated['name'],
             'email' => $validated['email'],
         ];
 
-        if (isset($validated['role'])) {
-            $data['role'] = $validated['role'];
-        }
-
         if (filled($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);
         }
 
         $user->update($data);
+        $user->roles()->sync($validated['roles']);
+
+        $firstRole = Role::whereIn('id', $validated['roles'])->orderBy('name')->first();
+        if ($firstRole) {
+            $user->updateQuietly(['role' => $firstRole->name]);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil diperbarui.');

@@ -39,11 +39,26 @@
                                     <td class="px-4 py-3 font-medium text-gray-900">{{ $user->name }}</td>
                                     <td class="px-4 py-3 text-gray-600">{{ $user->email }}</td>
                                     <td class="px-4 py-3">
-                                        @if($user->isSuperadmin())
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Superadmin</span>
-                                        @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Admin</span>
-                                        @endif
+                                        <div class="flex flex-wrap gap-1">
+                                            @forelse($user->roles as $role)
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                    {{ $role->name === 'superadmin' ? 'bg-amber-100 text-amber-800' : '' }}
+                                                    {{ $role->name === 'admin' ? 'bg-emerald-100 text-emerald-800' : '' }}
+                                                    {{ $role->name === 'guru' ? 'bg-blue-100 text-blue-800' : '' }}
+                                                    {{ $role->name === 'kepala_sekolah' ? 'bg-purple-100 text-purple-800' : '' }}
+                                                    {{ $role->name === 'staf_tata_usaha' ? 'bg-slate-100 text-slate-800' : '' }}
+                                                    {{ $role->name === 'staf_keuangan' ? 'bg-cyan-100 text-cyan-800' : '' }}
+                                                    {{ $role->name === 'staf_kesiswaan' ? 'bg-indigo-100 text-indigo-800' : '' }}
+                                                    {{ $role->name === 'staf_sarpras' ? 'bg-rose-100 text-rose-800' : '' }}
+                                                    {{ !in_array($role->name, ['superadmin','admin','guru','kepala_sekolah','staf_tata_usaha','staf_keuangan','staf_kesiswaan','staf_sarpras']) ? 'bg-gray-100 text-gray-800' : '' }}">
+                                                    {{ $role->display_name }}
+                                                </span>
+                                            @empty
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                                    {{ $user->role ? ucfirst($user->role) : 'Tanpa role' }}
+                                                </span>
+                                            @endforelse
+                                        </div>
                                     </td>
                                     <td class="px-4 py-3 text-gray-500">{{ $user->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="px-4 py-3 text-right">

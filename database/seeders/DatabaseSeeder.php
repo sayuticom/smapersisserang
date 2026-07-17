@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            RoleSeeder::class,
             SchoolSettingSeeder::class,
             SchoolValueSeeder::class,
             WebsitePageSeeder::class,
@@ -30,12 +31,18 @@ class DatabaseSeeder extends Seeder
             WaqfSettingSeeder::class,
         ]);
 
-        User::updateOrCreate(
+        $user = User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
                 'password' => Hash::make('password'),
             ]
         );
+
+        $adminRole = \App\Models\Role::firstOrCreate(
+            ['name' => 'admin'],
+            ['display_name' => 'Admin', 'guard_name' => 'web']
+        );
+        $user->roles()->syncWithoutDetaching([$adminRole->id]);
     }
 }
