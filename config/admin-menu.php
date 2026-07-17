@@ -21,6 +21,7 @@ return [
                     'route_active' => 'admin.ppdb.dashboard',
                     'icon' => 'chart-bar',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
+                    'permission' => 'ppdb.dashboard.view',
                 ],
                 [
                     'key' => 'ppdb.applications',
@@ -29,6 +30,7 @@ return [
                     'route_active' => 'admin.ppdb.applications.*',
                     'icon' => 'document',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
+                    'permission' => 'ppdb.applications.view',
                 ],
                 [
                     'key' => 'ppdb.settings',
@@ -37,6 +39,7 @@ return [
                     'route_active' => 'admin.ppdb.settings.*',
                     'icon' => 'gear',
                     'roles' => ['superadmin', 'admin'],
+                    'permission' => 'ppdb.settings.manage',
                 ],
             ],
         ],
@@ -50,6 +53,7 @@ return [
                     'route_active' => 'admin.finance.dashboard',
                     'icon' => 'pie-chart',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                    'permission' => 'finance.dashboard.view',
                 ],
                 [
                     'key' => 'finance.incomes',
@@ -59,6 +63,7 @@ return [
                     'icon' => 'arrow-down',
                     'indent' => true,
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'finance.transactions.manage',
                 ],
                 [
                     'key' => 'finance.expenses',
@@ -68,6 +73,7 @@ return [
                     'icon' => 'arrow-up',
                     'indent' => true,
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'finance.transactions.manage',
                 ],
                 [
                     'key' => 'finance.report',
@@ -77,6 +83,7 @@ return [
                     'icon' => 'clipboard',
                     'indent' => true,
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                    'permission' => 'finance.report.view',
                 ],
             ],
         ],
@@ -90,6 +97,7 @@ return [
                     'route_active' => 'admin.letters.outgoings.*',
                     'icon' => 'send',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'kepala_sekolah'],
+                    'permission' => 'letters.outgoings.view',
                 ],
                 [
                     'key' => 'letters.incomings',
@@ -98,6 +106,7 @@ return [
                     'route_active' => 'admin.letters.incomings.*',
                     'icon' => 'inbox',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'kepala_sekolah'],
+                    'permission' => 'letters.incomings.view',
                 ],
                 [
                     'key' => 'letters.templates',
@@ -106,6 +115,7 @@ return [
                     'route_active' => 'admin.letters.templates.*',
                     'icon' => 'document',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'letters.templates.manage',
                 ],
                 [
                     'key' => 'letters.signers',
@@ -114,6 +124,7 @@ return [
                     'route_active' => 'admin.letters.signers.*',
                     'icon' => 'pen',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'letters.signers.manage',
                 ],
                 [
                     'key' => 'letters.types',
@@ -122,6 +133,7 @@ return [
                     'route_active' => 'admin.letters.types.*',
                     'icon' => 'tag',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'letters.types.manage',
                 ],
                 [
                     'key' => 'letters.settings',
@@ -130,6 +142,7 @@ return [
                     'route_active' => 'admin.letters.settings.*',
                     'icon' => 'gear',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'letters.settings.manage',
                 ],
             ],
         ],
@@ -143,6 +156,7 @@ return [
                     'route_active' => 'admin.website.donasi-pendidikan.*',
                     'icon' => 'hands',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.education.manage',
                 ],
                 [
                     'key' => 'donation.transactions',
@@ -151,6 +165,7 @@ return [
                     'route_active' => 'admin.donasi-transactions.index',
                     'icon' => 'checkmark',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                    'permission' => 'donation.transactions.view',
                 ],
                 [
                     'key' => 'donation.receipt',
@@ -159,6 +174,7 @@ return [
                     'route_active' => 'admin.donasi-transactions.create-receipt',
                     'icon' => 'plus',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.transactions.manage',
                 ],
                 [
                     'key' => 'donation.infaq-wa',
@@ -167,6 +183,7 @@ return [
                     'route_active' => 'admin.infaq-barang-wa.*',
                     'icon' => 'chat',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.infaq.manage',
                 ],
                 [
                     'key' => 'donation.share-template',
@@ -175,6 +192,7 @@ return [
                     'route_active' => 'admin.donasi-pendidikan.share-template',
                     'icon' => 'chat-dots',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.education.manage',
                 ],
             ],
         ],
@@ -188,6 +206,7 @@ return [
                     'route_active' => 'admin.orang-tua-asuh.*',
                     'icon' => 'users',
                     'roles' => ['superadmin', 'admin', 'staf_kesiswaan'],
+                    'permission' => 'foster.parents.view',
                 ],
             ],
         ],
@@ -201,6 +220,7 @@ return [
                     'route_active' => 'admin.wakaf.settings.*',
                     'icon' => 'gear',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'wakaf.settings.manage',
                 ],
                 [
                     'key' => 'wakaf.transactions',
@@ -209,6 +229,7 @@ return [
                     'route_active' => 'admin.wakaf.transactions.index',
                     'icon' => 'checkmark',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                    'permission' => 'wakaf.transactions.view',
                 ],
                 [
                     'key' => 'wakaf.receipt',
@@ -217,6 +238,7 @@ return [
                     'route_active' => 'admin.wakaf.transactions.create-receipt',
                     'icon' => 'plus',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'wakaf.transactions.manage',
                 ],
             ],
         ],
@@ -230,6 +252,7 @@ return [
                     'route_active' => 'admin.sarpras.dashboard',
                     'icon' => 'home',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras', 'kepala_sekolah'],
+                    'permission' => 'sarpras.dashboard.view',
                 ],
                 [
                     'key' => 'sarpras.assets',
@@ -238,6 +261,7 @@ return [
                     'route_active' => 'admin.sarpras.assets.*',
                     'icon' => 'box',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
+                    'permission' => 'sarpras.assets.manage',
                 ],
                 [
                     'key' => 'sarpras.rooms',
@@ -246,6 +270,7 @@ return [
                     'route_active' => 'admin.sarpras.rooms.*',
                     'icon' => 'folder',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
+                    'permission' => 'sarpras.rooms.manage',
                 ],
                 [
                     'key' => 'sarpras.needs',
@@ -254,6 +279,7 @@ return [
                     'route_active' => 'admin.sarpras.needs.*',
                     'icon' => 'plus-circle',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
+                    'permission' => 'sarpras.needs.manage',
                 ],
                 [
                     'key' => 'sarpras.maintenances',
@@ -262,6 +288,7 @@ return [
                     'route_active' => 'admin.sarpras.maintenances.*',
                     'icon' => 'gear',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
+                    'permission' => 'sarpras.maintenances.manage',
                 ],
                 [
                     'key' => 'sarpras.procurements',
@@ -270,6 +297,7 @@ return [
                     'route_active' => 'admin.sarpras.procurements.*',
                     'icon' => 'shopping-bag',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
+                    'permission' => 'sarpras.procurements.manage',
                 ],
                 [
                     'key' => 'sarpras.report',
@@ -278,6 +306,7 @@ return [
                     'route_active' => 'admin.sarpras.laporan',
                     'icon' => 'clipboard',
                     'roles' => ['superadmin', 'admin', 'staf_sarpras', 'kepala_sekolah'],
+                    'permission' => 'sarpras.report.view',
                 ],
             ],
         ],
@@ -291,6 +320,7 @@ return [
                     'route_active' => 'admin.website.settings.edit',
                     'icon' => 'gear',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.settings.manage',
                 ],
                 [
                     'key' => 'website.boarding',
@@ -300,6 +330,7 @@ return [
                     'icon' => 'home',
                     'indent' => true,
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.boarding.manage',
                 ],
                 [
                     'key' => 'website.media',
@@ -308,6 +339,7 @@ return [
                     'route_active' => 'admin.website.media.*',
                     'icon' => 'image',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.media.manage',
                 ],
                 [
                     'key' => 'website.categories',
@@ -316,6 +348,7 @@ return [
                     'route_active' => 'admin.website.categories.*',
                     'icon' => 'tag',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.categories.manage',
                 ],
                 [
                     'key' => 'website.pages',
@@ -324,6 +357,7 @@ return [
                     'route_active' => 'admin.website.pages.*',
                     'icon' => 'list',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.pages.manage',
                 ],
                 [
                     'key' => 'website.menus',
@@ -332,6 +366,7 @@ return [
                     'route_active' => 'admin.website.menus.*',
                     'icon' => 'menu-bars',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.menus.manage',
                 ],
                 [
                     'key' => 'website.organization',
@@ -340,6 +375,7 @@ return [
                     'route_active' => 'admin.organization-structures.*',
                     'icon' => 'grid',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.organization.manage',
                 ],
                 [
                     'key' => 'website.values',
@@ -348,6 +384,7 @@ return [
                     'route_active' => 'admin.website.values.*',
                     'icon' => 'star',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.values.manage',
                 ],
                 [
                     'key' => 'website.figures',
@@ -356,6 +393,7 @@ return [
                     'route_active' => 'admin.website.figures.*',
                     'icon' => 'person',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.figures.manage',
                 ],
             ],
         ],
@@ -369,6 +407,7 @@ return [
                     'route_active' => 'admin.website.teachers.*',
                     'icon' => 'person',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.teachers.manage',
                 ],
                 [
                     'key' => 'academic.subjects',
@@ -377,6 +416,7 @@ return [
                     'route_active' => 'admin.website.subjects.*',
                     'icon' => 'book',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.subjects.manage',
                 ],
                 [
                     'label' => 'Kalender dan Jadwal',
@@ -391,6 +431,7 @@ return [
                             'route_active' => 'admin.akademik.kalender.*',
                             'icon' => 'calendar',
                             'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
+                            'permission' => 'academic.calendar.view',
                         ],
                         [
                             'key' => 'academic.schedule',
@@ -399,6 +440,7 @@ return [
                             'route_active' => 'admin.akademik.jadwal-pelajaran.*',
                             'icon' => 'checkmark',
                             'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
+                            'permission' => 'academic.schedule.view',
                         ],
                     ],
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
@@ -410,6 +452,7 @@ return [
                     'route_active' => 'admin.akademik.tahun-pelajaran.*',
                     'icon' => 'list-details',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
+                    'permission' => 'academic.years.view',
                 ],
                 [
                     'key' => 'academic.classes',
@@ -418,6 +461,7 @@ return [
                     'route_active' => 'admin.akademik.kelas.*',
                     'icon' => 'building',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
+                    'permission' => 'academic.classes.view',
                 ],
                 [
                     'key' => 'academic.hours',
@@ -426,6 +470,7 @@ return [
                     'route_active' => 'admin.akademik.jam-pelajaran.*',
                     'icon' => 'clock',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
+                    'permission' => 'academic.hours.view',
                 ],
             ],
         ],
@@ -439,6 +484,7 @@ return [
                     'route_active' => 'admin.ai-faqs.*',
                     'icon' => 'lightbulb',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'guru'],
+                    'permission' => 'website.faq-ai.view',
                 ],
                 [
                     'key' => 'system.users',
@@ -447,6 +493,7 @@ return [
                     'route_active' => 'admin.users.*',
                     'icon' => 'users',
                     'roles' => ['superadmin'],
+                    'permission' => 'system.users.manage',
                 ],
                 [
                     'key' => 'system.roles',
@@ -455,6 +502,7 @@ return [
                     'route_active' => 'admin.roles.*',
                     'icon' => 'shield',
                     'roles' => ['superadmin'],
+                    'permission' => 'system.roles.manage',
                 ],
                 [
                     'key' => 'system.menu-access',
@@ -463,6 +511,7 @@ return [
                     'route_active' => 'admin.menu-access.*',
                     'icon' => 'eye',
                     'roles' => ['superadmin'],
+                    'permission' => 'system.menu.manage',
                 ],
             ],
         ],

@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Role extends Model
+class Permission extends Model
 {
     protected $fillable = [
         'name',
+        'module',
+        'action',
         'display_name',
-        'guard_name',
         'description',
+        'group_name',
+        'guard_name',
         'is_system',
         'is_active',
         'sort_order',
@@ -26,15 +29,9 @@ class Role extends Model
         ];
     }
 
-    public function users(): BelongsToMany
+    public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'role_user')
-            ->withTimestamps();
-    }
-
-    public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(Permission::class, 'permission_role')
+        return $this->belongsToMany(Role::class, 'permission_role')
             ->withTimestamps()
             ->withPivot('granted_by');
     }
@@ -47,15 +44,5 @@ class Role extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('name');
-    }
-
-    public function isSystem(): bool
-    {
-        return $this->is_system ?? false;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->is_active ?? true;
     }
 }

@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             DonationShareTemplateSeeder::class,
             LetterTypeSeeder::class,
             WaqfSettingSeeder::class,
+            PermissionSeeder::class,
         ]);
 
         $user = User::updateOrCreate(
