@@ -28,6 +28,7 @@ use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicLessonScheduleController;
 use App\Http\Controllers\PublicProgressController;
 use App\Http\Controllers\WaqfController;
+use App\Http\Controllers\Admin\MenuAccessController;
 use App\Http\Controllers\Admin\WaqfSettingController;
 use App\Http\Controllers\Admin\WaqfTransactionController;
 use App\Models\AdmissionYear;
@@ -875,6 +876,13 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::get('/{aiFaq}/edit', [\App\Http\Controllers\Admin\AiFaqController::class, 'edit'])->name('edit');
             Route::put('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'update'])->name('update');
             Route::delete('/{aiFaq}', [\App\Http\Controllers\Admin\AiFaqController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::name('menu-access.')->prefix('menu-access')
+        ->middleware('role:superadmin')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\MenuAccessController::class, 'index'])->name('index');
+            Route::put('/', [\App\Http\Controllers\Admin\MenuAccessController::class, 'update'])->name('update');
         });
 });
 

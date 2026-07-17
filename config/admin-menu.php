@@ -2,6 +2,7 @@
 
 return [
     'dashboard' => [
+        'key' => 'dashboard',
         'label' => 'Dashboard',
         'route' => 'dashboard',
         'route_active' => 'dashboard',
@@ -14,6 +15,7 @@ return [
             'label' => 'SPMB',
             'items' => [
                 [
+                    'key' => 'ppdb.dashboard',
                     'label' => 'Dashboard SPMB',
                     'route' => 'admin.ppdb.dashboard',
                     'route_active' => 'admin.ppdb.dashboard',
@@ -21,6 +23,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'ppdb.applications',
                     'label' => 'Data Pendaftaran',
                     'route' => 'admin.ppdb.applications.index',
                     'route_active' => 'admin.ppdb.applications.*',
@@ -28,6 +31,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'ppdb.settings',
                     'label' => 'Pengaturan SPMB',
                     'route' => 'admin.ppdb.settings.edit',
                     'route_active' => 'admin.ppdb.settings.*',
@@ -40,6 +44,7 @@ return [
             'label' => 'KEUANGAN',
             'items' => [
                 [
+                    'key' => 'finance.dashboard',
                     'label' => 'Dashboard Keuangan',
                     'route' => 'admin.finance.dashboard',
                     'route_active' => 'admin.finance.dashboard',
@@ -47,6 +52,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'finance.incomes',
                     'label' => 'Pemasukan',
                     'route' => 'admin.finance.incomes.index',
                     'route_active' => 'admin.finance.incomes.*',
@@ -55,6 +61,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'finance.expenses',
                     'label' => 'Pengeluaran',
                     'route' => 'admin.finance.expenses.index',
                     'route_active' => 'admin.finance.expenses.*',
@@ -63,6 +70,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'finance.report',
                     'label' => 'Laporan',
                     'route' => 'admin.finance.report',
                     'route_active' => 'admin.finance.report',
@@ -76,6 +84,7 @@ return [
             'label' => 'SURAT MENYURAT',
             'items' => [
                 [
+                    'key' => 'letters.outgoings',
                     'label' => 'Surat Keluar',
                     'route' => 'admin.letters.outgoings.index',
                     'route_active' => 'admin.letters.outgoings.*',
@@ -83,6 +92,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'letters.incomings',
                     'label' => 'Surat Masuk',
                     'route' => 'admin.letters.incomings.index',
                     'route_active' => 'admin.letters.incomings.*',
@@ -90,6 +100,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'letters.templates',
                     'label' => 'Template Surat',
                     'route' => 'admin.letters.templates.index',
                     'route_active' => 'admin.letters.templates.*',
@@ -97,6 +108,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'letters.signers',
                     'label' => 'Penandatangan',
                     'route' => 'admin.letters.signers.index',
                     'route_active' => 'admin.letters.signers.*',
@@ -104,6 +116,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'letters.types',
                     'label' => 'Jenis Surat',
                     'route' => 'admin.letters.types.index',
                     'route_active' => 'admin.letters.types.*',
@@ -111,6 +124,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'letters.settings',
                     'label' => 'Pengaturan Surat',
                     'route' => 'admin.letters.settings.edit',
                     'route_active' => 'admin.letters.settings.*',
@@ -123,6 +137,7 @@ return [
             'label' => 'DONASI',
             'items' => [
                 [
+                    'key' => 'donation.education',
                     'label' => 'Donasi Pendidikan',
                     'route' => 'admin.website.donasi-pendidikan.edit',
                     'route_active' => 'admin.website.donasi-pendidikan.*',
@@ -130,6 +145,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'donation.transactions',
                     'label' => 'Donasi Masuk',
                     'route' => 'admin.donasi-transactions.index',
                     'route_active' => 'admin.donasi-transactions.index',
@@ -137,6 +153,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'donation.receipt',
                     'label' => 'Bukti Penerimaan Donasi',
                     'route' => 'admin.donasi-transactions.create-receipt',
                     'route_active' => 'admin.donasi-transactions.create-receipt',
@@ -144,6 +161,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'donation.infaq-wa',
                     'label' => 'Data WA Infaq Barang',
                     'route' => 'admin.infaq-barang-wa.index',
                     'route_active' => 'admin.infaq-barang-wa.*',
@@ -151,6 +169,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'donation.share-template',
                     'label' => 'Template Share WA',
                     'route' => 'admin.donasi-pendidikan.share-template',
                     'route_active' => 'admin.donasi-pendidikan.share-template',
@@ -163,6 +182,7 @@ return [
             'label' => 'ORANG TUA ASUH',
             'items' => [
                 [
+                    'key' => 'foster.parents',
                     'label' => 'Pengajuan OTA',
                     'route' => 'admin.orang-tua-asuh.index',
                     'route_active' => 'admin.orang-tua-asuh.*',
@@ -175,6 +195,7 @@ return [
             'label' => 'WAKAF',
             'items' => [
                 [
+                    'key' => 'wakaf.settings',
                     'label' => 'Pengaturan Wakaf',
                     'route' => 'admin.wakaf.settings.edit',
                     'route_active' => 'admin.wakaf.settings.*',
@@ -182,6 +203,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 ],
                 [
+                    'key' => 'wakaf.transactions',
                     'label' => 'Wakaf Masuk',
                     'route' => 'admin.wakaf.transactions.index',
                     'route_active' => 'admin.wakaf.transactions.index',
@@ -189,6 +211,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'wakaf.receipt',
                     'label' => 'Buat Bukti Penerimaan',
                     'route' => 'admin.wakaf.transactions.create-receipt',
                     'route_active' => 'admin.wakaf.transactions.create-receipt',
@@ -201,6 +224,7 @@ return [
             'label' => 'SARPRAS',
             'items' => [
                 [
+                    'key' => 'sarpras.dashboard',
                     'label' => 'Dashboard Sarpras',
                     'route' => 'admin.sarpras.dashboard',
                     'route_active' => 'admin.sarpras.dashboard',
@@ -208,6 +232,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'sarpras.assets',
                     'label' => 'Data Aset',
                     'route' => 'admin.sarpras.assets.index',
                     'route_active' => 'admin.sarpras.assets.*',
@@ -215,6 +240,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
                 ],
                 [
+                    'key' => 'sarpras.rooms',
                     'label' => 'Data Ruangan',
                     'route' => 'admin.sarpras.rooms.index',
                     'route_active' => 'admin.sarpras.rooms.*',
@@ -222,6 +248,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
                 ],
                 [
+                    'key' => 'sarpras.needs',
                     'label' => 'Kebutuhan Sarpras',
                     'route' => 'admin.sarpras.needs.index',
                     'route_active' => 'admin.sarpras.needs.*',
@@ -229,6 +256,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
                 ],
                 [
+                    'key' => 'sarpras.maintenances',
                     'label' => 'Perbaikan',
                     'route' => 'admin.sarpras.maintenances.index',
                     'route_active' => 'admin.sarpras.maintenances.*',
@@ -236,6 +264,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
                 ],
                 [
+                    'key' => 'sarpras.procurements',
                     'label' => 'Pengadaan Barang',
                     'route' => 'admin.sarpras.procurements.index',
                     'route_active' => 'admin.sarpras.procurements.*',
@@ -243,6 +272,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_sarpras'],
                 ],
                 [
+                    'key' => 'sarpras.report',
                     'label' => 'Laporan Sarpras',
                     'route' => 'admin.sarpras.laporan',
                     'route_active' => 'admin.sarpras.laporan',
@@ -255,6 +285,7 @@ return [
             'label' => 'WEBSITE',
             'items' => [
                 [
+                    'key' => 'website.settings',
                     'label' => 'Pengaturan Website',
                     'route' => 'admin.website.settings.edit',
                     'route_active' => 'admin.website.settings.edit',
@@ -262,6 +293,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.boarding',
                     'label' => 'Konten Boarding',
                     'route' => 'admin.website.boarding.index',
                     'route_active' => 'admin.website.boarding.*',
@@ -270,6 +302,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.media',
                     'label' => 'Galeri Sekolah',
                     'route' => 'admin.website.media.index',
                     'route_active' => 'admin.website.media.*',
@@ -277,6 +310,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.categories',
                     'label' => 'Kategori Galeri',
                     'route' => 'admin.website.categories.index',
                     'route_active' => 'admin.website.categories.*',
@@ -284,6 +318,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.pages',
                     'label' => 'Konten Halaman',
                     'route' => 'admin.website.pages.index',
                     'route_active' => 'admin.website.pages.*',
@@ -291,6 +326,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.menus',
                     'label' => 'Menu Navigasi',
                     'route' => 'admin.website.menus.index',
                     'route_active' => 'admin.website.menus.*',
@@ -298,6 +334,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.organization',
                     'label' => 'Struktur Organisasi',
                     'route' => 'admin.organization-structures.index',
                     'route_active' => 'admin.organization-structures.*',
@@ -305,6 +342,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.values',
                     'label' => 'Nilai Utama',
                     'route' => 'admin.website.values.index',
                     'route_active' => 'admin.website.values.*',
@@ -312,6 +350,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'website.figures',
                     'label' => 'Tokoh & Pembina',
                     'route' => 'admin.website.figures.index',
                     'route_active' => 'admin.website.figures.*',
@@ -324,6 +363,7 @@ return [
             'label' => 'AKADEMIK',
             'items' => [
                 [
+                    'key' => 'academic.teachers',
                     'label' => 'Profil Guru',
                     'route' => 'admin.website.teachers.index',
                     'route_active' => 'admin.website.teachers.*',
@@ -331,6 +371,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                 ],
                 [
+                    'key' => 'academic.subjects',
                     'label' => 'Mata Pelajaran',
                     'route' => 'admin.website.subjects.index',
                     'route_active' => 'admin.website.subjects.*',
@@ -344,6 +385,7 @@ return [
                     'icon' => 'calendar',
                     'children' => [
                         [
+                            'key' => 'academic.calendar',
                             'label' => 'Kalender Pendidikan',
                             'route' => 'admin.akademik.kalender.index',
                             'route_active' => 'admin.akademik.kalender.*',
@@ -351,6 +393,7 @@ return [
                             'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
                         ],
                         [
+                            'key' => 'academic.schedule',
                             'label' => 'Jadwal Pelajaran',
                             'route' => 'admin.akademik.jadwal-pelajaran.index',
                             'route_active' => 'admin.akademik.jadwal-pelajaran.*',
@@ -361,6 +404,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
                 ],
                 [
+                    'key' => 'academic.years',
                     'label' => 'Tahun Pelajaran',
                     'route' => 'admin.akademik.tahun-pelajaran.index',
                     'route_active' => 'admin.akademik.tahun-pelajaran.*',
@@ -368,6 +412,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
                 ],
                 [
+                    'key' => 'academic.classes',
                     'label' => 'Kelas / Rombel',
                     'route' => 'admin.akademik.kelas.index',
                     'route_active' => 'admin.akademik.kelas.*',
@@ -375,6 +420,7 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
                 ],
                 [
+                    'key' => 'academic.hours',
                     'label' => 'Jam Pelajaran',
                     'route' => 'admin.akademik.jam-pelajaran.index',
                     'route_active' => 'admin.akademik.jam-pelajaran.*',
@@ -387,6 +433,7 @@ return [
             'label' => 'SISTEM',
             'items' => [
                 [
+                    'key' => 'system.faq',
                     'label' => 'FAQ AI',
                     'route' => 'admin.ai-faqs.index',
                     'route_active' => 'admin.ai-faqs.*',
@@ -394,10 +441,19 @@ return [
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'guru'],
                 ],
                 [
+                    'key' => 'system.users',
                     'label' => 'Kelola User',
                     'route' => 'admin.users.index',
                     'route_active' => 'admin.users.*',
                     'icon' => 'users',
+                    'roles' => ['superadmin'],
+                ],
+                [
+                    'key' => 'system.menu-access',
+                    'label' => 'Pengaturan Menu',
+                    'route' => 'admin.menu-access.index',
+                    'route_active' => 'admin.menu-access.*',
+                    'icon' => 'eye',
                     'roles' => ['superadmin'],
                 ],
             ],
@@ -408,6 +464,7 @@ return [
         'label' => 'AKUN',
         'items' => [
             [
+                'key' => 'account.profile',
                 'label' => 'Profil',
                 'route' => 'profile.edit',
                 'route_active' => 'profile.*',

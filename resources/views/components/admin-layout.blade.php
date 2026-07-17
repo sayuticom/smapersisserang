@@ -74,16 +74,13 @@
 
             @php
                 $user = auth()->user();
-                $menuConfig = config('admin-menu');
+                $menuService = app(\App\Services\AdminMenuService::class);
+                $menuConfig = $user ? $menuService->getSidebar($user) : config('admin-menu');
                 $routeIs = function ($patterns) {
                     foreach (explode('|', $patterns) as $pattern) {
                         if (request()->routeIs(trim($pattern))) return true;
                     }
                     return false;
-                };
-                $canSee = function ($roles) use ($user) {
-                    if (empty($roles)) return true;
-                    return $user && $user->hasAnyRole($roles);
                 };
                 $linkClass = function ($active) {
                     return $active ? 'bg-green-50 text-green-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
@@ -101,66 +98,52 @@
                         Dashboard
                     </a>
 
-                    @foreach ($menuConfig['sections'] as $section)
-                        @php
-                            $visibleItems = array_filter($section['items'], fn($item) => $canSee($item['roles'] ?? []));
-                        @endphp
-                        @if (count($visibleItems))
-                            <div class="pt-3 pb-1">
-                                <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ $section['label'] }}</p>
-                            </div>
-                            @foreach ($section['items'] as $item)
-                                @if (!$canSee($item['roles'] ?? []))
-                                    @continue
-                                @endif
-                                @if (isset($item['children']))
-                                    @php
-                                        $childActive = $routeIs($item['route_active']);
-                                        $visibleChildren = array_filter($item['children'], fn($c) => $canSee($c['roles'] ?? []));
-                                    @endphp
-                                    @if (count($visibleChildren))
-                                        <div x-data="{ open: {{ $childActive ? 'true' : 'false' }} }">
-                                            <button @click="open = !open" type="button"
-                                                    class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $linkClass($childActive) }}">
-                                                <x-admin-icon name="{{ $item['icon'] }}" class="w-5 h-5 flex-shrink-0 {{ $iconClass($childActive) }}" />
-                                                <span class="flex-1 text-left">{{ $item['label'] }}</span>
-                                                <svg class="h-4 w-4 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                                </svg>
-                                            </button>
-                                            <div x-show="open" class="ml-6 space-y-0.5 mt-0.5">
-                                                @foreach ($visibleChildren as $child)
-                                                    @php $childAct = $routeIs($child['route_active']) @endphp
-                                                    <a href="{{ route($child['route']) }}"
-                                                       class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ $linkClass($childAct) }}">
-                                                        <x-admin-icon name="{{ $child['icon'] }}" class="w-4 h-4 flex-shrink-0 {{ $iconClass($childAct) }}" />
-                                                        {{ $child['label'] }}
-                                                    </a>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
-                                @else
-                                    @php $itemActive = $routeIs($item['route_active']) @endphp
-                                    <a href="{{ route($item['route']) }}"
-                                       class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ ($item['indent'] ?? false) ? 'ml-6 ' : '' }}{{ $linkClass($itemActive) }}">
-                                        <x-admin-icon name="{{ $item['icon'] }}"
-                                            class="{{ ($item['indent'] ?? false) ? 'w-4 h-4' : 'w-5 h-5' }} flex-shrink-0 {{ $iconClass($itemActive) }}" />
-                                        {{ $item['label'] }}
-                                    </a>
-                                @endif
-                            @endforeach
-                        @endif
+                    @foreach ($menuConfig['sections'] ?? [] as $section)
+                        <div class="pt-3 pb-1">
+                            <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ $section['label'] }}</p>
+                        </div>
+                        @foreach ($section['items'] as $item)
+                            @if (isset($item['children']))
+                                @php
+                                    $childActive = $routeIs($item['route_active']);
+                                @endphp
+                                <div x-data="{ open: {{ $childActive ? 'true' : 'false' }} }">
+                                    <button @click="open = !open" type="button"
+                                            class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $linkClass($childActive) }}">
+                                        <x-admin-icon name="{{ $item['icon'] }}" class="w-5 h-5 flex-shrink-0 {{ $iconClass($childActive) }}" />
+                                        <span class="flex-1 text-left">{{ $item['label'] }}</span>
+                                        <svg class="h-4 w-4 transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    <div x-show="open" class="ml-6 space-y-0.5 mt-0.5">
+                                        @foreach ($item['children'] as $child)
+                                            @php $childAct = $routeIs($child['route_active']) @endphp
+                                            <a href="{{ route($child['route']) }}"
+                                               class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ $linkClass($childAct) }}">
+                                                <x-admin-icon name="{{ $child['icon'] }}" class="w-4 h-4 flex-shrink-0 {{ $iconClass($childAct) }}" />
+                                                {{ $child['label'] }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                @php $itemActive = $routeIs($item['route_active']) @endphp
+                                <a href="{{ route($item['route']) }}"
+                                   class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ ($item['indent'] ?? false) ? 'ml-6 ' : '' }}{{ $linkClass($itemActive) }}">
+                                    <x-admin-icon name="{{ $item['icon'] }}"
+                                        class="{{ ($item['indent'] ?? false) ? 'w-4 h-4' : 'w-5 h-5' }} flex-shrink-0 {{ $iconClass($itemActive) }}" />
+                                    {{ $item['label'] }}
+                                </a>
+                            @endif
+                        @endforeach
                     @endforeach
 
-                    @php
-                        $accountItems = array_filter($menuConfig['account']['items'], fn($item) => $canSee($item['roles'] ?? []));
-                    @endphp
-                    @if (count($accountItems))
+                    @if (isset($menuConfig['account']))
                         <div class="pt-3 pb-1">
                             <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ $menuConfig['account']['label'] }}</p>
                         </div>
-                        @foreach ($accountItems as $item)
+                        @foreach ($menuConfig['account']['items'] as $item)
                             @php $itemActive = $routeIs($item['route_active']) @endphp
                             <a href="{{ route($item['route']) }}"
                                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ $linkClass($itemActive) }}">
