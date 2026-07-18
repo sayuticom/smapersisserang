@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\MenuRoleOverride;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -21,6 +23,14 @@ class AdminMenuService
     protected array $lockedKeys = ['dashboard', 'account.profile', 'system.users'];
 
     protected ?array $validRoleNamesCache = null;
+
+    protected ?Collection $userPermissionsCache = null;
+
+    protected ?int $userPermissionsCacheUserId = null;
+
+    protected ?Collection $validPermissionNames = null;
+
+    protected bool $permissionLoadFailed = false;
 
     public function getValidRoleNames(): array
     {
@@ -78,6 +88,10 @@ class AdminMenuService
         $this->overrides = null;
         $this->routeRolesCache = [];
         $this->validRoleNamesCache = null;
+        $this->userPermissionsCache = null;
+        $this->userPermissionsCacheUserId = null;
+        $this->validPermissionNames = null;
+        $this->permissionLoadFailed = false;
     }
 
     public function getOverrides(): Collection
@@ -129,6 +143,51 @@ class AdminMenuService
             : $user->roles()->pluck('name')->toArray();
     }
 
+    protected function loadUserPermissions(User $user): void
+    {
+        if ($this->userPermissionsCache !== null && $this->userPermissionsCacheUserId === $user->id) {
+            return;
+        }
+
+        $user->loadMissing('roles.permissions');
+        $this->userPermissionsCache = $user->roles
+            ->flatMap(fn(Role $role) => $role->permissions)
+            ->pluck('name')
+            ->unique();
+        $this->userPermissionsCacheUserId = $user->id;
+    }
+
+    protected function loadValidPermissionNames(): void
+    {
+        if ($this->validPermissionNames !== null || $this->permissionLoadFailed) {
+            return;
+        }
+
+        try {
+            $this->validPermissionNames = Permission::pluck('name');
+        } catch (\Throwable $e) {
+            Log::warning('Failed to load menu permissions; falling back to role-based visibility.', [
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+            $this->permissionLoadFailed = true;
+            $this->validPermissionNames = new Collection();
+        }
+    }
+
+    public function hasPermission(User $user, string $permissionName): ?bool
+    {
+        $this->loadValidPermissionNames();
+
+        if (!$this->validPermissionNames->contains($permissionName)) {
+            return null;
+        }
+
+        $this->loadUserPermissions($user);
+
+        return $this->userPermissionsCache->contains($permissionName);
+    }
+
     public function isLocked(string $menuKey): bool
     {
         return in_array($menuKey, $this->lockedKeys, true);
@@ -165,6 +224,14 @@ class AdminMenuService
 
     public function isVisibleToUser(array $item, ?User $user): bool
     {
+        if (!$user) {
+            return false;
+        }
+
+        if (in_array('superadmin', $this->userRoleNames($user), true)) {
+            return true;
+        }
+
         if (!empty($item['children'])) {
             foreach ($item['children'] as $child) {
                 if ($this->isVisibleToUser($child, $user)) {
@@ -174,14 +241,15 @@ class AdminMenuService
             return false;
         }
 
-        if (!$user) {
-            return false;
-        }
-
-        $userRoles = $this->userRoleNames($user);
-
-        if (in_array('superadmin', $userRoles, true)) {
-            return true;
+        $permName = $item['permission'] ?? null;
+        if ($permName) {
+            $permResult = $this->hasPermission($user, $permName);
+            if ($permResult === true) {
+                return true;
+            }
+            if ($permResult === false) {
+                return false;
+            }
         }
 
         $effectiveRoles = $this->getEffectiveRoles($item);
@@ -190,7 +258,7 @@ class AdminMenuService
             return true;
         }
 
-        return !empty(array_intersect($effectiveRoles, $userRoles));
+        return !empty(array_intersect($effectiveRoles, $this->userRoleNames($user)));
     }
 
     public function getSidebar(?User $user): array
@@ -211,7 +279,19 @@ class AdminMenuService
             foreach ($config['sections'] as $section) {
                 $visibleItems = [];
                 foreach ($section['items'] as $item) {
-                    if ($this->isVisibleToUser($item, $user)) {
+                    if (!empty($item['children'])) {
+                        $visibleChildren = [];
+                        foreach ($item['children'] as $child) {
+                            if ($this->isVisibleToUser($child, $user)) {
+                                $visibleChildren[] = $child;
+                            }
+                        }
+                        if (!empty($visibleChildren)) {
+                            $filtered = $item;
+                            $filtered['children'] = $visibleChildren;
+                            $visibleItems[] = $filtered;
+                        }
+                    } elseif ($this->isVisibleToUser($item, $user)) {
                         $visibleItems[] = $item;
                     }
                 }
