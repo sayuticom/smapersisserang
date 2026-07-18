@@ -279,6 +279,10 @@ class PermissionFoundationTest extends TestCase
                 if (str_starts_with($mw, 'role:')) {
                     $legacyRoles = array_merge($legacyRoles, array_map('trim', explode(',', substr($mw, 5))));
                 }
+                if (str_starts_with($mw, 'permission:')) {
+                    $parts = explode(',', substr($mw, 11));
+                    $legacyRoles = array_merge($legacyRoles, array_map('trim', array_slice($parts, 1)));
+                }
                 if ($mw === 'superadmin') $legacyRoles[] = 'superadmin';
             }
             $legacyRoles = array_values(array_unique($legacyRoles));

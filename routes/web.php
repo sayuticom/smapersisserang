@@ -638,7 +638,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('website.media.')->prefix('website/media')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:website.media.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\SchoolImageController::class, 'mediaStore'])->name('store');
