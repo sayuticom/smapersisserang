@@ -63,23 +63,33 @@
 
             <div>
                 <h4 class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-amber-300">Menu</h4>
-                <div class="space-y-2 text-sm">
-                    @forelse($footerMenuItems as $menu)
-                        <a href="{{ $menu->url() }}"
-                           class="block text-emerald-100/75 transition hover:text-amber-300">
-                            {{ $menu->label }}
-                        </a>
-                    @empty
-                        <a href="{{ route('public.profile') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Profil</a>
-                        <a href="{{ route('public.teachers') }}" class="block text-emerald-100/75 transition hover:text-amber-300">Guru</a>
-                    @endforelse
 
-                </div>
+                @if($footerMenuItems->count())
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm md:justify-end">
+                        @foreach($footerMenuItems->take(3) as $menu)
+                            <a href="{{ $menu->url() }}"
+                               class="whitespace-nowrap text-emerald-100/75 transition hover:text-amber-300">
+                                {{ $menu->label }}
+                            </a>
+                        @endforeach
+                    </div>
 
-                    <a href="{{ route('login') }}"
-                       class="mt-3 inline-block rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-emerald-950">
-                        Login
-                    </a>
+                    @if($footerMenuItems->count() > 3)
+                        <div class="mt-4 space-y-2 text-sm">
+                            @foreach($footerMenuItems->slice(3) as $menu)
+                                <a href="{{ $menu->url() }}"
+                                   class="block text-emerald-100/75 transition hover:text-amber-300">
+                                    {{ $menu->label }}
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                @else
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm md:justify-end">
+                        <a href="{{ route('public.profile') }}" class="whitespace-nowrap text-emerald-100/75 transition hover:text-amber-300">Profil</a>
+                        <a href="{{ route('public.teachers') }}" class="whitespace-nowrap text-emerald-100/75 transition hover:text-amber-300">Guru</a>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -88,10 +98,14 @@
                 &copy; 2026 SMA Persis Serang. All rights reserved.
                 <br>Developed by <span class="font-semibold">Tim IT SMA Persis Serang</span>
             </p>
-            <div class="flex gap-4">
+            <div class="flex flex-wrap items-center gap-4 md:flex-nowrap md:justify-end">
                 @foreach($footerMenuItems->take(3) as $menu)
-                    <a href="{{ $menu->url() }}" class="transition hover:text-amber-300">{{ $menu->label }}</a>
+                    <a href="{{ $menu->url() }}" class="whitespace-nowrap transition hover:text-amber-300">{{ $menu->label }}</a>
                 @endforeach
+                <a href="{{ route('login') }}"
+                   class="whitespace-nowrap rounded-lg bg-amber-400 px-5 py-2.5 font-semibold text-emerald-950 transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-emerald-950">
+                    Login
+                </a>
             </div>
         </div>
     </div>
