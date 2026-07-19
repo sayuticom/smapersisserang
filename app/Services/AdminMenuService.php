@@ -151,6 +151,7 @@ class AdminMenuService
 
         $user->loadMissing('roles.permissions');
         $this->userPermissionsCache = $user->roles
+            ->filter(fn(Role $role) => $role->is_active ?? true)
             ->flatMap(fn(Role $role) => $role->permissions)
             ->pluck('name')
             ->unique();

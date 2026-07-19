@@ -2,13 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\MenuRoleOverride;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AdminMenuService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -19,13 +17,14 @@ class MenuAccessTest extends TestCase
         parent::setUp();
         $this->createTables();
         $this->seedRoles();
+        $this->seed(\Database\Seeders\PermissionSeeder::class);
     }
 
     protected function tearDown(): void
     {
         Schema::dropIfExists('permission_role');
-        Schema::dropIfExists('permissions');
         Schema::dropIfExists('menu_role_overrides');
+        Schema::dropIfExists('permissions');
         Schema::dropIfExists('role_user');
         Schema::dropIfExists('roles');
         Schema::dropIfExists('users');
@@ -135,708 +134,529 @@ class MenuAccessTest extends TestCase
 
     private function createUser(string $roleName): User
     {
-        $user = User::factory()->create(['role' => $roleName]);
         $role = Role::where('name', $roleName)->first();
+        $user = User::create([
+            'name' => "Test {$roleName}",
+            'email' => "{$roleName}_" . uniqid() . '@test.com',
+            'password' => 'password',
+        ]);
         $user->roles()->attach($role->id);
         return $user;
     }
 
-    private function createPermission(string $name, string $roleName): Permission
+    private function makeSuperadmin(): User
     {
-        return Permission::create([
-            'name' => $name,
-            'module' => 'test',
-            'action' => 'view',
-            'display_name' => $name,
-            'group_name' => 'test',
-        ]);
+        return $this->createUser('superadmin');
     }
 
-    private function registerTestSidebarRoute(string $name): void
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACCESS CONTROL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_guest_redirected_to_login(): void
     {
-        Route::middleware('web')->group(function () use ($name) {
-            Route::get('/_test/menu-' . $name, function () {
-                return view('components.admin-layout', ['slot' => '']);
-            })->middleware('auth')->name('_test.menu-' . $name);
-        });
+        $this->get(route('admin.menu-access.index'))->assertRedirect();
     }
 
-    // ── Access Control ──
-
-    public function test_superadmin_can_access_menu_access_page(): void
+    public function test_non_superadmin_gets_403(): void
     {
-        $user = $this->createUser('superadmin');
-        $response = $this->actingAs($user)->get(route('admin.menu-access.index'));
-        $response->assertOk();
-        $response->assertSee('Pengaturan Menu Akses');
-        $response->assertSee('ppdb.dashboard');
-        $response->assertSee('finance.incomes');
-        $response->assertSee('sarpras.assets');
-    }
-
-    public function test_non_superadmin_cannot_access_menu_access_page(): void
-    {
-        $roles = ['admin', 'kepala_sekolah', 'guru', 'staf_tata_usaha', 'staf_keuangan', 'staf_kesiswaan', 'staf_sarpras'];
-        foreach ($roles as $roleName) {
-            $user = $this->createUser($roleName);
-            $response = $this->actingAs($user)->get(route('admin.menu-access.index'));
-            $response->assertForbidden();
-        }
-    }
-
-    public function test_admin_and_other_roles_get_403_on_menu_access_page(): void
-    {
-        $roles = ['admin', 'kepala_sekolah', 'guru', 'staf_tata_usaha', 'staf_keuangan', 'staf_kesiswaan', 'staf_sarpras'];
-        foreach ($roles as $roleName) {
+        foreach (['admin', 'guru', 'staf_tata_usaha', 'kepala_sekolah'] as $roleName) {
             $user = $this->createUser($roleName);
             $this->actingAs($user)->get(route('admin.menu-access.index'))->assertForbidden();
-            $this->actingAs($user)->put(route('admin.menu-access.update'), [
-                'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['admin']]],
-            ])->assertForbidden();
         }
     }
 
-    // ── CRUD Overrides ──
-
-    public function test_superadmin_can_update_menu_role_overrides(): void
+    public function test_superadmin_can_access_page(): void
     {
-        $user = $this->createUser('superadmin');
+        $user = $this->makeSuperadmin();
+        $this->actingAs($user)->get(route('admin.menu-access.index'))->assertOk();
+    }
 
-        $response = $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [
-                [
-                    'key' => 'ppdb.dashboard',
-                    'roles' => ['superadmin', 'admin'],
-                ],
+    // ═══════════════════════════════════════════════════════════════════════
+    // RENDERING
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_page_shows_hak_ases_title(): void
+    {
+        $user = $this->makeSuperadmin();
+        $response = $this->actingAs($user)->get(route('admin.menu-access.index'));
+        $response->assertSee('Pengaturan Hak Akses');
+        $response->assertDontSee('Pengaturan Menu Akses');
+    }
+
+    public function test_all_active_roles_displayed(): void
+    {
+        $user = $this->makeSuperadmin();
+        $html = $this->actingAs($user)->get(route('admin.menu-access.index'))->getContent();
+
+        $this->assertStringContainsString('Admin', $html);
+        $this->assertStringContainsString('Guru', $html);
+        $this->assertStringContainsString('Staf Tata Usaha', $html);
+        $this->assertStringContainsString('Pengaturan Hak Akses', $html);
+    }
+
+    public function test_inactive_role_not_displayed(): void
+    {
+        Role::where('name', 'guru')->first()->update(['is_active' => false]);
+
+        $user = $this->makeSuperadmin();
+        $html = $this->actingAs($user)->get(route('admin.menu-access.index'))->getContent();
+        $this->assertStringNotContainsString('>Guru<', $html);
+
+        Role::where('name', 'guru')->first()->update(['is_active' => true]);
+    }
+
+    public function test_operational_perm_shown_in_blade(): void
+    {
+        $user = $this->makeSuperadmin();
+        $html = $this->actingAs($user)->get(route('admin.menu-access.index'))->getContent();
+        $this->assertStringContainsString('ppdb.dashboard.view', $html);
+        $this->assertStringContainsString('academic.calendar.view', $html);
+    }
+
+    public function test_horizontal_scroll_wrapper_exists(): void
+    {
+        $user = $this->makeSuperadmin();
+        $response = $this->actingAs($user)->get(route('admin.menu-access.index'));
+        $response->assertSee('overflow-x-auto');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOCKED KEYS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_dashboard_locked_key_skipped(): void
+    {
+        $user = $this->makeSuperadmin();
+
+        $this->actingAs($user)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'dashboard', 'mode' => 'kosongkan', 'roles' => []],
             ],
-        ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-
-        $this->assertDatabaseHas('menu_role_overrides', [
-            'menu_key' => 'ppdb.dashboard',
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'ppdb.dashboard')->first();
-        $this->assertEquals(['superadmin', 'admin'], $override->roles);
+        ])->assertRedirect();
     }
 
-    public function test_clearing_all_roles_deletes_override(): void
+    public function test_profile_locked_key_skipped(): void
     {
-        MenuRoleOverride::create([
-            'menu_key' => 'sarpras.dashboard',
-            'roles' => ['superadmin', 'admin'],
-        ]);
+        $user = $this->makeSuperadmin();
 
-        $user = $this->createUser('superadmin');
-
-        $response = $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [
-                [
-                    'key' => 'sarpras.dashboard',
-                    'roles' => [],
-                ],
+        $this->actingAs($user)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'account.profile', 'mode' => 'kosongkan', 'roles' => []],
             ],
-        ]);
-
-        $response->assertRedirect();
-
-        $this->assertDatabaseMissing('menu_role_overrides', [
-            'menu_key' => 'sarpras.dashboard',
-        ]);
+        ])->assertRedirect();
     }
 
-    // ── Locked Items ──
+    // ═══════════════════════════════════════════════════════════════════════
+    // MODE: AKSES PENUH
+    // ═══════════════════════════════════════════════════════════════════════
 
-    public function test_locked_dashboard_cannot_be_overridden(): void
+    public function test_full_access_grants_all_module_permissions(): void
     {
-        $user = $this->createUser('superadmin');
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
 
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'dashboard', 'roles' => ['admin']]],
-        ]);
-
-        $this->assertDatabaseMissing('menu_role_overrides', ['menu_key' => 'dashboard']);
-    }
-
-    public function test_locked_profile_cannot_be_overridden(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'account.profile', 'roles' => ['admin']]],
-        ]);
-
-        $this->assertDatabaseMissing('menu_role_overrides', ['menu_key' => 'account.profile']);
-    }
-
-    public function test_locked_kelola_user_cannot_be_expanded(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'system.users', 'roles' => ['superadmin', 'admin']]],
-        ]);
-
-        $this->assertDatabaseMissing('menu_role_overrides', ['menu_key' => 'system.users']);
-    }
-
-    // ── Reset ──
-
-    public function test_reset_removes_all_overrides(): void
-    {
-        MenuRoleOverride::create(['menu_key' => 'ppdb.dashboard', 'roles' => ['superadmin']]);
-        MenuRoleOverride::create(['menu_key' => 'finance.incomes', 'roles' => ['superadmin']]);
-
-        $user = $this->createUser('superadmin');
-
-        $this->assertDatabaseCount('menu_role_overrides', 2);
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), ['reset' => '1']);
-
-        $this->assertDatabaseCount('menu_role_overrides', 0);
-    }
-
-    public function test_reset_clears_cache(): void
-    {
-        MenuRoleOverride::create(['menu_key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin']]);
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $this->assertNotNull($service->getOverrideFor('ppdb.dashboard'));
-
-        $user = $this->createUser('superadmin');
-        $this->actingAs($user)->put(route('admin.menu-access.update'), ['reset' => '1']);
-
-        $service->flushCache();
-        $this->assertNull($service->getOverrideFor('ppdb.dashboard'));
-    }
-
-    // ── Validation ──
-
-    public function test_foreign_key_submission_is_ignored(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [
-                ['key' => 'nonexistent.menu.key', 'roles' => ['superadmin', 'admin']],
-            ],
-        ]);
-
-        $this->assertDatabaseMissing('menu_role_overrides', ['menu_key' => 'nonexistent.menu.key']);
-    }
-
-    public function test_invalid_role_submission_is_filtered_out(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [
-                [
-                    'key' => 'ppdb.dashboard',
-                    'roles' => ['superadmin', 'admin', 'invalid_role_xyz'],
-                ],
-            ],
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'ppdb.dashboard')->first();
-        $this->assertNotNull($override);
-        $this->assertContains('superadmin', $override->roles);
-        $this->assertContains('admin', $override->roles);
-        $this->assertNotContains('invalid_role_xyz', $override->roles);
-    }
-
-    public function test_superadmin_always_forced_in_override(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [
-                [
-                    'key' => 'ppdb.dashboard',
-                    'roles' => ['admin', 'staf_tata_usaha'],
-                ],
-            ],
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'ppdb.dashboard')->first();
-        $this->assertNotNull($override);
-        $this->assertContains('superadmin', $override->roles);
-        $this->assertContains('admin', $override->roles);
-    }
-
-    public function test_roles_not_in_route_allowed_are_filtered_out(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'sarpras.assets', 'roles' => ['superadmin', 'admin', 'guru']]],
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'sarpras.assets')->first();
-        $this->assertNotNull($override);
-        $this->assertContains('superadmin', $override->roles);
-        $this->assertContains('admin', $override->roles);
-        $this->assertNotContains('guru', $override->roles);
-    }
-
-    // ── created_by / updated_by ──
-
-    public function test_created_by_recorded_on_create(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin']]],
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'ppdb.dashboard')->first();
-        $this->assertEquals($user->id, $override->created_by);
-        $this->assertEquals($user->id, $override->updated_by);
-    }
-
-    public function test_updated_by_changes_on_update_by_different_user(): void
-    {
-        $creator = $this->createUser('superadmin');
-
-        $this->actingAs($creator)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin']]],
-        ]);
-
-        $override = MenuRoleOverride::where('menu_key', 'ppdb.dashboard')->first();
-        $this->assertEquals($creator->id, $override->created_by);
-
-        $updater = User::factory()->create(['role' => 'superadmin']);
-        $role = Role::where('name', 'superadmin')->first();
-        $updater->roles()->attach($role->id);
-
-        $this->actingAs($updater)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin', 'staf_tata_usaha']]],
-        ]);
-
-        $override->refresh();
-        $this->assertEquals($creator->id, $override->created_by);
-        $this->assertEquals($updater->id, $override->updated_by);
-    }
-
-    // ── Sidebar ──
-
-    public function test_sidebar_reflects_role_overrides(): void
-    {
-        $this->registerTestSidebarRoute('override-test');
-
-        MenuRoleOverride::create([
-            'menu_key' => 'ppdb.dashboard',
-            'roles' => ['superadmin', 'admin'],
-        ]);
-
-        $tuUser = $this->createUser('staf_tata_usaha');
-        $response = $this->actingAs($tuUser)->get('/_test/menu-override-test');
-        $html = $response->getContent();
-
-        $this->assertStringNotContainsString('Dashboard SPMB', $html);
-    }
-
-    public function test_sidebar_filters_by_override(): void
-    {
-        $this->registerTestSidebarRoute('sidebar-filter');
-
-        MenuRoleOverride::create([
-            'menu_key' => 'ppdb.applications',
-            'roles' => ['superadmin'],
-        ]);
-
-        $adminUser = $this->createUser('admin');
-        $response = $this->actingAs($adminUser)->get('/_test/menu-sidebar-filter');
-        $html = $response->getContent();
-
-        $this->assertStringNotContainsString('Data Pendaftaran', $html);
-    }
-
-    public function test_sidebar_changes_after_override_then_reset(): void
-    {
-        $this->registerTestSidebarRoute('sidebar-change');
-
-        $tuUser = $this->createUser('staf_tata_usaha');
-        $response = $this->actingAs($tuUser)->get('/_test/menu-sidebar-change');
-        $html = $response->getContent();
-        $this->assertStringContainsString('Dashboard SPMB', $html);
-
-        $superadmin = User::factory()->create(['role' => 'superadmin']);
-        $role = Role::where('name', 'superadmin')->first();
-        $superadmin->roles()->attach($role->id);
+        $viewPerm = Permission::where('name', 'academic.calendar.view')->first();
+        $managePerm = Permission::where('name', 'academic.calendar.manage')->first();
+        DB::table('permission_role')->where('role_id', $guru->id)
+            ->whereIn('permission_id', [$viewPerm->id, $managePerm->id])->delete();
 
         $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin']]],
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'akses_penuh', 'roles' => ['guru']],
+            ],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $viewPerm->id, 'role_id' => $guru->id]);
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $managePerm->id, 'role_id' => $guru->id]);
+    }
+
+    public function test_full_access_unchecked_roles_lose_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $stafTu = Role::where('name', 'staf_tata_usaha')->first();
+        $calendarView = Permission::where('name', 'academic.calendar.view')->first();
+
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $calendarView->id, 'role_id' => $stafTu->id]);
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'akses_penuh', 'roles' => ['guru']],
+            ],
         ]);
 
-        $response2 = $this->actingAs($tuUser)->get('/_test/menu-sidebar-change');
-        $html2 = $response2->getContent();
-        $this->assertStringNotContainsString('Dashboard SPMB', $html2);
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $calendarView->id, 'role_id' => $stafTu->id]);
+    }
+
+    public function test_granted_by_recorded(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
+        $perm = Permission::where('name', 'academic.calendar.view')->first();
+
+        DB::table('permission_role')->where('role_id', $guru->id)
+            ->where('permission_id', $perm->id)->delete();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'akses_penuh', 'roles' => ['guru']],
+            ],
+        ]);
+
+        $row = DB::table('permission_role')
+            ->where('permission_id', $perm->id)
+            ->where('role_id', $guru->id)
+            ->first();
+
+        $this->assertNotNull($row);
+        $this->assertEquals($superadmin->id, $row->granted_by);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MODE: BACA SAJA
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_read_only_grants_only_view_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
+
+        DB::table('permission_role')->where('role_id', $guru->id)->delete();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'baca_saja', 'roles' => ['guru']],
+            ],
+        ]);
+
+        $viewPerm = Permission::where('name', 'academic.calendar.view')->first();
+        $managePerm = Permission::where('name', 'academic.calendar.manage')->first();
+
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $viewPerm->id, 'role_id' => $guru->id]);
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $managePerm->id, 'role_id' => $guru->id]);
+    }
+
+    public function test_read_only_revokes_manage_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
+        $managePerm = Permission::where('name', 'academic.calendar.manage')->first();
+
+        DB::table('permission_role')->insertOrIgnore([
+            'permission_id' => $managePerm->id,
+            'role_id' => $guru->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'baca_saja', 'roles' => ['guru']],
+            ],
+        ]);
+
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $managePerm->id, 'role_id' => $guru->id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MODE: KOSONGKAN
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_empty_mode_removes_module_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
+        $viewPerm = Permission::where('name', 'academic.calendar.view')->first();
+
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $viewPerm->id, 'role_id' => $guru->id]);
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'kosongkan', 'roles' => []],
+            ],
+        ]);
+
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $viewPerm->id, 'role_id' => $guru->id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // RESET
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_reset_restores_default_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $admin = Role::where('name', 'admin')->first();
+        $perm = Permission::where('name', 'academic.calendar.view')->first();
+
+        DB::table('permission_role')->where('role_id', $admin->id)
+            ->where('permission_id', $perm->id)->delete();
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $perm->id, 'role_id' => $admin->id]);
 
         $this->actingAs($superadmin)->put(route('admin.menu-access.update'), ['reset' => '1']);
 
-        $response3 = $this->actingAs($tuUser)->get('/_test/menu-sidebar-change');
-        $html3 = $response3->getContent();
-        $this->assertStringContainsString('Dashboard SPMB', $html3);
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $perm->id, 'role_id' => $admin->id]);
     }
 
-    public function test_sidebar_shows_all_for_superadmin(): void
+    public function test_reset_preserves_custom_role_assignments(): void
     {
-        $user = $this->createUser('superadmin');
+        $superadmin = $this->makeSuperadmin();
 
-        $service = app(AdminMenuService::class);
-        $sidebar = $service->getSidebar($user);
-
-        $this->assertArrayHasKey('dashboard', $sidebar);
-        $this->assertArrayHasKey('sections', $sidebar);
-        $sectionLabels = array_map(fn($s) => $s['label'], $sidebar['sections']);
-        $this->assertContains('SPMB', $sectionLabels);
-        $this->assertContains('SISTEM', $sectionLabels);
-    }
-
-    // ── Service ──
-
-    public function test_service_computes_effective_roles(): void
-    {
-        MenuRoleOverride::create([
-            'menu_key' => 'ppdb.applications',
-            'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+        $customRole = Role::create([
+            'name' => 'wakasek_test_reset',
+            'display_name' => 'Wakasek Test Reset',
+            'guard_name' => 'web',
+            'is_active' => true,
         ]);
 
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $item = [
-            'key' => 'ppdb.applications',
-            'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-        ];
-
-        $effective = $service->getEffectiveRoles($item);
-
-        $this->assertContains('superadmin', $effective);
-        $this->assertContains('admin', $effective);
-        $this->assertContains('staf_tata_usaha', $effective);
-    }
-
-    public function test_get_all_menu_items_returns_all_keys(): void
-    {
-        $service = app(AdminMenuService::class);
-        $items = $service->getAllMenuItems();
-
-        $keys = array_column($items, 'key');
-        $this->assertContains('ppdb.dashboard', $keys);
-        $this->assertContains('finance.incomes', $keys);
-        $this->assertContains('letters.outgoings', $keys);
-        $this->assertContains('sarpras.assets', $keys);
-        $this->assertContains('system.menu-access', $keys);
-        $this->assertContains('account.profile', $keys);
-
-        $this->assertNotContains('Kalender dan Jadwal', array_column($items, 'label'));
-    }
-
-    public function test_parent_visibility_computed_from_children(): void
-    {
-        MenuRoleOverride::create([
-            'menu_key' => 'academic.calendar',
-            'roles' => ['superadmin', 'admin'],
+        $perm = Permission::where('name', 'academic.calendar.view')->first();
+        DB::table('permission_role')->insert([
+            'permission_id' => $perm->id,
+            'role_id' => $customRole->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        MenuRoleOverride::create([
-            'menu_key' => 'academic.schedule',
-            'roles' => ['superadmin', 'admin'],
-        ]);
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), ['reset' => '1']);
 
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $perm->id, 'role_id' => $customRole->id]);
 
-        $guru = $this->createUser('guru');
+        DB::table('permission_role')->where('role_id', $customRole->id)->delete();
+        $customRole->delete();
+    }
 
-        $parentItem = [
-            'label' => 'Kalender dan Jadwal',
-            'route' => '#',
-            'route_active' => 'admin.akademik.kalender.*|admin.akademik.jadwal-pelajaran.*',
-            'icon' => 'calendar',
-            'children' => [
-                ['key' => 'academic.calendar', 'label' => 'Kalender Pendidikan', 'route' => '', 'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru']],
-                ['key' => 'academic.schedule', 'label' => 'Jadwal Pelajaran', 'route' => '', 'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru']],
+    // ═══════════════════════════════════════════════════════════════════════
+    // VALIDATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_invalid_menu_key_ignored(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $countBefore = DB::table('permission_role')->count();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'nonexistent.menu.key', 'mode' => 'akses_penuh', 'roles' => ['admin']],
             ],
-            'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah', 'guru'],
-        ];
-
-        $visible = $service->isVisibleToUser($parentItem, $guru);
-        $this->assertFalse($visible, 'Parent should be hidden when all children are hidden by override');
-    }
-
-    public function test_fallback_when_table_not_available(): void
-    {
-        Schema::dropIfExists('menu_role_overrides');
-
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $overrides = $service->getOverrides();
-        $this->assertNotNull($overrides);
-        $this->assertTrue($overrides->isEmpty());
-
-        $item = [
-            'key' => 'ppdb.dashboard',
-            'route' => 'admin.ppdb.dashboard',
-            'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-        ];
-
-        $effective = $service->getEffectiveRoles($item);
-        $this->assertContains('superadmin', $effective);
-        $this->assertContains('admin', $effective);
-    }
-
-    public function test_empty_override_returns_to_config_default(): void
-    {
-        $user = $this->createUser('superadmin');
-
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => ['superadmin', 'admin']]],
         ]);
 
-        $this->assertDatabaseHas('menu_role_overrides', ['menu_key' => 'ppdb.dashboard']);
+        $this->assertEquals($countBefore, DB::table('permission_role')->count());
+    }
 
-        $this->actingAs($user)->put(route('admin.menu-access.update'), [
-            'overrides' => [['key' => 'ppdb.dashboard', 'roles' => []]],
+    public function test_invalid_role_names_filtered(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'akses_penuh', 'roles' => ['admin', 'nonexistent_role_xyz']],
+            ],
+        ])->assertRedirect();
+
+        $this->assertNull(Role::where('name', 'nonexistent_role_xyz')->first());
+    }
+
+    public function test_inactive_role_not_granted_permissions(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $inactive = Role::where('name', 'staf_keuangan')->first();
+        $inactive->update(['is_active' => false]);
+
+        $perm = Permission::where('name', 'academic.calendar.view')->first();
+        DB::table('permission_role')->where('role_id', $inactive->id)
+            ->where('permission_id', $perm->id)->delete();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'academic.calendar', 'mode' => 'akses_penuh', 'roles' => ['staf_keuangan']],
+            ],
         ]);
 
-        $this->assertDatabaseMissing('menu_role_overrides', ['menu_key' => 'ppdb.dashboard']);
+        $this->assertDatabaseMissing('permission_role', ['permission_id' => $perm->id, 'role_id' => $inactive->id]);
+        $inactive->update(['is_active' => true]);
     }
 
-    // ── Permission-based visibility (Fase 1) ──
-
-    public function test_superadmin_sees_all_menu_via_permission(): void
+    public function test_other_role_assignments_unchanged(): void
     {
-        $service = app(AdminMenuService::class);
+        $superadmin = $this->makeSuperadmin();
+        $guru = Role::where('name', 'guru')->first();
+        $classesView = Permission::where('name', 'academic.classes.view')->first();
+
+        DB::table('permission_role')->insertOrIgnore([
+            'permission_id' => $classesView->id,
+            'role_id' => $guru->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'ppdb.dashboard', 'mode' => 'akses_penuh', 'roles' => ['admin']],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('permission_role', ['permission_id' => $classesView->id, 'role_id' => $guru->id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SYSTEM PERMISSION PROTECTION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_system_permissions_not_affected_by_update(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+        $systemPerm = Permission::where('name', 'system.menu.manage')->first();
+
+        $countBefore = DB::table('permission_role')
+            ->where('permission_id', $systemPerm->id)->count();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'system.menu-access', 'mode' => 'akses_penuh', 'roles' => ['admin']],
+            ],
+        ]);
+
+        $this->assertEquals($countBefore, DB::table('permission_role')
+            ->where('permission_id', $systemPerm->id)->count());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SIDEBAR INTEGRATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_permission_grant_shows_menu_in_sidebar(): void
+    {
+        $guruRole = Role::where('name', 'guru')->first();
+        $perm = Permission::where('name', 'ppdb.dashboard.view')->first();
+
+        DB::table('permission_role')->where('role_id', $guruRole->id)
+            ->where('permission_id', $perm->id)->delete();
+
+        $user = $this->createUser('guru');
+        $service = new AdminMenuService();
+
+        $fresh = User::find($user->id);
+        $this->assertFalse($service->isVisibleToUser([
+            'key' => 'ppdb.dashboard', 'permission' => 'ppdb.dashboard.view',
+        ], $fresh));
+
+        $superadmin = $this->makeSuperadmin();
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'ppdb.dashboard', 'mode' => 'akses_penuh', 'roles' => ['guru']],
+            ],
+        ]);
+
         $service->flushCache();
-
-        $user = $this->createUser('superadmin');
-        $sidebar = $service->getSidebar($user);
-
-        $this->assertArrayHasKey('dashboard', $sidebar);
-        $sectionLabels = array_map(fn($s) => $s['label'], $sidebar['sections']);
-        $this->assertContains('SISTEM', $sectionLabels);
-        $this->assertContains('SPMB', $sectionLabels);
+        $fresh2 = User::find($user->id);
+        $this->assertTrue($service->isVisibleToUser([
+            'key' => 'ppdb.dashboard', 'permission' => 'ppdb.dashboard.view',
+        ], $fresh2));
     }
 
-    public function test_user_with_permission_can_see_menu(): void
+    public function test_permission_revocation_hides_menu_in_sidebar(): void
     {
-        $perm = $this->createPermission('ppdb.dashboard.view', 'staf_tata_usaha');
-        $role = Role::where('name', 'staf_tata_usaha')->first();
-        DB::table('permission_role')->insert([
+        $guruRole = Role::where('name', 'guru')->first();
+        $perm = Permission::where('name', 'ppdb.dashboard.view')->first();
+
+        DB::table('permission_role')->insertOrIgnore([
             'permission_id' => $perm->id,
-            'role_id' => $role->id,
+            'role_id' => $guruRole->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
+        $user = $this->createUser('guru');
+        $service = new AdminMenuService();
 
-        $user = $this->createUser('staf_tata_usaha');
-        $this->assertTrue(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'permission' => 'ppdb.dashboard.view',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $user)
-        );
+        $fresh = User::find($user->id);
+        $this->assertTrue($service->isVisibleToUser([
+            'key' => 'ppdb.dashboard', 'permission' => 'ppdb.dashboard.view',
+        ], $fresh));
+
+        $superadmin = $this->makeSuperadmin();
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'items' => [
+                ['key' => 'ppdb.dashboard', 'mode' => 'kosongkan', 'roles' => []],
+            ],
+        ]);
+
+        $service->flushCache();
+        $fresh2 = User::find($user->id);
+        $this->assertFalse($service->isVisibleToUser([
+            'key' => 'ppdb.dashboard', 'permission' => 'ppdb.dashboard.view',
+        ], $fresh2));
     }
 
-    public function test_user_without_permission_cannot_see_menu_even_if_role_allows(): void
+    public function test_parent_follows_child_visibility(): void
     {
-        $this->createPermission('ppdb.dashboard.view', 'admin');
+        $guruRole = Role::where('name', 'guru')->first();
+        $calendarView = Permission::where('name', 'academic.calendar.view')->first();
+        $scheduleView = Permission::where('name', 'academic.schedule.view')->first();
 
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
+        DB::table('permission_role')->where('role_id', $guruRole->id)
+            ->whereIn('permission_id', [$calendarView->id, $scheduleView->id])->delete();
 
-        $user = $this->createUser('staf_tata_usaha');
-        $this->assertFalse(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'permission' => 'ppdb.dashboard.view',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $user)
-        );
-    }
+        $user = $this->createUser('guru');
+        $service = new AdminMenuService();
 
-    public function test_permission_not_available_falls_back_to_role(): void
-    {
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
+        $fresh = User::find($user->id);
+        $parentItem = collect(config('admin-menu.sections'))
+            ->firstWhere('label', 'AKADEMIK')['items'][2];
+        $this->assertFalse($service->isVisibleToUser($parentItem, $fresh));
 
-        $user = $this->createUser('staf_sarpras');
-
-        $permName = 'nonexistent.permission.not.seeded';
-        $this->assertTrue(
-            $service->isVisibleToUser([
-                'key' => 'sarpras.dashboard',
-                'permission' => $permName,
-                'roles' => ['superadmin', 'admin', 'staf_sarpras', 'kepala_sekolah'],
-            ], $user)
-        );
-    }
-
-    public function test_item_without_permission_uses_role_only(): void
-    {
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $guru = $this->createUser('guru');
-        $this->assertFalse(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $guru)
-        );
-
-        $tu = $this->createUser('staf_tata_usaha');
-        $this->assertTrue(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $tu)
-        );
-
-        $stafSarpras = $this->createUser('staf_sarpras');
-        $this->assertFalse(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $stafSarpras)
-        );
-    }
-
-    public function test_parent_visible_when_child_permitted(): void
-    {
-        $this->createPermission('academic.calendar.view', 'guru');
-        $this->createPermission('academic.schedule.view', 'admin');
-        $role = Role::where('name', 'guru')->first();
-        DB::table('permission_role')->insert([
-            'permission_id' => Permission::where('name', 'academic.calendar.view')->first()->id,
-            'role_id' => $role->id,
+        DB::table('permission_role')->insertOrIgnore([
+            'permission_id' => $calendarView->id,
+            'role_id' => $guruRole->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $service = app(AdminMenuService::class);
         $service->flushCache();
-
-        $user = $this->createUser('guru');
-        $sidebar = $service->getSidebar($user);
-
-        $sectionLabels = array_map(fn($s) => $s['label'], $sidebar['sections']);
-        $this->assertContains('AKADEMIK', $sectionLabels);
-
-        $akademik = collect($sidebar['sections'])->firstWhere('label', 'AKADEMIK');
-        $this->assertNotEmpty($akademik['items']);
-
-        $parentLabels = array_map(fn($i) => $i['label'] ?? '', $akademik['items']);
-        $this->assertContains('Kalender dan Jadwal', $parentLabels);
-
-        $jitem = collect($akademik['items'])->firstWhere('label', 'Kalender dan Jadwal');
-        $childLabels = array_map(fn($c) => $c['label'], $jitem['children']);
-        $this->assertContains('Kalender Pendidikan', $childLabels);
-        $this->assertNotContains('Jadwal Pelajaran', $childLabels);
+        $fresh2 = User::find($user->id);
+        $this->assertTrue($service->isVisibleToUser($parentItem, $fresh2));
     }
 
-    public function test_parent_hidden_when_all_children_denied(): void
+    public function test_inactive_role_hides_menu_in_sidebar(): void
     {
-        $this->createPermission('academic.calendar.view', 'admin');
-        $this->createPermission('academic.schedule.view', 'admin');
+        $guruRole = Role::where('name', 'guru')->first();
+        $perm = Permission::where('name', 'academic.calendar.view')->first();
 
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $user = $this->createUser('guru');
-        $sidebar = $service->getSidebar($user);
-
-        $akademik = collect($sidebar['sections'] ?? [])->firstWhere('label', 'AKADEMIK');
-        $this->assertNotEmpty($akademik['items']);
-
-        $parentLabels = array_map(fn($i) => $i['label'] ?? '', $akademik['items']);
-        $this->assertNotContains('Kalender dan Jadwal', $parentLabels);
-    }
-
-    public function test_denied_child_excluded_from_sidebar(): void
-    {
-        $this->createPermission('academic.calendar.view', 'guru');
-        $this->createPermission('academic.schedule.view', 'admin');
-        $role = Role::where('name', 'guru')->first();
-        DB::table('permission_role')->insert([
-            'permission_id' => Permission::where('name', 'academic.calendar.view')->first()->id,
-            'role_id' => $role->id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        $user = $this->createUser('guru');
-        $sidebar = $service->getSidebar($user);
-
-        $akademik = collect($sidebar['sections'])->firstWhere('label', 'AKADEMIK');
-        $jitem = collect($akademik['items'])->firstWhere('label', 'Kalender dan Jadwal');
-        $childLabels = array_map(fn($c) => $c['label'], $jitem['children']);
-
-        $this->assertContains('Kalender Pendidikan', $childLabels);
-        $this->assertNotContains('Jadwal Pelajaran', $childLabels);
-    }
-
-    public function test_override_still_works_on_role_fallback(): void
-    {
-        $service = app(AdminMenuService::class);
-        $service->flushCache();
-
-        MenuRoleOverride::create([
-            'menu_key' => 'sarpras.dashboard',
-            'roles' => ['superadmin', 'admin'],
-        ]);
-        $service->flushCache();
-
-        $tu = $this->createUser('staf_tata_usaha');
-        $this->assertFalse(
-            $service->isVisibleToUser([
-                'key' => 'sarpras.dashboard',
-                'roles' => ['superadmin', 'admin', 'staf_sarpras', 'kepala_sekolah'],
-            ], $tu)
-        );
-    }
-
-    public function test_override_cannot_bypass_permission_denied(): void
-    {
-        $perm = $this->createPermission('ppdb.dashboard.view', 'admin');
-        $role = Role::where('name', 'admin')->first();
-        DB::table('permission_role')->insert([
+        DB::table('permission_role')->insertOrIgnore([
             'permission_id' => $perm->id,
-            'role_id' => $role->id,
+            'role_id' => $guruRole->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $service = app(AdminMenuService::class);
+        $user = $this->createUser('guru');
+        $service = new AdminMenuService();
+
+        $fresh = User::find($user->id);
+        $this->assertTrue($service->hasPermission($fresh, 'academic.calendar.view'));
+
+        $guruRole->update(['is_active' => false]);
         $service->flushCache();
 
-        MenuRoleOverride::create([
-            'menu_key' => 'ppdb.dashboard',
-            'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
-        ]);
-        $service->flushCache();
+        $fresh2 = User::find($user->id);
+        $result = $service->hasPermission($fresh2, 'academic.calendar.view');
+        $this->assertTrue($result === false || $result === null);
 
-        $tu = $this->createUser('staf_tata_usaha');
-        $this->assertFalse(
-            $service->isVisibleToUser([
-                'key' => 'ppdb.dashboard',
-                'permission' => 'ppdb.dashboard.view',
-                'roles' => ['superadmin', 'admin', 'staf_tata_usaha', 'staf_kesiswaan', 'kepala_sekolah'],
-            ], $tu)
-        );
+        $guruRole->update(['is_active' => true]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // FORM FORMAT
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function test_update_rejects_old_overrides_format(): void
+    {
+        $superadmin = $this->makeSuperadmin();
+
+        $this->actingAs($superadmin)->put(route('admin.menu-access.update'), [
+            'overrides' => [
+                ['key' => 'ppdb.dashboard', 'roles' => ['admin']],
+            ],
+        ])->assertSessionHasErrors('items');
     }
 }

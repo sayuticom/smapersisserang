@@ -699,7 +699,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('website.teachers.')->prefix('website/guru')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:website.teachers.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\TeacherController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\TeacherController::class, 'create'])->name('create');
@@ -713,7 +713,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('website.subjects.')->prefix('website/mata-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:website.subjects.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\SchoolSubjectController::class, 'create'])->name('create');
@@ -725,13 +725,13 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('akademik.kalender.')->prefix('akademik/kalender')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->middleware('permission:academic.calendar.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'index'])->name('index');
         });
 
     Route::name('akademik.kalender.')->prefix('akademik/kalender')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:academic.calendar.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/create', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\AcademicCalendarController::class, 'store'])->name('store');
@@ -741,13 +741,13 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+        ->middleware('permission:academic.years.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('index');
         });
 
     Route::name('akademik.tahun-pelajaran.')->prefix('akademik/tahun-pelajaran')
-        ->middleware('role:superadmin,admin')
+        ->middleware('permission:academic.years.manage,superadmin,admin')
         ->group(function () {
             Route::get('/create', [\App\Http\Controllers\Admin\AcademicYearController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('store');
@@ -758,13 +758,13 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('akademik.kelas.')->prefix('akademik/kelas')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->middleware('permission:academic.classes.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'index'])->name('index');
         });
 
     Route::name('akademik.kelas.')->prefix('akademik/kelas')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:academic.classes.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/create', [\App\Http\Controllers\Admin\SchoolClassController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\SchoolClassController::class, 'store'])->name('store');
@@ -773,20 +773,20 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('akademik.kelas.')->prefix('akademik/kelas')
-        ->middleware('role:superadmin,admin')
+        ->middleware('permission:academic.classes.delete,superadmin,admin')
         ->group(function () {
             Route::patch('/{schoolClass}/toggle', [\App\Http\Controllers\Admin\SchoolClassController::class, 'toggle'])->name('toggle');
             Route::delete('/{schoolClass}', [\App\Http\Controllers\Admin\SchoolClassController::class, 'destroy'])->name('destroy');
         });
 
     Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->middleware('permission:academic.hours.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'index'])->name('index');
         });
 
     Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:academic.hours.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'store'])->name('store');
@@ -795,20 +795,20 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::name('akademik.jam-pelajaran.')->prefix('akademik/jam-pelajaran')
-        ->middleware('role:superadmin,admin')
+        ->middleware('permission:academic.hours.delete,superadmin,admin')
         ->group(function () {
             Route::patch('/{lessonScheduleSetting}/toggle', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'toggle'])->name('toggle');
             Route::delete('/{lessonScheduleSetting}', [\App\Http\Controllers\Admin\LessonScheduleSettingController::class, 'destroy'])->name('destroy');
         });
 
     Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
+        ->middleware('permission:academic.schedule.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah,guru')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'index'])->name('index');
         });
 
     Route::name('akademik.jadwal-pelajaran.')->prefix('akademik/jadwal-pelajaran')
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:academic.schedule.manage,superadmin,admin,staf_tata_usaha')
         ->group(function () {
             Route::get('/create', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\LessonScheduleController::class, 'store'])->name('store');
