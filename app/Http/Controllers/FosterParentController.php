@@ -6,6 +6,7 @@ use App\Models\FosterParentSubmission;
 use App\Models\SchoolSetting;
 use App\Models\StudentApplication;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FosterParentController extends Controller
 {
@@ -41,22 +42,22 @@ class FosterParentController extends Controller
             }
         }
 
+        $allowedPresets = ['100000', '150000', '200000', '250000', '300000', '500000'];
+
         $data = $request->validate([
             'student_id' => ['nullable', 'exists:student_applications,id'],
             'donor_name' => ['nullable', 'string', 'max:100'],
             'donor_phone' => ['required', 'string', 'max:30'],
-            'amount' => ['required', 'string', 'max:50'],
-            'custom_amount' => ['nullable', 'numeric', 'min:1000', 'max:50000000'],
+            'amount' => ['required', Rule::in([...$allowedPresets, 'lainnya'])],
+            'custom_amount' => ['exclude_unless:amount,lainnya', 'required_if:amount,lainnya', 'integer', 'min:1'],
             'commitment_duration' => ['required', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $amount = $data['amount'] === 'lainnya' && $data['custom_amount']
-            ? (int) str_replace(['.', ','], '', $data['custom_amount'])
-            : ($data['amount'] !== 'lainnya' ? (int) $data['amount'] : null);
-
-        if ($amount !== null && $amount < 1000) {
-            return back()->withErrors(['amount' => 'Minimal donasi Rp1.000'])->withInput();
+        if ($data['amount'] === 'lainnya') {
+            $amount = (int) $data['custom_amount'];
+        } else {
+            $amount = (int) $data['amount'];
         }
 
         FosterParentSubmission::create([

@@ -164,15 +164,32 @@
                 @error('student_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <div>
+            <div x-data="{
+    amount: {{ Js::from(old('amount', '100000')) }},
+    customAmount: {{ Js::from(old('custom_amount', '')) }},
+    init() {
+        this.$watch('amount', val => {
+            if (val !== 'lainnya') this.customAmount = '';
+        });
+    },
+    get isCustom() { return this.amount === 'lainnya'; },
+    get formattedCustom() {
+        if (!this.customAmount) return '';
+        const num = this.customAmount.replace(/\D/g, '');
+        if (!num) return '';
+        return new Intl.NumberFormat('id-ID').format(num);
+    }
+}">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nominal Donasi per Bulan <span class="text-red-500">*</span></label>
-                <div class="grid grid-cols-2 gap-2" x-data="{ amount: '{{ old('amount', '100000') }}' }">
+                <div class="grid grid-cols-2 gap-2">
                     @php
                         $presets = [
-                            '100000'  => 'Rp100.000',
-                            '250000'  => 'Rp250.000',
-                            '500000'  => 'Rp500.000',
-                            '1000000' => 'Rp1.000.000',
+                            '100000' => 'Rp100.000',
+                            '150000' => 'Rp150.000',
+                            '200000' => 'Rp200.000',
+                            '250000' => 'Rp250.000',
+                            '300000' => 'Rp300.000',
+                            '500000' => 'Rp500.000',
                         ];
                     @endphp
                     @foreach($presets as $val => $label)
@@ -193,15 +210,21 @@
                     </label>
                 </div>
                 @error('amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
 
-            <div x-show="$el.querySelector('[name=amount]:checked')?.value === 'lainnya'">
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Nominal Lainnya (Rp)</label>
-                <input type="text" name="custom_amount" value="{{ old('custom_amount') }}"
-                       inputmode="numeric"
-                       class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
-                       placeholder="cth: 750000">
-                @error('custom_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                <div x-show="isCustom" x-cloak class="mt-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Nominal Lainnya (Rp)</label>
+                    <input type="text" name="custom_amount" x-model="customAmount"
+                           @input="customAmount = $event.target.value.replace(/\D/g, '')"
+                           inputmode="numeric"
+                           :required="isCustom"
+                           :disabled="!isCustom"
+                           class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0F6B3A] focus:border-[#0F6B3A] transition-shadow"
+                           placeholder="cth: 300000">
+                    <template x-if="customAmount">
+                        <p class="text-xs text-gray-400 mt-1" x-text="'Rp' + formattedCustom"></p>
+                    </template>
+                    @error('custom_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
 
             <div>
