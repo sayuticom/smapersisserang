@@ -5,16 +5,20 @@ namespace Tests\Feature\Admin;
 use App\Models\AcademicYear;
 use App\Models\LessonSchedule;
 use App\Models\LessonScheduleSetting;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\SchoolSubject;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class LessonScheduleTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
     private User $nonAdmin;
@@ -30,8 +34,8 @@ class LessonScheduleTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->nonAdmin = User::factory()->create(['role' => 'user']);
+        $this->admin = $this->createAdminUser();
+        $this->nonAdmin = $this->createNonAdminUser(['role' => 'user']);
 
         $this->academicYear = AcademicYear::create([
             'name' => '2025/2026',
@@ -48,35 +52,20 @@ class LessonScheduleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->pelajaranSlot = LessonScheduleSetting::create([
-            'name' => 'Jam ke-1',
-            'day' => 'Senin',
-            'start_time' => '07:15',
-            'end_time' => '07:55',
-            'type' => 'pelajaran',
-            'sort_order' => 1,
-            'is_active' => true,
-        ]);
+        $this->pelajaranSlot = LessonScheduleSetting::firstOrCreate(
+            ['day' => 'Senin', 'start_time' => '07:15', 'end_time' => '07:55'],
+            ['name' => 'Jam ke-1', 'type' => 'pelajaran', 'sort_order' => 1, 'is_active' => true]
+        );
 
-        $this->istirahatSlot = LessonScheduleSetting::create([
-            'name' => 'Istirahat',
-            'day' => 'Senin',
-            'start_time' => '09:55',
-            'end_time' => '10:25',
-            'type' => 'istirahat',
-            'sort_order' => 5,
-            'is_active' => true,
-        ]);
+        $this->istirahatSlot = LessonScheduleSetting::firstOrCreate(
+            ['day' => 'Senin', 'start_time' => '09:55', 'end_time' => '10:25'],
+            ['name' => 'Istirahat', 'type' => 'istirahat', 'sort_order' => 5, 'is_active' => true]
+        );
 
-        $this->kegiatanKhususSlot = LessonScheduleSetting::create([
-            'name' => 'Kegiatan Khusus 1',
-            'day' => 'Sabtu',
-            'start_time' => '09:15',
-            'end_time' => '09:55',
-            'type' => 'kegiatan_khusus',
-            'sort_order' => 4,
-            'is_active' => true,
-        ]);
+        $this->kegiatanKhususSlot = LessonScheduleSetting::firstOrCreate(
+            ['day' => 'Sabtu', 'start_time' => '09:15', 'end_time' => '09:55'],
+            ['name' => 'Kegiatan Khusus 1', 'type' => 'kegiatan_khusus', 'sort_order' => 4, 'is_active' => true]
+        );
 
         $this->subject = SchoolSubject::create([
             'name' => 'Matematika',
@@ -379,8 +368,7 @@ class LessonScheduleTest extends TestCase
     {
         $this->actingAs($this->nonAdmin)
             ->get(route('admin.akademik.jadwal-pelajaran.index'))
-            ->assertStatus(200)
-            ->assertSee('Jadwal Pelajaran');
+            ->assertStatus(403);
     }
 
     public function test_non_admin_cannot_access_kelas_index(): void
@@ -411,5 +399,148 @@ class LessonScheduleTest extends TestCase
             ->get(route('admin.akademik.jam-pelajaran.index'))
             ->assertStatus(200)
             ->assertSee('Jam Pelajaran');
+    }
+
+    private function createRoleWithPermissions(string $roleName, array $permissionNames): User
+    {
+        $role = Role::firstOrCreate(
+            ['name' => $roleName],
+            ['display_name' => $roleName, 'is_active' => true, 'is_system' => false]
+        );
+
+        foreach ($permissionNames as $permName) {
+            $perm = Permission::firstOrCreate(
+                ['name' => $permName],
+                [
+                    'display_name' => $permName,
+                    'module' => 'academic',
+                    'action' => 'manage',
+                    'group_name' => 'AKADEMIK',
+                    'is_system' => false,
+                    'is_active' => true,
+                ]
+            );
+            $role->permissions()->attach($perm->id);
+        }
+
+        $user = User::factory()->create(['role' => 'user']);
+        $user->roles()->attach($role->id);
+        $user->load('roles.permissions');
+
+        return $user;
+    }
+
+    public function test_kurikulum_with_manage_permission_sees_crud_buttons(): void
+    {
+        $kurikulum = $this->createRoleWithPermissions('kurikulum', [
+            'academic.schedule.view',
+            'academic.schedule.manage',
+        ]);
+
+        LessonSchedule::create([
+            'academic_year_id' => $this->academicYear->id,
+            'semester' => 'ganjil',
+            'school_class_id' => $this->class->id,
+            'day' => 'Senin',
+            'lesson_schedule_setting_id' => $this->pelajaranSlot->id,
+            'school_subject_id' => $this->subject->id,
+            'teacher_id' => $this->teacher->id,
+        ]);
+
+        $response = $this->actingAs($kurikulum)
+            ->get(route('admin.akademik.jadwal-pelajaran.index', [
+                'academic_year' => $this->academicYear->id,
+                'semester' => 'ganjil',
+                'class_id' => $this->class->id,
+            ]));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertStringContainsString('Tampilkan Jadwal', $html);
+        $this->assertStringContainsString('Edit', $html);
+        $this->assertStringContainsString('Hapus', $html);
+        $this->assertStringContainsString('+ Tambah', $html);
+    }
+
+    public function test_view_only_user_does_not_see_crud_buttons(): void
+    {
+        $viewOnly = $this->createRoleWithPermissions('guru_view', [
+            'academic.schedule.view',
+        ]);
+
+        $response = $this->actingAs($viewOnly)
+            ->get(route('admin.akademik.jadwal-pelajaran.index', [
+                'academic_year' => $this->academicYear->id,
+                'semester' => 'ganjil',
+                'class_id' => $this->class->id,
+            ]));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertStringContainsString('Tampilkan Jadwal', $html);
+        $this->assertStringNotContainsString('>Edit<', $html);
+        $this->assertStringNotContainsString('>Hapus<', $html);
+        $this->assertStringNotContainsString('+ Tambah', $html);
+    }
+
+    public function test_admin_still_sees_crud_buttons(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->get(route('admin.akademik.jadwal-pelajaran.index', [
+                'academic_year' => $this->academicYear->id,
+                'semester' => 'ganjil',
+                'class_id' => $this->class->id,
+            ]));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertStringContainsString('Tampilkan Jadwal', $html);
+        $this->assertStringContainsString('+ Tambah', $html);
+    }
+
+    public function test_view_only_user_gets_403_on_direct_edit_route(): void
+    {
+        $viewOnly = $this->createRoleWithPermissions('guru_view_direct', [
+            'academic.schedule.view',
+        ]);
+
+        $schedule = LessonSchedule::create([
+            'academic_year_id' => $this->academicYear->id,
+            'semester' => 'ganjil',
+            'school_class_id' => $this->class->id,
+            'day' => 'Senin',
+            'lesson_schedule_setting_id' => $this->pelajaranSlot->id,
+            'school_subject_id' => $this->subject->id,
+            'teacher_id' => $this->teacher->id,
+        ]);
+
+        $this->actingAs($viewOnly)
+            ->get(route('admin.akademik.jadwal-pelajaran.edit', $schedule))
+            ->assertStatus(403);
+    }
+
+    public function test_kurikulum_with_manage_permission_can_access_edit_route(): void
+    {
+        $kurikulum = $this->createRoleWithPermissions('kurikulum_edit', [
+            'academic.schedule.view',
+            'academic.schedule.manage',
+        ]);
+
+        $this->assertTrue($kurikulum->hasPermissionTo('academic.schedule.manage'));
+
+        $schedule = LessonSchedule::create([
+            'academic_year_id' => $this->academicYear->id,
+            'semester' => 'ganjil',
+            'school_class_id' => $this->class->id,
+            'day' => 'Senin',
+            'lesson_schedule_setting_id' => $this->pelajaranSlot->id,
+            'school_subject_id' => $this->subject->id,
+            'teacher_id' => $this->teacher->id,
+        ]);
+
+        $this->actingAs($kurikulum)
+            ->get(route('admin.akademik.jadwal-pelajaran.edit', $schedule))
+            ->assertStatus(200)
+            ->assertSee('Edit Jadwal');
     }
 }

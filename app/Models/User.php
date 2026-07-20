@@ -118,6 +118,22 @@ class User extends Authenticatable
         return false;
     }
 
+    public function hasPermissionTo(string $permissionName): bool
+    {
+        if ($this->isSuperadmin()) {
+            return true;
+        }
+
+        $this->loadMissing('roles.permissions');
+
+        return $this->roles
+            ->filter(fn(Role $role) => $role->is_active ?? true)
+            ->flatMap(fn(Role $role) => $role->permissions)
+            ->pluck('name')
+            ->unique()
+            ->contains($permissionName);
+    }
+
     public function syncRoles(array $roleIds): void
     {
         $this->roles()->sync($roleIds);

@@ -1,6 +1,7 @@
 <x-admin-layout>
     @php
         $isAdmin = auth()->user()?->isAdmin();
+        $canManage = $isAdmin || (auth()->user()?->hasPermissionTo('academic.schedule.manage') ?? false);
         $displayMode = $teacherId ? 'teacher' : 'class';
         $hasPrimaryFilter = $academicYearId && $semester && ($classId || $teacherId);
         $schedulableTypes = ['pelajaran', 'kegiatan_khusus'];
@@ -222,7 +223,7 @@
                                             @if($entry->room)
                                                 <p class="mt-0.5 text-xs font-medium text-slate-500">Ruang {{ $entry->room }}</p>
                                             @endif
-                                            @if($isAdmin)
+                                            @if($canManage)
                                                 <div class="mt-3 flex items-center gap-3 border-t border-slate-100 pt-2.5">
                                                     <a href="{{ route('admin.akademik.jadwal-pelajaran.edit', $entry) }}" class="text-xs font-bold text-emerald-700 hover:text-emerald-800">Edit</a>
                                                     <form method="POST" action="{{ route('admin.akademik.jadwal-pelajaran.destroy', $entry) }}" onsubmit="return confirm('Hapus jadwal ini?')">
@@ -233,7 +234,7 @@
                                                 </div>
                                             @endif
                                         </div>
-                                    @elseif($isSchedulable && $isAdmin && $classId && !$teacherId)
+                                    @elseif($isSchedulable && $canManage && $classId && !$teacherId)
                                         <a href="{{ route('admin.akademik.jadwal-pelajaran.create', ['academic_year' => $academicYearId, 'semester' => $semester, 'class_id' => $classId, 'day' => $day, 'time_slot' => $slot->id]) }}"
                                            class="mt-3 inline-flex items-center rounded-lg border border-dashed border-emerald-300 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50">
                                             + Tambah
@@ -293,7 +294,7 @@
                                                         @if($entry->room)
                                                             <div class="mt-0.5 text-[11px] font-medium text-slate-500">Ruang {{ $entry->room }}</div>
                                                         @endif
-                                                        @if($isAdmin)
+                                                        @if($canManage)
                                                             <div class="mt-auto flex items-center gap-2 border-t border-emerald-100 pt-2">
                                                                 <a href="{{ route('admin.akademik.jadwal-pelajaran.edit', $entry) }}" class="text-[11px] font-bold text-emerald-700 hover:text-emerald-900">Edit</a>
                                                                 <form method="POST" action="{{ route('admin.akademik.jadwal-pelajaran.destroy', $entry) }}" onsubmit="return confirm('Hapus jadwal ini?')">
@@ -304,7 +305,7 @@
                                                             </div>
                                                         @endif
                                                     </div>
-                                                @elseif($isAdmin && $classId && !$teacherId)
+                                                @elseif($canManage && $classId && !$teacherId)
                                                     <div class="flex h-full min-h-24 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white">
                                                         <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">{{ $slot->name }}</span>
                                                         <span class="mb-1 mt-0.5 text-[10px] font-semibold text-slate-400">{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}–{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}</span>

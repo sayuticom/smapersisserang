@@ -67,7 +67,7 @@ class LessonScheduleController extends Controller
 
     public function create()
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('academic.schedule.manage'), 403);
 
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
         $classes = SchoolClass::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
@@ -83,7 +83,7 @@ class LessonScheduleController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('academic.schedule.manage'), 403);
 
         $validated = $request->validate([
             'academic_year_id' => ['required', 'exists:academic_years,id'],
@@ -138,7 +138,7 @@ class LessonScheduleController extends Controller
 
     public function edit(LessonSchedule $lessonSchedule)
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('academic.schedule.manage'), 403);
 
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
         $classes = SchoolClass::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
@@ -154,7 +154,7 @@ class LessonScheduleController extends Controller
 
     public function update(Request $request, LessonSchedule $lessonSchedule)
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('academic.schedule.manage'), 403);
 
         $validated = $request->validate([
             'academic_year_id' => ['required', 'exists:academic_years,id'],
@@ -196,7 +196,7 @@ class LessonScheduleController extends Controller
 
     public function destroy(LessonSchedule $lessonSchedule)
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('academic.schedule.manage'), 403);
 
         $params = [
             'academic_year' => $lessonSchedule->academic_year_id,
