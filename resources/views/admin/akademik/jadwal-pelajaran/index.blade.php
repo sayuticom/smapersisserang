@@ -253,14 +253,27 @@
                 </div>
 
                 {{-- Desktop: matriks mingguan --}}
-                <div class="hidden overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm sm:block">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-[1100px] w-full table-fixed border-collapse text-left">
+                <style>
+                    @media (min-width: 1024px) {
+                        .lesson-schedule-table-wrapper {
+                            overflow: visible !important;
+                        }
+                        .lesson-schedule-table thead th {
+                            position: sticky !important;
+                            top: 0 !important;
+                            z-index: 40 !important;
+                            background: #0f172a !important;
+                        }
+                    }
+                </style>
+                <div class="hidden rounded-2xl border border-slate-300 bg-white shadow-sm sm:block">
+                    <div class="lesson-schedule-table-wrapper relative overflow-x-auto lg:overflow-visible">
+                        <table class="lesson-schedule-table w-full min-w-[1100px] border-separate border-spacing-0 text-left">
                             <thead>
-                                <tr class="bg-slate-900 text-white">
-                                    <th scope="col" class="w-16 border-r border-slate-700 px-4 py-3.5 text-xs font-bold uppercase tracking-wider">NO</th>
+                                <tr>
+                                    <th scope="col" class="sticky top-0 z-40 w-16 border-r border-slate-700 bg-slate-900 px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-white">NO</th>
                                     @foreach($days as $day)
-                                        <th scope="col" class="border-r border-slate-700 px-3 py-3.5 text-center text-sm font-bold last:border-r-0">{{ $day }}</th>
+                                        <th scope="col" class="sticky top-0 z-40 border-r border-slate-700 bg-slate-900 px-3 py-3.5 text-center text-sm font-bold text-white last:border-r-0">{{ $day }}</th>
                                     @endforeach
                                 </tr>
                             </thead>
