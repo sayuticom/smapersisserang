@@ -102,6 +102,15 @@
                             </div>
                         @endif
                     </div>
+                    <div>
+                        <label class="flex items-center gap-3">
+                            <input type="checkbox" name="show_consultation_button" value="1"
+                                    {{ old('show_consultation_button', $currentYear?->show_consultation_button ?? true) ? 'checked' : '' }}
+                                   class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-sm font-semibold text-gray-700">Tampilkan Tombol Konsultasi SPMB</span>
+                        </label>
+                        <p class="mt-1 text-xs text-gray-400">Menampilkan tombol "Konsultasi SPMB" di halaman publik /spmb.</p>
+                    </div>
                 </div>
             </div>
 

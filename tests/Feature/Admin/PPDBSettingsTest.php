@@ -111,4 +111,138 @@ class PPDBSettingsTest extends TestCase
                 'tuition_fee', 'boarding_fee', 'meal_fee', 'registration_fee', 'other_fee',
             ]);
     }
+
+    // ─── Consultation button toggle ─────────────────────────────
+
+    public function test_settings_page_shows_consultation_checkbox(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.settings.edit'))
+            ->assertOk()
+            ->assertSee('Tampilkan Tombol Konsultasi SPMB')
+            ->assertSee('show_consultation_button');
+    }
+
+    public function test_admin_can_disable_consultation_button(): void
+    {
+        $this->actingAs($this->admin)
+            ->put(route('admin.ppdb.settings.update'), $this->validPayload(['show_consultation_button' => 0]))
+            ->assertRedirect(route('admin.ppdb.settings.edit'))
+            ->assertSessionHas('success');
+
+        $this->admissionYear->refresh();
+        $this->assertFalse((bool) $this->admissionYear->show_consultation_button);
+    }
+
+    public function test_admin_can_enable_consultation_button(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => false]);
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.ppdb.settings.update'), $this->validPayload(['show_consultation_button' => 1]))
+            ->assertRedirect(route('admin.ppdb.settings.edit'))
+            ->assertSessionHas('success');
+
+        $this->admissionYear->refresh();
+        $this->assertTrue((bool) $this->admissionYear->show_consultation_button);
+    }
+
+    public function test_consultation_button_defaults_to_true(): void
+    {
+        $this->admissionYear->refresh();
+        $this->assertTrue((bool) $this->admissionYear->show_consultation_button);
+    }
+
+    public function test_consultation_button_not_sent_defaults_to_true(): void
+    {
+        $this->actingAs($this->admin)
+            ->put(route('admin.ppdb.settings.update'), $this->validPayload())
+            ->assertRedirect(route('admin.ppdb.settings.edit'));
+
+        $this->admissionYear->refresh();
+        $this->assertTrue((bool) $this->admissionYear->show_consultation_button);
+    }
+
+    public function test_unauthorized_user_cannot_toggle_consultation_button(): void
+    {
+        $user = \App\Models\User::factory()->create(['role' => 'guru']);
+        $role = \App\Models\Role::firstOrCreate(
+            ['name' => 'guru'],
+            ['display_name' => 'Guru', 'is_active' => true, 'is_system' => true]
+        );
+        $user->roles()->attach($role->id);
+
+        $this->actingAs($user)
+            ->put(route('admin.ppdb.settings.update'), $this->validPayload(['show_consultation_button' => 0]))
+            ->assertStatus(403);
+    }
+
+    // ─── Public page consultation button visibility ──────────────
+
+    public function test_public_page_shows_consultation_button_when_enabled(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => true, 'status' => 'open']);
+
+        $response = $this->get(route('spmb.info'));
+        $response->assertOk();
+        $response->assertSee('Konsultasi SPMB');
+    }
+
+    public function test_public_page_hides_consultation_button_when_disabled(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => false, 'status' => 'open']);
+
+        $response = $this->get(route('spmb.info'));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $widgetCount = substr_count($content, 'toggleAiChatPanel');
+        $this->assertEquals(3, $widgetCount, 'Only the AI chat widget should reference toggleAiChatPanel when consultation buttons are disabled');
+    }
+
+    public function test_public_page_shows_consultation_button_when_enabled_count(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => true, 'status' => 'open']);
+
+        $response = $this->get(route('spmb.info'));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $widgetCount = substr_count($content, 'toggleAiChatPanel');
+        $this->assertEquals(5, $widgetCount, 'Widget (3) + 2 inline consultation buttons should equal 5');
+    }
+
+    public function test_public_page_shows_consultation_button_by_default(): void
+    {
+        $this->admissionYear->update(['status' => 'open']);
+
+        $response = $this->get(route('spmb.info'));
+        $response->assertOk();
+        $response->assertSee('Konsultasi SPMB');
+    }
+
+    private function validPayload(array $overrides = []): array
+    {
+        return array_replace([
+            'name' => $this->admissionYear->name,
+            'academic_year' => $this->admissionYear->academic_year,
+            'quota' => $this->admissionYear->quota,
+            'status' => $this->admissionYear->status,
+            'start_date' => $this->admissionYear->start_date->format('Y-m-d'),
+            'end_date' => $this->admissionYear->end_date->format('Y-m-d'),
+            'description' => $this->admissionYear->description,
+
+            'program_name' => $this->admissionProgram->name,
+            'program_type' => $this->admissionProgram->type,
+            'program_quota' => $this->admissionProgram->quota,
+            'program_status' => $this->admissionProgram->status,
+            'tuition_fee' => $this->admissionProgram->tuition_fee,
+            'boarding_fee' => $this->admissionProgram->boarding_fee,
+            'meal_fee' => $this->admissionProgram->meal_fee,
+            'registration_fee' => $this->admissionProgram->registration_fee,
+            'other_fee' => $this->admissionProgram->other_fee,
+            'is_free_program' => $this->admissionProgram->is_free_program ? 1 : 0,
+            'program_description' => $this->admissionProgram->description,
+        ], $overrides);
+    }
 }

@@ -527,6 +527,7 @@ class PPDBApplicationController extends Controller
             'program_description' => 'nullable|string',
             'program_benefits' => 'nullable|string|max:5000',
             'program_requirements' => 'nullable|string|max:5000',
+            'show_consultation_button' => 'nullable|boolean',
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -541,6 +542,7 @@ class PPDBApplicationController extends Controller
                     'start_date' => $validated['start_date'],
                     'end_date' => $validated['end_date'],
                     'description' => $validated['description'] ?? '',
+                    'show_consultation_button' => $validated['show_consultation_button'] ?? true,
                 ];
 
                 if ($request->hasFile('promo_image')) {

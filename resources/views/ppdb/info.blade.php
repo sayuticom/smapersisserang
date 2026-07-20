@@ -99,10 +99,12 @@
                            class="inline-flex w-full items-center justify-center rounded-xl bg-amber-400 px-7 py-3 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-300 sm:w-auto">
                             Daftar SPMB
                         </a>
+                        @if($admissionYear?->show_consultation_button ?? true)
                         <button type="button" onclick="toggleAiChatPanel()"
                            class="inline-flex w-full items-center justify-center rounded-xl border border-white/40 bg-white/10 px-7 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 sm:w-auto">
                             Konsultasi SPMB
                         </button>
+                        @endif
                         <a href="{{ route('donasi-pendidikan') }}"
                            class="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/80 bg-emerald-950/30 px-7 py-3 text-sm font-semibold text-amber-200 backdrop-blur transition hover:bg-white/15 sm:w-auto">
                             Donasi Pendidikan
@@ -270,10 +272,12 @@
                            class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#0F6B3A] bg-white px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE] sm:w-auto">
                             Cek Status
                         </a>
+                        @if($admissionYear?->show_consultation_button ?? true)
                         <button type="button" onclick="toggleAiChatPanel()"
                            class="inline-flex w-full items-center justify-center rounded-xl border-2 border-[#D4A017] bg-white px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5 sm:w-auto">
                             Konsultasi SPMB
                         </button>
+                        @endif
                     </div>
                 </div>
             </div>

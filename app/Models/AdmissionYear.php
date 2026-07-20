@@ -13,11 +13,13 @@ class AdmissionYear extends Model
     
     protected $fillable = [
         'name', 'academic_year', 'quota', 'status', 
-        'start_date', 'end_date', 'is_current', 'description', 'promo_image'
+        'start_date', 'end_date', 'is_current', 'description', 'promo_image',
+        'show_consultation_button'
     ];
     
     protected $casts = [
         'is_current' => 'boolean',
+        'show_consultation_button' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
     ];
