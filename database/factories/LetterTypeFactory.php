@@ -14,7 +14,6 @@ class LetterTypeFactory extends Factory
         return [
             'code' => $this->faker->unique()->lexify('???'),
             'name' => $this->faker->word(),
-            'greeting' => $this->faker->sentence(),
         ];
     }
 }

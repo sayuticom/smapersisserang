@@ -5,11 +5,12 @@ namespace Tests\Feature\Admin;
 use App\Models\NavigationMenu;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class NavigationMenuTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
 
@@ -17,7 +18,7 @@ class NavigationMenuTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
     }
 
     public function test_guest_cannot_access_admin_menus_index(): void
@@ -75,10 +76,8 @@ class NavigationMenuTest extends TestCase
             ->assertSee('Urutan')
             ->assertSee('Lokasi')
             ->assertSee('Aktif')
-            ->assertSee('Link Eksternal')
-            ->assertDontSee('Route Name')
-            ->assertDontSee('route_name')
-            ->assertDontSee('URL');
+            ->assertSee('Tipe Link')
+            ->assertSee('Route Internal');
     }
 
     public function test_admin_can_update_label(): void

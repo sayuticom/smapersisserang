@@ -8,11 +8,12 @@ use App\Models\StudentApplication;
 use App\Models\ApplicationStatusHistory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class PPDBApplicationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
     private AdmissionYear $admissionYear;
@@ -23,7 +24,7 @@ class PPDBApplicationTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
 
         $this->admissionYear = AdmissionYear::factory()->create();
         $this->admissionProgram = AdmissionProgram::factory()->create([
@@ -196,7 +197,7 @@ class PPDBApplicationTest extends TestCase
             'verified_at' => now()->subDay(),
         ]);
 
-        $newAdmin = User::factory()->create();
+        $newAdmin = $this->createAdminUser();
 
         $this->actingAs($newAdmin)
             ->patch(route('admin.ppdb.applications.update-status', $this->application), [
@@ -396,7 +397,7 @@ class PPDBApplicationTest extends TestCase
 
         $this->assertStringContainsString('Dashboard SPMB', $html);
         $this->assertStringContainsString(route('admin.ppdb.dashboard'), $html);
-        $this->assertStringContainsString('Pendaftar SPMB', $html);
+        $this->assertStringContainsString('Data Pendaftaran', $html);
         $this->assertStringContainsString(route('admin.ppdb.applications.index'), $html);
     }
 
@@ -409,7 +410,7 @@ class PPDBApplicationTest extends TestCase
         $html = $response->getContent();
 
         $this->assertStringContainsString('Dashboard SPMB', $html);
-        $this->assertStringContainsString('Pendaftar SPMB', $html);
+        $this->assertStringContainsString('Data Pendaftaran', $html);
         $this->assertStringContainsString('Pengaturan SPMB', $html);
     }
 

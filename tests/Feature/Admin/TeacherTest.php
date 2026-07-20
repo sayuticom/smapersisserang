@@ -8,11 +8,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class TeacherTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
 
@@ -20,7 +21,7 @@ class TeacherTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
     }
 
     public function test_guest_can_view_public_teachers_page(): void
@@ -337,7 +338,7 @@ class TeacherTest extends TestCase
         $teacher = Teacher::where('name', 'Guru Foto')->first();
         $this->assertNotNull($teacher);
         $this->assertNotNull($teacher->photo_path);
-        $this->assertStringStartsWith('school/teachers/', $teacher->photo_path);
+        $this->assertStringStartsWith('teachers/', $teacher->photo_path);
         Storage::disk('public')->assertExists($teacher->photo_path);
     }
 

@@ -55,7 +55,7 @@ class NavigationMenuController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $data['is_external'] = $request->boolean('is_external');
 
-        $linkType = $request->input('link_type', 'manual');
+        $linkType = $request->input('link_type');
         $isExternal = $request->boolean('is_external');
 
         if ($isExternal) {
@@ -75,7 +75,7 @@ class NavigationMenuController extends Controller
                     $data['url'] = null;
                 }
             }
-        } else {
+        } elseif ($linkType === 'manual') {
             $data['route_name'] = null;
             $data['url'] = $request->input('url');
         }

@@ -8,11 +8,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class WebsiteMediaTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
 
@@ -20,7 +21,7 @@ class WebsiteMediaTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
     }
 
     public function test_guest_cannot_access_media_page(): void

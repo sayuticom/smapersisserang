@@ -7,11 +7,12 @@ use App\Models\Teacher;
 use App\Models\User;
 use Database\Seeders\SchoolSubjectSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class SchoolSubjectTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
 
@@ -19,7 +20,7 @@ class SchoolSubjectTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
     }
 
     public function test_seeder_creates_default_subjects_and_teacher_relations(): void

@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = DB::connection()->getDriverName();
+
+        if (!in_array($driver, ['mysql', 'mariadb'])) {
+            return;
+        }
+
         $constraintName = 'foster_parent_submissions_foster_student_id_foreign';
 
         $exists = DB::selectOne("

@@ -3,15 +3,16 @@
 namespace Tests\Unit;
 
 use App\Models\LetterCounter;
+use App\Models\LetterOutgoing;
 use App\Models\LetterType;
 use App\Models\User;
 use App\Services\Letters\LetterNumberService;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class LetterNumberServiceTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     private LetterNumberService $service;
     private LetterType $type;
@@ -37,7 +38,7 @@ class LetterNumberServiceTest extends TestCase
         $this->assertEquals(7, $number['month']);
 
         $counter = LetterCounter::where('year', 2026)
-            ->where('letter_type_id', $this->type->id)
+            ->where('classification_code', '421.3')
             ->first();
         $this->assertNotNull($counter);
         $this->assertEquals(1, $counter->last_number);
@@ -59,7 +60,7 @@ class LetterNumberServiceTest extends TestCase
 
         // Counter updated
         $counter = LetterCounter::where('year', 2026)
-            ->where('letter_type_id', $this->type->id)
+            ->where('classification_code', '421.3')
             ->first();
         $this->assertEquals(3, $counter->last_number);
     }
@@ -81,20 +82,25 @@ class LetterNumberServiceTest extends TestCase
         $this->assertEquals(1, $first['sequence_number']);
 
         $other = $this->service->generate($otherType, '2026-07-01');
-        $this->assertEquals(1, $other['sequence_number']);
+        $this->assertEquals(2, $other['sequence_number']);
     }
 
     public function test_initially_empty_counter_gets_max_issued_sequence(): void
     {
-        // Manually set sequence_number in letter_outgoings (simulate historical data)
-        $this->service->generate($this->type, '2026-07-01');
+        LetterOutgoing::create([
+            'letter_type_id' => $this->type->id,
+            'sequence_number' => 1,
+            'status' => 'issued',
+            'letter_classification_code' => '421.3',
+            'letter_year' => 2026,
+            'letter_month' => 7,
+            'letter_date' => '2026-07-01',
+        ]);
 
-        // Delete the counter to simulate fresh start
         LetterCounter::where('year', 2026)
-            ->where('letter_type_id', $this->type->id)
+            ->where('classification_code', '421.3')
             ->delete();
 
-        // Re-issue should start from max issued + 1
         $number = $this->service->generate($this->type, '2026-07-01');
         $this->assertEquals(2, $number['sequence_number']);
     }

@@ -3,80 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DonationItemReceiptTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        if (!Schema::hasTable('users')) {
-            Schema::create('users', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('email')->unique();
-                $table->string('password');
-                $table->string('role')->default('admin');
-                $table->rememberToken();
-                $table->timestamps();
-            });
-        }
-
-        if (!Schema::hasTable('donation_item_receipts')) {
-            Schema::create('donation_item_receipts', function (Blueprint $table) {
-                $table->id();
-                $table->string('receipt_number')->unique();
-                $table->date('received_date');
-                $table->string('donor_name')->nullable();
-                $table->string('donor_phone')->nullable();
-                $table->string('item_type');
-                $table->string('item_name')->nullable();
-                $table->string('quantity')->nullable();
-                $table->string('unit')->nullable();
-                $table->string('item_condition')->nullable();
-                $table->string('delivery_method')->nullable();
-                $table->text('note')->nullable();
-                $table->foreignId('user_id')->nullable();
-                $table->string('received_by')->nullable();
-                $table->string('proof_photo')->nullable();
-                $table->string('status')->default('received');
-                $table->timestamps();
-            });
-        }
-
-        if (!Schema::hasTable('donation_item_commitments')) {
-            Schema::create('donation_item_commitments', function (Blueprint $table) {
-                $table->id();
-                $table->string('reference_number')->unique();
-                $table->dateTime('received_at');
-                $table->string('donor_name')->nullable();
-                $table->string('donor_phone')->nullable();
-                $table->string('item_type');
-                $table->string('item_name')->nullable();
-                $table->string('quantity_estimate')->nullable();
-                $table->string('delivery_method')->nullable();
-                $table->text('note')->nullable();
-                $table->text('raw_whatsapp_message')->nullable();
-                $table->string('status')->default('pending');
-                $table->dateTime('confirmed_at')->nullable();
-                $table->foreignId('received_receipt_id')->nullable();
-                $table->foreignId('created_by')->nullable();
-                $table->timestamps();
-            });
-        }
-
-        if (!Schema::hasTable('school_settings')) {
-            Schema::create('school_settings', function (Blueprint $table) {
-                $table->id();
-                $table->string('school_name')->nullable();
-                $table->string('tagline')->nullable();
-                $table->string('logo_path')->nullable();
-                $table->timestamps();
-            });
-        }
     }
 
     public function test_manual_item_receipt_create_redirects_to_whatsapp_data(): void
@@ -87,6 +23,12 @@ class DonationItemReceiptTest extends TestCase
             'password' => bcrypt('password'),
             'role' => 'admin',
         ]);
+
+        $role = \App\Models\Role::firstOrCreate(
+            ['name' => 'admin'],
+            ['display_name' => 'Admin', 'guard_name' => 'web', 'is_active' => true, 'is_system' => true]
+        );
+        $admin->roles()->syncWithoutDetaching([$role->id]);
 
         $this->actingAs($admin)
             ->get(route('admin.infaq-barang.create'))
