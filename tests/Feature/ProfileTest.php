@@ -19,6 +19,14 @@ class ProfileTest extends TestCase
             ->get('/profile');
 
         $response->assertOk();
+        $response->assertSee('Profil Akun');
+        $response->assertSee('Informasi Profil');
+        $response->assertSee('Ubah Kata Sandi');
+        $response->assertSee('Hapus Akun');
+        $response->assertSee('Nama');
+        $response->assertSee('Kata Sandi Saat Ini');
+        $response->assertSee('Kata Sandi Baru');
+        $response->assertSee('Konfirmasi Kata Sandi');
     }
 
     public function test_profile_information_can_be_updated(): void
