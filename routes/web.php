@@ -846,12 +846,12 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::put('organization-structures/page', [OrganizationStructureController::class, 'updatePage'])
-        ->middleware('role:superadmin,admin,staf_tata_usaha')
+        ->middleware('permission:website.organization.manage,superadmin,admin,staf_tata_usaha')
         ->name('organization-structures.page.update');
 
     Route::resource('organization-structures', OrganizationStructureController::class)
         ->except(['show'])
-        ->middleware('role:superadmin,admin,staf_tata_usaha');
+        ->middleware('permission:website.organization.manage,superadmin,admin,staf_tata_usaha');
 
     Route::name('website.values.')->prefix('website/nilai-utama')
         ->middleware('role:superadmin,admin,staf_tata_usaha')

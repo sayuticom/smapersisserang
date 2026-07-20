@@ -354,7 +354,7 @@ return [
             'admin.organization-structures.page.update',
         ],
         'default_roles' => ['admin', 'staf_tata_usaha'],
-        'menu_key'      => 'website.organization',
+        'menu_key'      => 'academic.organization',
         'is_system'     => false,
         'sort_order'    => 27,
     ],

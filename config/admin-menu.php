@@ -378,15 +378,6 @@ return [
                     'permission' => 'website.settings.manage',
                 ],
                 [
-                    'key' => 'website.organization',
-                    'label' => 'Struktur Organisasi',
-                    'route' => 'admin.organization-structures.index',
-                    'route_active' => 'admin.organization-structures.*',
-                    'icon' => 'grid',
-                    'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
-                    'permission' => 'website.organization.manage',
-                ],
-                [
                     'key' => 'website.figures',
                     'label' => 'Tokoh & Pembina',
                     'route' => 'admin.website.figures.index',
@@ -453,6 +444,15 @@ return [
                     'icon' => 'person',
                     'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
                     'permission' => 'website.teachers.manage',
+                ],
+                [
+                    'key' => 'academic.organization',
+                    'label' => 'Struktur Organisasi',
+                    'route' => 'admin.organization-structures.index',
+                    'route_active' => 'admin.organization-structures.*',
+                    'icon' => 'grid',
+                    'roles' => ['superadmin', 'admin', 'staf_tata_usaha'],
+                    'permission' => 'website.organization.manage',
                 ],
                 [
                     'key' => 'academic.years',
