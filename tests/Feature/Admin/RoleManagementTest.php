@@ -615,4 +615,68 @@ class RoleManagementTest extends TestCase
         $this->assertTrue($user->roles->contains('name', 'admin'));
         $this->assertTrue($user->roles->contains('name', 'pustakawan'));
     }
+
+    // ─── UX: Atur Akses Link ───
+
+    public function test_atur_akses_link_appears_for_all_roles(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $this->assertStringContainsString('Atur Akses', $html);
+        $this->assertStringContainsString(route('admin.menu-access.index'), $html);
+    }
+
+    public function test_atur_akses_link_count_matches_role_count(): void
+    {
+        $roleCount = Role::count();
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $linkCount = substr_count($html, 'Atur Akses');
+        $this->assertEquals($roleCount, $linkCount);
+    }
+
+    public function test_atur_akses_links_to_menu_access_page(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $expectedUrl = route('admin.menu-access.index');
+        $this->assertStringContainsString("href=\"{$expectedUrl}\"", $html);
+    }
+
+    public function test_column_header_changed_to_deskripsi_ringkasan_akses(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $this->assertStringContainsString('Ringkasan Akses', $html);
+    }
+
+    public function test_help_text_mentions_pengaturan_hak_akses(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $this->assertStringContainsString('Pengaturan menu dan permission dilakukan melalui', $html);
+        $this->assertStringContainsString('Pengaturan Hak Akses', $html);
+    }
+
+    public function test_technical_route_text_not_displayed_raw(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $this->assertStringNotContainsString('route: admin.', $html);
+        $this->assertStringNotContainsString('menu: SISTEM', $html);
+    }
+
+    public function test_route_summary_shows_count_not_names(): void
+    {
+        $user = $this->createUser('superadmin');
+        $html = $this->actingAs($user)->get(route('admin.roles.index'))->getContent();
+
+        $this->assertStringContainsString('route hardcode', $html);
+    }
 }

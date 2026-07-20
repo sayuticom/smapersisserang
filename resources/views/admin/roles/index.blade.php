@@ -8,9 +8,9 @@
         <h1 class="text-2xl font-bold text-slate-800">Pengaturan Role</h1>
         <p class="text-sm text-slate-500 mt-1">Kelola role / peran pengguna di sistem.</p>
         <div class="mt-2 text-xs bg-blue-50 border border-blue-100 rounded-lg p-3 text-slate-600">
-            <strong>Catatan:</strong> Role baru tidak otomatis mendapat akses modul. Hak akses tetap mengikuti
-            <code class="bg-slate-100 px-1 rounded">role:</code> middleware pada route. Role baru hanya dapat dicentang
-            di Pengaturan Menu Akses jika route middleware sudah mengizinkannya.
+            <strong>Catatan:</strong> Pengaturan menu dan permission dilakukan melalui
+            <a href="{{ route('admin.menu-access.index') }}" class="underline font-medium text-blue-600 hover:text-blue-800">Pengaturan Hak Akses</a>.
+            Halaman ini hanya untuk mengelola data role (nama, status, urutan).
         </div>
     </div>
 
@@ -34,7 +34,7 @@
                         <th class="text-left py-3 px-4 font-semibold text-slate-700 w-1">No</th>
                         <th class="text-left py-3 px-4 font-semibold text-slate-700">Role</th>
                         <th class="text-left py-3 px-4 font-semibold text-slate-700">Nama Tampilan</th>
-                        <th class="text-left py-3 px-4 font-semibold text-slate-700">Deskripsi</th>
+                        <th class="text-left py-3 px-4 font-semibold text-slate-700">Deskripsi & Ringkasan Akses</th>
                         <th class="text-center py-3 px-4 font-semibold text-slate-700">Status</th>
                         <th class="text-center py-3 px-4 font-semibold text-slate-700">User</th>
                         <th class="text-center py-3 px-4 font-semibold text-slate-700">Urutan</th>
@@ -57,14 +57,18 @@
                                 <div class="text-slate-800">{{ $role->display_name }}</div>
                             </td>
                             <td class="py-2.5 px-4 text-slate-500 text-xs max-w-xs">
-                                {{ $role->description ?: '—' }}
-                                @if (!empty($routeRoles[$role->name]) || !empty($configRoles[$role->name]))
-                                    <div class="mt-1 space-y-0.5">
-                                        @if (!empty($routeRoles[$role->name]))
-                                            <div class="text-amber-500">route: {{ implode(', ', array_slice($routeRoles[$role->name], 0, 3)) }}{{ count($routeRoles[$role->name]) > 3 ? ', ...' : '' }}</div>
+                                <div>{{ $role->description ?: '—' }}</div>
+                                @php
+                                    $routeCount = count($routeRoles[$role->name] ?? []);
+                                    $menuCount = count($configRoles[$role->name] ?? []);
+                                @endphp
+                                @if ($routeCount > 0 || $menuCount > 0)
+                                    <div class="mt-1 text-slate-400 space-y-0.5">
+                                        @if ($routeCount > 0)
+                                            <div>{{ $routeCount }} route hardcode</div>
                                         @endif
-                                        @if (!empty($configRoles[$role->name]))
-                                            <div class="text-blue-500">menu: {{ implode(', ', array_slice($configRoles[$role->name], 0, 2)) }}{{ count($configRoles[$role->name]) > 2 ? ', ...' : '' }}</div>
+                                        @if ($menuCount > 0)
+                                            <div>{{ $menuCount }} menu di config</div>
                                         @endif
                                     </div>
                                 @endif
@@ -82,6 +86,11 @@
                             <td class="text-center py-2.5 px-4 text-slate-500 text-xs">{{ $role->sort_order }}</td>
                             <td class="text-center py-2.5 px-4">
                                 <div class="flex items-center justify-center gap-1">
+                                    <a href="{{ route('admin.menu-access.index') }}"
+                                       class="px-2.5 py-1 text-xs font-medium rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                                       title="Atur hak akses menu dan permission untuk role ini">
+                                        Atur Akses
+                                    </a>
                                     <a href="#edit-{{ $role->id }}"
                                        onclick="event.preventDefault(); document.getElementById('edit-form-{{ $role->id }}').classList.toggle('hidden');"
                                        class="px-2.5 py-1 text-xs font-medium rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
