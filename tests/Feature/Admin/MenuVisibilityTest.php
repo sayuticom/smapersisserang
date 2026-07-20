@@ -272,7 +272,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengaturan Wakaf', 'Wakaf Masuk', 'Buat Bukti Penerimaan',
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
-                    'Profil Guru', 'Mata Pelajaran', 'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Profil Guru', 'Mata Pelajaran', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ]),
                 [],
@@ -288,7 +288,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengaturan Wakaf', 'Wakaf Masuk', 'Buat Bukti Penerimaan',
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
-                    'Profil Guru', 'Mata Pelajaran', 'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Profil Guru', 'Mata Pelajaran', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI',
                 ]),
                 ['Kelola User', 'Pengaturan Role', 'Pengaturan Menu'],
@@ -302,7 +302,7 @@ class MenuVisibilityTest extends TestCase
                     'Donasi Masuk',
                     'Wakaf Masuk',
                     'Dashboard Sarpras', 'Laporan Sarpras',
-                    'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                 ]),
                 [
                     'Pengaturan SPMB',
@@ -320,7 +320,7 @@ class MenuVisibilityTest extends TestCase
             'guru' => [
                 'guru',
                 array_merge($always, [
-                    'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Kalender Pendidikan', 'Jadwal Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI',
                 ]),
                 [
@@ -342,7 +342,7 @@ class MenuVisibilityTest extends TestCase
                     'Dashboard SPMB', 'Data Pendaftaran',
                     'Surat Keluar', 'Surat Masuk', 'Template Surat', 'Penandatangan', 'Jenis Surat', 'Pengaturan Surat',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
-                    'Profil Guru', 'Mata Pelajaran', 'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Profil Guru', 'Mata Pelajaran', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI',
                 ]),
                 [
@@ -369,7 +369,7 @@ class MenuVisibilityTest extends TestCase
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
-                    'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
@@ -378,7 +378,7 @@ class MenuVisibilityTest extends TestCase
                 array_merge($always, [
                     'Dashboard SPMB', 'Data Pendaftaran',
                     'Pengajuan OTA',
-                    'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                 ]),
                 [
                     'Pengaturan SPMB',
@@ -406,7 +406,7 @@ class MenuVisibilityTest extends TestCase
                     'Pengaturan Wakaf', 'Wakaf Masuk', 'Buat Bukti Penerimaan',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran',
-                    'Kalender dan Jadwal', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
+                    'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
                     'FAQ AI', 'Kelola User', 'Pengaturan Role', 'Pengaturan Menu',
                 ],
             ],
@@ -462,7 +462,6 @@ class MenuVisibilityTest extends TestCase
 
         $this->assertStringContainsString('Dashboard', $html);
         $this->assertStringContainsString('Profil', $html);
-        $this->assertStringContainsString('Kalender dan Jadwal', $html);
         $this->assertStringContainsString('Kalender Pendidikan', $html);
         $this->assertStringContainsString('Jadwal Pelajaran', $html);
         $this->assertStringContainsString('Kelas / Rombel', $html);

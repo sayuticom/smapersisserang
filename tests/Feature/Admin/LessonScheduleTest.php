@@ -457,8 +457,8 @@ class LessonScheduleTest extends TestCase
         $response->assertOk();
         $html = $response->getContent();
         $this->assertStringContainsString('Tampilkan Jadwal', $html);
-        $this->assertStringContainsString('Edit', $html);
-        $this->assertStringContainsString('Hapus', $html);
+        $this->assertStringContainsString('bg-blue-50', $html);
+        $this->assertStringContainsString('bg-red-50', $html);
         $this->assertStringContainsString('+ Tambah', $html);
     }
 
