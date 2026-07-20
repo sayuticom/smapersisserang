@@ -332,37 +332,48 @@ Route::middleware('track.visitor')->group(function () {
 
 Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::get('/ppdb', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'dashboard'])
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+        ->middleware('permission:ppdb.dashboard.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
         ->name('ppdb.dashboard');
 
     Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan')
         ->group(function () {
-            Route::get('/export', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'export'])->name('export');
-            Route::get('/export-pdf', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'exportPdf'])->name('export-pdf');
-            Route::get('/{studentApplication}/print', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'print'])->name('print');
-            Route::get('/{studentApplication}/requirements/download', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'downloadRequirements'])->name('requirements.download');
-            Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])->name('update-status');
-            Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])->name('update-follow-up');
-            Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])->name('mark-data-complete');
-            Route::post('/{studentApplication}/generate-update-link', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'generateUpdateLink'])->name('generate-update-link');
-        });
-
-    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
-        ->middleware('role:superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
-        ->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'index'])->name('index');
-            Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])->name('show');
-        });
-
-    Route::name('ppdb.applications.')->prefix('ppdb/pendaftar')
-        ->middleware('role:superadmin,admin')
-        ->group(function () {
-            Route::delete('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'destroy'])->name('destroy');
+            Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'index'])
+                ->middleware('permission:ppdb.applications.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+                ->name('index');
+            Route::get('/export', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'export'])
+                ->middleware('permission:ppdb.applications.export,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('export');
+            Route::get('/export-pdf', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'exportPdf'])
+                ->middleware('permission:ppdb.applications.export,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('export-pdf');
+            Route::get('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'show'])
+                ->middleware('permission:ppdb.applications.view,superadmin,admin,staf_tata_usaha,staf_kesiswaan,kepala_sekolah')
+                ->name('show');
+            Route::get('/{studentApplication}/print', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'print'])
+                ->middleware('permission:ppdb.applications.export,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('print');
+            Route::get('/{studentApplication}/requirements/download', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'downloadRequirements'])
+                ->middleware('permission:ppdb.applications.download,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('requirements.download');
+            Route::patch('/{studentApplication}/status', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateStatus'])
+                ->middleware('permission:ppdb.applications.manage,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('update-status');
+            Route::patch('/{studentApplication}/follow-up', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'updateFollowUp'])
+                ->middleware('permission:ppdb.applications.manage,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('update-follow-up');
+            Route::patch('/{studentApplication}/mark-data-complete', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'markDataComplete'])
+                ->middleware('permission:ppdb.applications.manage,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('mark-data-complete');
+            Route::post('/{studentApplication}/generate-update-link', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'generateUpdateLink'])
+                ->middleware('permission:ppdb.applications.manage,superadmin,admin,staf_tata_usaha,staf_kesiswaan')
+                ->name('generate-update-link');
+            Route::delete('/{studentApplication}', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'destroy'])
+                ->middleware('permission:ppdb.applications.delete,superadmin,admin')
+                ->name('destroy');
         });
 
     Route::name('ppdb.settings.')->prefix('ppdb/pengaturan')
-        ->middleware('role:superadmin,admin')
+        ->middleware('permission:ppdb.settings.manage,superadmin,admin')
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsEdit'])->name('edit');
             Route::put('/', [\App\Http\Controllers\Admin\PPDBApplicationController::class, 'settingsUpdate'])->name('update');

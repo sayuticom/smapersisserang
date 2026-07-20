@@ -6,11 +6,12 @@ use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\HasAdminUser;
 use Tests\TestCase;
 
 class PPDBSettingsTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAdminUser;
 
     private User $admin;
     private AdmissionYear $admissionYear;
@@ -20,7 +21,7 @@ class PPDBSettingsTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->create();
+        $this->admin = $this->createAdminUser();
 
         $this->admissionYear = AdmissionYear::factory()->create([
             'status' => 'open',

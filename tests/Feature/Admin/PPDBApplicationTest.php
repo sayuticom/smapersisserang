@@ -4,6 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Models\AdmissionYear;
 use App\Models\AdmissionProgram;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\StudentApplication;
 use App\Models\ApplicationStatusHistory;
 use App\Models\User;
@@ -850,5 +852,269 @@ class PPDBApplicationTest extends TestCase
         $filtered->assertSee('Follow Up Alpha');
         $filtered->assertDontSee('Follow Up Beta');
         $filtered->assertDontSee('Charlie Followup');
+    }
+
+    // ─── Permission middleware regression ────────────────────────
+
+    private function createRoleWithPermissions(string $roleName, array $permissionNames, string $module = 'ppdb'): User
+    {
+        $role = Role::firstOrCreate(
+            ['name' => $roleName],
+            ['display_name' => $roleName, 'is_active' => true, 'is_system' => false]
+        );
+
+        foreach ($permissionNames as $permName) {
+            $perm = Permission::firstOrCreate(
+                ['name' => $permName],
+                [
+                    'display_name' => $permName,
+                    'module' => $module,
+                    'action' => 'manage',
+                    'group_name' => 'SPMB',
+                    'is_system' => false,
+                    'is_active' => true,
+                ]
+            );
+            $role->permissions()->attach($perm->id);
+        }
+
+        $user = User::factory()->create(['role' => 'user']);
+        $user->roles()->attach($role->id);
+        $user->load('roles.permissions');
+
+        return $user;
+    }
+
+    public function test_user_with_ppdb_dashboard_permission_can_access_dashboard(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb', ['ppdb.dashboard.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk()
+            ->assertSee('Dashboard SPMB');
+    }
+
+    public function test_user_with_ppdb_applications_view_permission_can_access_index(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_read', ['ppdb.applications.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertOk()
+            ->assertSee('Pendaftar SPMB');
+    }
+
+    public function test_user_with_ppdb_applications_view_permission_can_access_show(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_read', ['ppdb.applications.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.show', $this->application))
+            ->assertOk()
+            ->assertSee('Detail Pendaftar');
+    }
+
+    public function test_user_with_ppdb_export_permission_can_export(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_export', ['ppdb.applications.export']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.export'))
+            ->assertOk();
+    }
+
+    public function test_user_with_ppdb_manage_permission_can_update_status(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_manage', ['ppdb.applications.manage']);
+
+        $this->actingAs($user)
+            ->patch(route('admin.ppdb.applications.update-status', $this->application), [
+                'status' => 'terverifikasi',
+            ])->assertSessionHas('success');
+    }
+
+    public function test_user_with_ppdb_settings_permission_can_access_settings(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_settings', ['ppdb.settings.manage']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.settings.edit'))
+            ->assertOk();
+    }
+
+    public function test_user_without_ppdb_permission_gets_403_on_dashboard(): void
+    {
+        $user = $this->createRoleWithPermissions('guru', ['academic.schedule.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertStatus(403);
+    }
+
+    public function test_user_without_ppdb_permission_gets_403_on_index(): void
+    {
+        $user = $this->createRoleWithPermissions('guru', ['academic.schedule.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertStatus(403);
+    }
+
+    public function test_user_with_only_view_permission_cannot_update_status(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_view_only', ['ppdb.applications.view']);
+
+        $this->actingAs($user)
+            ->patch(route('admin.ppdb.applications.update-status', $this->application), [
+                'status' => 'terverifikasi',
+            ])->assertStatus(403);
+    }
+
+    public function test_user_with_only_view_permission_cannot_export(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_view_only', ['ppdb.applications.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.export'))
+            ->assertStatus(403);
+    }
+
+    public function test_user_with_only_view_permission_cannot_access_settings(): void
+    {
+        $user = $this->createRoleWithPermissions('staf_ppdb_view_only', ['ppdb.applications.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.settings.edit'))
+            ->assertStatus(403);
+    }
+
+    public function test_fallback_role_still_works_for_ppdb_dashboard(): void
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'staf_tata_usaha'],
+            ['display_name' => 'Staf Tata Usaha', 'is_active' => true, 'is_system' => true]
+        );
+        $user = User::factory()->create(['role' => 'user']);
+        $user->roles()->attach($role->id);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk();
+    }
+
+    public function test_fallback_role_still_works_for_ppdb_index(): void
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'staf_tata_usaha'],
+            ['display_name' => 'Staf Tata Usaha', 'is_active' => true, 'is_system' => true]
+        );
+        $user = User::factory()->create(['role' => 'user']);
+        $user->roles()->attach($role->id);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertOk();
+    }
+
+    public function test_admin_user_always_passes_ppdb_routes(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertOk();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.applications.export'))
+            ->assertOk();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.settings.edit'))
+            ->assertOk();
+    }
+
+    public function test_legacy_column_admin_user_passes_via_fallback(): void
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'admin'],
+            ['display_name' => 'Admin', 'is_active' => true, 'is_system' => true]
+        );
+
+        $user = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.settings.edit'))
+            ->assertOk();
+    }
+
+    public function test_legacy_column_staf_tata_usaha_passes_via_fallback(): void
+    {
+        Role::firstOrCreate(
+            ['name' => 'staf_tata_usaha'],
+            ['display_name' => 'Staf Tata Usaha', 'is_active' => true, 'is_system' => true]
+        );
+
+        $user = User::factory()->create(['role' => 'staf_tata_usaha']);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.applications.index'))
+            ->assertOk();
+    }
+
+    public function test_empty_pivot_relation_with_column_admin_passes_via_fallback(): void
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'admin'],
+            ['display_name' => 'Admin', 'is_active' => true, 'is_system' => true]
+        );
+
+        $user = User::factory()->create(['role' => 'admin']);
+        $user->roles()->attach($role->id);
+        $user->unsetRelation('roles');
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertOk();
+    }
+
+    public function test_user_with_inactive_role_pivot_gets_403(): void
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'inactive_role'],
+            ['display_name' => 'Inactive Role', 'is_active' => false, 'is_system' => false]
+        );
+
+        $user = User::factory()->create(['role' => 'inactive_role']);
+        $user->roles()->attach($role->id);
+
+        $this->actingAs($user)
+            ->get(route('admin.ppdb.dashboard'))
+            ->assertStatus(403);
+    }
+
+    public function test_export_route_not_caught_as_student_application(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.applications.export'))
+            ->assertOk();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.ppdb.applications.export-pdf'))
+            ->assertOk();
     }
 }

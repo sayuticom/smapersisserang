@@ -62,16 +62,34 @@ class CheckPermission
 
     protected function isSuperadmin(User $user): bool
     {
-        return $user->relationLoaded('roles')
-            ? $user->roles->contains(fn(Role $r) => $r->name === 'superadmin' && ($r->is_active ?? true))
-            : $user->roles()->where('name', 'superadmin')->where('is_active', true)->exists();
+        if ($user->relationLoaded('roles') || $user->exists) {
+            $user->loadMissing('roles');
+            if ($user->roles->isNotEmpty()) {
+                return $user->roles->contains(fn(Role $r) => $r->name === 'superadmin' && ($r->is_active ?? true));
+            }
+        }
+
+        if ($user->role === 'superadmin') {
+            return Role::where('name', 'superadmin')->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     protected function userHasFallbackRole(User $user, array $fallbackRoles): bool
     {
-        return $user->relationLoaded('roles')
-            ? $user->roles->filter(fn(Role $r) => $r->is_active ?? true)->whereIn('name', $fallbackRoles)->isNotEmpty()
-            : $user->roles()->whereIn('name', $fallbackRoles)->where('is_active', true)->exists();
+        if ($user->relationLoaded('roles') || $user->exists) {
+            $user->loadMissing('roles');
+            if ($user->roles->isNotEmpty()) {
+                return $user->roles->filter(fn(Role $r) => $r->is_active ?? true)->whereIn('name', $fallbackRoles)->isNotEmpty();
+            }
+        }
+
+        if (in_array($user->role, $fallbackRoles)) {
+            return Role::where('name', $user->role)->where('is_active', true)->exists();
+        }
+
+        return false;
     }
 
     protected function loadValidPermissionNames(): void
