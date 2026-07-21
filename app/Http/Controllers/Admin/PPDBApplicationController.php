@@ -542,7 +542,7 @@ class PPDBApplicationController extends Controller
                     'start_date' => $validated['start_date'],
                     'end_date' => $validated['end_date'],
                     'description' => $validated['description'] ?? '',
-                    'show_consultation_button' => $validated['show_consultation_button'] ?? true,
+                    'show_consultation_button' => $request->boolean('show_consultation_button'),
                 ];
 
                 if ($request->hasFile('promo_image')) {

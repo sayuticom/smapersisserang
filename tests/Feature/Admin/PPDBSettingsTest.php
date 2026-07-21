@@ -153,14 +153,14 @@ class PPDBSettingsTest extends TestCase
         $this->assertTrue((bool) $this->admissionYear->show_consultation_button);
     }
 
-    public function test_consultation_button_not_sent_defaults_to_true(): void
+    public function test_consultation_button_not_sent_defaults_to_false(): void
     {
         $this->actingAs($this->admin)
             ->put(route('admin.ppdb.settings.update'), $this->validPayload())
             ->assertRedirect(route('admin.ppdb.settings.edit'));
 
         $this->admissionYear->refresh();
-        $this->assertTrue((bool) $this->admissionYear->show_consultation_button);
+        $this->assertFalse((bool) $this->admissionYear->show_consultation_button);
     }
 
     public function test_unauthorized_user_cannot_toggle_consultation_button(): void

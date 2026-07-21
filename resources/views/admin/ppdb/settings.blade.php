@@ -104,6 +104,7 @@
                     </div>
                     <div>
                         <label class="flex items-center gap-3">
+                            <input type="hidden" name="show_consultation_button" value="0">
                             <input type="checkbox" name="show_consultation_button" value="1"
                                     {{ old('show_consultation_button', $currentYear?->show_consultation_button ?? true) ? 'checked' : '' }}
                                    class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
