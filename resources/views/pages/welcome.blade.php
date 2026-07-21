@@ -7,13 +7,15 @@
         $schoolSetting = null;
     }
 
-    $homeTitle = 'SMA Persis Serang - Islamic Boarding School';
-    $homeDescription = 'SMA Persis Serang adalah Islamic Boarding School berbasis akhlak dan teknologi. Pendaftaran SPMB dibuka, gratis biaya sekolah dan asrama selama 3 tahun khusus angkatan pertama.';
+    $homeTitle = 'SMA Persis Serang | Islamic Boarding School';
+    $ogTitle = 'SMA Persis Serang — Berakhlak Mulia, Berpikir Kritis, dan Mandiri';
+    $homeDescription = 'SMA Persis Serang adalah sekolah Islam berasrama yang memadukan pendidikan formal, pembinaan akhlak dan keislaman, kemandirian, pendidikan kewirausahaan, serta pembelajaran teknologi untuk mempersiapkan siswa menghadapi era kecerdasan artifisial.';
+    $twitterDescription = 'Berakhlak mulia, berpikir kritis, dan mandiri. Siap menghadapi era teknologi dan AI.';
 
-    $homeUrl = request()->fullUrl();
+    $homeUrl = url('/');
     $homeImage = $schoolSetting?->meta_image
         ? asset('storage/' . $schoolSetting->meta_image)
-        : asset('images/og/default-og.jpg');
+        : asset('images/og-sma-persis-serang.jpg');
 @endphp
 
 @section('title', $homeTitle)
@@ -23,18 +25,18 @@
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ $homeUrl }}">
-    <meta property="og:title" content="{{ $homeTitle }}">
+    <meta property="og:title" content="{{ $ogTitle }}">
     <meta property="og:description" content="{{ $homeDescription }}">
     <meta property="og:image" content="{{ $homeImage }}">
     <meta property="og:image:secure_url" content="{{ $homeImage }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="SMA Persis Serang - Promo SPMB Gratis Sekolah dan Asrama 3 Tahun">
+    <meta property="og:image:alt" content="SMA Persis Serang - Islamic Boarding School">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $homeTitle }}">
-    <meta name="twitter:description" content="{{ $homeDescription }}">
+    <meta name="twitter:description" content="{{ $twitterDescription }}">
     <meta name="twitter:image" content="{{ $homeImage }}">
 @endsection
 

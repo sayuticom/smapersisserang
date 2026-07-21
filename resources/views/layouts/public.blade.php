@@ -24,10 +24,10 @@
         @hasSection('meta')
             @yield('meta')
         @else
-            <meta name="description" content="SMA Persis Serang - Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
+            <meta name="description" content="SMA Persis Serang adalah sekolah Islam berasrama yang memadukan pendidikan formal, pembinaan akhlak dan keislaman, kemandirian, pendidikan kewirausahaan, serta pembelajaran teknologi.">
 
-            <meta property="og:title" content="SMA Persis Serang">
-            <meta property="og:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami. Gratis biaya pendidikan dan asrama untuk satu rombongan belajar.">
+            <meta property="og:title" content="SMA Persis Serang | Islamic Boarding School">
+            <meta property="og:description" content="SMA Persis Serang adalah sekolah Islam berasrama yang memadukan pendidikan formal, pembinaan akhlak dan keislaman, kemandirian, pendidikan kewirausahaan, serta pembelajaran teknologi.">
             <meta property="og:type" content="website">
             <meta property="og:url" content="{{ url('/') }}">
             <meta property="og:image" content="{{ $defaultOgImage }}">
@@ -36,8 +36,8 @@
             <meta property="og:image:height" content="630">
 
             <meta name="twitter:card" content="summary_large_image">
-            <meta name="twitter:title" content="SMA Persis Serang">
-            <meta name="twitter:description" content="Sekolah berbasis akhlak, ilmu, teknologi, dan pembinaan islami.">
+            <meta name="twitter:title" content="SMA Persis Serang | Islamic Boarding School">
+            <meta name="twitter:description" content="Berakhlak mulia, berpikir kritis, dan mandiri. Siap menghadapi era teknologi dan AI.">
             <meta name="twitter:image" content="{{ $defaultOgImage }}">
         @endif
 
