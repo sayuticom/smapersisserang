@@ -7,6 +7,7 @@
     $defaultOgImage = $schoolSetting?->meta_image
         ? asset('storage/' . $schoolSetting->meta_image)
         : asset('images/og-sma-persis-serang.jpg');
+
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -69,7 +70,9 @@
 
         @include('layouts.partials.public-footer')
         @if (!request()->routeIs('spmb.update-data*') && !request()->routeIs('donasi-pendidikan') && !request()->routeIs('donasi-pendidikan.form-donatur') && !request()->routeIs('wakaf-uang.*'))
-            <x-ai-chat-widget />
+            @if($currentAdmissionYear?->show_consultation_button ?? true)
+                <x-ai-chat-widget />
+            @endif
         @endif
         @stack('scripts')
     </body>

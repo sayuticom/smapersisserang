@@ -233,10 +233,12 @@
                class="rounded-xl border-2 border-[#0F6B3A] px-8 py-4 text-sm font-semibold text-[#0F6B3A] transition hover:bg-[#EAF6EE]">
                 Cek Status Pendaftaran
             </a>
+            @if($currentAdmissionYear?->show_consultation_button ?? true)
             <button type="button" onclick="toggleAiChatPanel()"
                class="rounded-xl border-2 border-[#D4A017] px-8 py-4 text-sm font-semibold text-[#D4A017] transition hover:bg-[#D4A017]/5">
                 Konsultasi SPMB
             </button>
+            @endif
         </div>
     </div>
 </section>

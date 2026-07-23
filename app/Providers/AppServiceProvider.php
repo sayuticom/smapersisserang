@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\AdmissionYear;
 use App\Models\NavigationMenu;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\View;
@@ -54,6 +55,20 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         }
+
+        $resolveCurrentAdmissionYear = fn () => once(
+            fn () => AdmissionYear::query()
+                ->where('is_current', true)
+                ->first()
+        );
+
+        View::composer([
+            'layouts.public',
+            'pages.*',
+            'ppdb.*',
+        ], function ($view) use ($resolveCurrentAdmissionYear) {
+            $view->with('currentAdmissionYear', $resolveCurrentAdmissionYear());
+        });
 
         View::composer('layouts.partials.public-header', function ($view) {
             $items = NavigationMenu::active()

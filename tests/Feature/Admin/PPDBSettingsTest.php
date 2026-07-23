@@ -197,7 +197,7 @@ class PPDBSettingsTest extends TestCase
 
         $content = $response->getContent();
         $widgetCount = substr_count($content, 'toggleAiChatPanel');
-        $this->assertEquals(3, $widgetCount, 'Only the AI chat widget should reference toggleAiChatPanel when consultation buttons are disabled');
+        $this->assertEquals(0, $widgetCount, 'The widget and all toggleAiChatPanel references should be absent when consultation buttons are disabled');
     }
 
     public function test_public_page_shows_consultation_button_when_enabled_count(): void
@@ -217,6 +217,41 @@ class PPDBSettingsTest extends TestCase
         $this->admissionYear->update(['status' => 'open']);
 
         $response = $this->get(route('spmb.info'));
+        $response->assertOk();
+        $response->assertSee('Konsultasi SPMB');
+    }
+
+    // ─── Non-SPMB public page consultation button visibility ──────
+
+    public function test_non_spmb_public_page_shows_consultation_when_enabled(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => true, 'status' => 'open']);
+
+        $response = $this->get(route('public.program'));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $widgetCount = substr_count($content, 'toggleAiChatPanel');
+        $this->assertEquals(4, $widgetCount, 'Widget (3) + 1 inline button should equal 4');
+    }
+
+    public function test_non_spmb_public_page_hides_consultation_when_disabled(): void
+    {
+        $this->admissionYear->update(['show_consultation_button' => false, 'status' => 'open']);
+
+        $response = $this->get(route('public.program'));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $widgetCount = substr_count($content, 'toggleAiChatPanel');
+        $this->assertEquals(0, $widgetCount, 'No toggleAiChatPanel references should exist when consultation buttons are disabled');
+    }
+
+    public function test_non_spmb_public_page_shows_consultation_by_default(): void
+    {
+        $this->admissionYear->update(['status' => 'open']);
+
+        $response = $this->get(route('public.program'));
         $response->assertOk();
         $response->assertSee('Konsultasi SPMB');
     }

@@ -72,10 +72,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                         </svg>
                     </a>
+                    @if($currentAdmissionYear?->show_consultation_button ?? true)
                     <button type="button" onclick="toggleAiChatPanel()"
                        class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                         Konsultasi SPMB
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -442,10 +444,12 @@
             Kami siap menyambut putra-putri Anda untuk bergabung dalam lingkungan pendidikan islami yang berasrama, berakhlak, dan berteknologi.
         </p>
         <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            @if($currentAdmissionYear?->show_consultation_button ?? true)
             <button type="button" onclick="toggleAiChatPanel()"
                class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 px-8 py-4 text-sm font-bold text-emerald-950 shadow-lg shadow-amber-900/20 transition hover:from-amber-300 hover:to-amber-500">
                 Konsultasi SPMB
             </button>
+            @endif
             <a href="{{ route('public.program') }}"
                class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-8 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                 Lihat Program

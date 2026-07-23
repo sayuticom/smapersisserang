@@ -161,10 +161,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                         </svg>
                     </a>
+                    @if($currentAdmissionYear?->show_consultation_button ?? true)
                     <button type="button" onclick="toggleAiChatPanel()"
                        class="inline-flex items-center justify-center rounded-xl border border-amber-300/80 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10">
                         {{ $contactActionLabel }}
                     </button>
+                    @endif
                     <a href="{{ route('donasi-pendidikan') }}"
                        class="inline-flex items-center justify-center rounded-xl border border-emerald-100/50 bg-emerald-950/50 px-7 py-4 text-sm font-bold text-emerald-50 transition hover:bg-white/10">
                         Donasi Pendidikan

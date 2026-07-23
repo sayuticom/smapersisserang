@@ -51,11 +51,13 @@
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-white text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-colors border border-emerald-200">
                     Cek Status
                 </a>
+                @if($currentAdmissionYear?->show_consultation_button ?? true)
                 <button type="button" onclick="toggleAiChatPanel()"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-200 transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                     Konsultasi SPMB
                 </button>
+                @endif
             </div>
         </div>
     </div>
