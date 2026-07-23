@@ -1,13 +1,17 @@
-<button id="ai-chat-toggle"
-        type="button"
-        onclick="toggleAiChatPanel()"
-        style="position: fixed; right: 1rem; bottom: 5rem; z-index: 9999;"
-        class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-700 to-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-emerald-500 hover:shadow-xl transition-all duration-200">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-    </svg>
-    <span>Konsultasi SPMB</span>
-</button>
+<div x-data="{ show: true }"
+     x-init="window.addEventListener('mobile-menu-toggle', e => { show = !e.detail.open; if (e.detail.open) { var p = document.getElementById('ai-chat-panel'); if (p && p.style.display !== 'none') { p.style.display = 'none'; } } })"
+     x-show="show">
+    <button id="ai-chat-toggle"
+            type="button"
+            onclick="toggleAiChatPanel()"
+            style="position: fixed; right: 1rem; bottom: 5rem; z-index: 9999;"
+            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-700 to-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-emerald-500 hover:shadow-xl transition-all duration-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+        <span>Konsultasi SPMB</span>
+    </button>
+</div>
 
 <div id="ai-chat-panel"
      style="display: none; position: fixed; left: 0; right: 0; top: 5rem; bottom: 6.5rem; z-index: 9998;"

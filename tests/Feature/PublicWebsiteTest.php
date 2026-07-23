@@ -318,10 +318,22 @@ class PublicWebsiteTest extends TestCase
     public function test_header_has_boarding_link(): void
     {
         NavigationMenu::create([
+            'menu_key' => 'program',
+            'label' => 'Program',
+            'route_name' => null,
+            'url' => null,
+            'parent_key' => null,
+            'sort_order' => 4,
+            'location' => 'public_header',
+            'is_active' => true,
+        ]);
+        NavigationMenu::create([
             'menu_key' => 'boarding',
             'label' => 'Boarding',
             'route_name' => 'public.boarding',
-            'sort_order' => 4,
+            'url' => null,
+            'parent_key' => 'program',
+            'sort_order' => 2,
             'location' => 'public_header',
             'is_active' => true,
         ]);
