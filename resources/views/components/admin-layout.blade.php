@@ -55,7 +55,10 @@
                 @php
                     $adminSetting = \App\Models\SchoolSetting::current();
                 @endphp
-                <div class="flex items-center gap-3">
+                <a href="{{ url('/') }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                     @if($adminSetting?->logo_path)
                         <img src="{{ asset('storage/' . $adminSetting->logo_path) }}"
                              alt="{{ $adminSetting->school_name }}"
@@ -69,7 +72,7 @@
                         <h2 class="font-semibold text-gray-900 text-sm truncate">{{ $adminSetting->school_name ?? 'SMA Persis Serang' }}</h2>
                         <p class="text-xs text-slate-500">{{ $adminSetting->tagline ?? 'Islamic Boarding School' }}</p>
                     </div>
-                </div>
+                </a>
             </div>
 
             @php
