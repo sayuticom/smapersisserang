@@ -55,7 +55,18 @@
                                         <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="block text-xs font-medium text-emerald-700 hover:underline">{{ $income->donationOutflow->transaction_number }}</a>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2.5 text-gray-400 text-xs hidden lg:table-cell">{{ $income->creator?->name }}</td>
+                                <td class="px-4 py-2.5 text-xs hidden lg:table-cell">
+                                    @if($income->donationOutflow)
+                                        <div class="text-gray-600">
+                                            <span class="font-medium">Diinput oleh:</span> {{ $income->donationOutflow->creator?->name ?? 'Pengguna tidak tersedia' }}
+                                        </div>
+                                        <div class="text-gray-600 mt-0.5">
+                                            <span class="font-medium">Diverifikasi oleh:</span> {{ $income->creator?->name ?? '-' }}
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400">{{ $income->creator?->name ?? '-' }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2.5">
                                     @if(!$income->donation_outflow_id)
                                         <div class="flex items-center gap-2">

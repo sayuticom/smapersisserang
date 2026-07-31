@@ -43,8 +43,8 @@
                 <div><dt class="text-gray-500">Bukti Penyerahan</dt><dd class="mt-1">@if($donationOutflow->proof_file)<a href="{{ asset('storage/'.$donationOutflow->proof_file) }}" target="_blank" class="font-medium text-blue-600 hover:underline">Lihat Bukti</a>@else<span class="text-gray-400">Tidak ada</span>@endif</dd></div>
                 <div class="sm:col-span-2"><dt class="text-gray-500">Keterangan/Periode</dt><dd class="mt-1 text-gray-900 whitespace-pre-line">{{ $donationOutflow->description ?: '-' }}</dd></div>
                 <div class="sm:col-span-2"><dt class="text-gray-500">Catatan</dt><dd class="mt-1 text-gray-900 whitespace-pre-line">{{ $donationOutflow->notes ?: '-' }}</dd></div>
-                <div><dt class="text-gray-500">Dibuat oleh</dt><dd class="mt-1 text-gray-900">{{ $donationOutflow->creator?->name ?? '-' }}</dd></div>
-                <div><dt class="text-gray-500">Waktu dibuat</dt><dd class="mt-1 text-gray-900">{{ $donationOutflow->created_at->format('d/m/Y H:i') }}</dd></div>
+                <div><dt class="text-gray-500">Diinput oleh</dt><dd class="mt-1 text-gray-900">{{ $donationOutflow->creator?->name ?? 'Pengguna tidak tersedia' }}</dd></div>
+                <div><dt class="text-gray-500">Waktu diinput</dt><dd class="mt-1 text-gray-900">{{ $donationOutflow->created_at->format('d/m/Y H:i') }}</dd></div>
             </dl>
         </div>
 
@@ -65,16 +65,26 @@
         @endif
 
         @if($donationOutflow->status === 'pending' && ($canApprove || $canReject))
-            <div class="flex flex-col sm:flex-row justify-end gap-3">
-                @if($canReject)
-                    <button type="button" @click="rejectOpen = true" class="px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700">Tolak</button>
-                @endif
-                @if($canApprove)
-                    <form method="POST" action="{{ route('admin.donation-outflows.approve', $donationOutflow) }}" onsubmit="return confirm('Setujui transaksi ini dan buat Pemasukan Keuangan?')">
-                        @csrf
-                        <button type="submit" class="w-full px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">Setujui</button>
-                    </form>
-                @endif
+            <div class="rounded-xl border border-gray-200 bg-white p-5">
+                <h3 class="text-sm font-semibold text-gray-700">Tindakan Verifikasi</h3>
+                <p class="mt-1 text-xs text-gray-500">Periksa bukti dan data penyerahan sebelum memutuskan.</p>
+                <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    @if($canReject)
+                        <button type="button" @click="rejectOpen = true" class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 sm:w-auto">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Tolak
+                        </button>
+                    @endif
+                    @if($canApprove)
+                        <form method="POST" action="{{ route('admin.donation-outflows.approve', $donationOutflow) }}" onsubmit="return confirm('Setujui transaksi ini dan buat Pemasukan Keuangan?')" class="w-full sm:w-auto">
+                            @csrf
+                            <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-md ring-2 ring-emerald-300 hover:bg-emerald-700">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Setujui / ACC
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
         @endif
 

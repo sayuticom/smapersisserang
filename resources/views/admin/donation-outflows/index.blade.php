@@ -30,7 +30,7 @@
                                 <th class="px-4 py-3 text-gray-500 font-medium">Nominal</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Metode</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Status</th>
-                                <th class="px-4 py-3 text-gray-500 font-medium">Pembuat</th>
+                                <th class="px-4 py-3 text-gray-500 font-medium">Diinput oleh</th>
                                 <th class="px-4 py-3"></th>
                             </tr>
                         </thead>
@@ -57,7 +57,12 @@
                                     <td class="px-4 py-3"><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                     <td class="px-4 py-3 text-gray-500">{{ $outflow->creator?->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold">Detail</a>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">Detail</a>
+                                            @if($outflow->status === 'pending' && auth()->user()->hasPermissionTo('donation.outflows.approve'))
+                                                <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm ring-2 ring-emerald-300 hover:bg-emerald-700">Verifikasi / ACC</a>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

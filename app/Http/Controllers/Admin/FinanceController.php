@@ -76,7 +76,7 @@ class FinanceController extends Controller
 
     public function incomesIndex(): View
     {
-        $incomes = FinanceIncome::with(['creator', 'donationOutflow'])
+        $incomes = FinanceIncome::with(['creator', 'donationOutflow.creator'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);

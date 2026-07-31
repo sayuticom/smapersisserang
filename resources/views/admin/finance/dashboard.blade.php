@@ -5,38 +5,39 @@
             <p class="text-sm text-gray-500 mt-1">Ringkasan keuangan SMA Persis Serang</p>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saldo Saat Ini</p>
-                <p class="text-2xl font-bold text-emerald-600 mt-2">Rp {{ number_format($balance, 0, ',', '.') }}</p>
+                <p class="text-xl sm:text-2xl font-bold text-emerald-600 mt-2 break-words">Rp {{ number_format($balance, 0, ',', '.') }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pemasukan Bulan Ini</p>
-                <p class="text-2xl font-bold text-blue-600 mt-2">Rp {{ number_format($monthIncome, 0, ',', '.') }}</p>
+                <p class="text-xl sm:text-2xl font-bold text-blue-600 mt-2 break-words">Rp {{ number_format($monthIncome, 0, ',', '.') }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengeluaran Bulan Ini</p>
-                <p class="text-2xl font-bold text-red-600 mt-2">Rp {{ number_format($monthExpense, 0, ',', '.') }}</p>
+                <p class="text-xl sm:text-2xl font-bold text-red-600 mt-2 break-words">Rp {{ number_format($monthExpense, 0, ',', '.') }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengeluaran Terbesar</p>
-                <p class="text-lg font-bold text-gray-900 mt-2 truncate">{{ $topExpense?->expense_category ?? '-' }}</p>
+                <p class="text-lg font-bold text-gray-900 mt-2 break-words">{{ $topExpense?->expense_category ?? '-' }}</p>
                 @if($topExpense)
-                <p class="text-sm text-red-600 font-medium">Rp {{ number_format($topExpense->total, 0, ',', '.') }}</p>
+                <p class="text-sm text-red-600 font-medium break-words">Rp {{ number_format($topExpense->total, 0, ',', '.') }}</p>
                 @endif
             </div>
         </div>
 
         @if(auth()->user()->hasPermissionTo('donation.outflows.view') && $pendingDonationOutflowCount > 0)
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex sm:items-center sm:justify-between">
-                <div>
+            <div class="flex w-full min-w-0 flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
                     <h3 class="font-semibold text-amber-900">Dana Donasi Menunggu Verifikasi</h3>
                     <p class="mt-1 text-sm text-amber-800">
                         {{ $pendingDonationOutflowCount }} transaksi · Rp {{ number_format($pendingDonationOutflowTotal, 0, ',', '.') }}
                     </p>
                     <p class="mt-1 text-xs text-amber-700">Dana belum dicatat sebagai Pemasukan sebelum disetujui.</p>
+                    <p class="mt-1 text-xs font-medium text-amber-800">Buka transaksi untuk memeriksa dan menyetujui penyerahan dana.</p>
                 </div>
-                <a href="{{ route('admin.donation-outflows.index') }}" class="mt-4 inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 sm:mt-0">
+                <a href="{{ route('admin.donation-outflows.index') }}" class="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 sm:w-auto">
                     Lihat Transaksi
                 </a>
             </div>

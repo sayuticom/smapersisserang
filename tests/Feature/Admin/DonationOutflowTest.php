@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\DonationOutflowApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -258,6 +259,217 @@ class DonationOutflowTest extends TestCase
         $this->assertCount(1, $view->getData()['incomes']);
         $this->assertEquals(1250000, $view->getData()['totalIncome']);
         $this->assertSame('Transfer dari Donasi', $view->getData()['incomes']->sole()->income_type);
+    }
+
+    public function test_staf_keuangan_can_open_index_and_detail(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($staf)
+            ->get(route('admin.donation-outflows.index'))
+            ->assertOk()
+            ->assertSee('Penyerahan Dana Donasi ke Keuangan');
+
+        $this->actingAs($staf)
+            ->get(route('admin.donation-outflows.show', $outflow))
+            ->assertOk()
+            ->assertSee($outflow->transaction_number);
+    }
+
+    public function test_staf_keuangan_can_approve(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($staf)
+            ->post(route('admin.donation-outflows.approve', $outflow))
+            ->assertRedirect(route('admin.donation-outflows.show', $outflow));
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'approved',
+            'approved_by' => $staf->id,
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 1);
+    }
+
+    public function test_staf_keuangan_can_reject(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($staf)
+            ->post(route('admin.donation-outflows.reject', $outflow), [
+                'rejection_reason' => 'Berkas belum lengkap.',
+            ])
+            ->assertRedirect(route('admin.donation-outflows.show', $outflow));
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'rejected',
+            'rejected_by' => $staf->id,
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_staf_keuangan_cannot_create(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+
+        $this->actingAs($staf)
+            ->get(route('admin.donation-outflows.create'))
+            ->assertForbidden();
+
+        $this->actingAs($staf)
+            ->post(route('admin.donation-outflows.store'), [
+                'handover_date' => '2026-07-31',
+                'donation_source' => 'Donasi Pendidikan',
+                'amount' => 1000,
+                'handover_method' => 'cash',
+                'destination_account' => 'Kas Sekolah',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('donation_outflows', 0);
+    }
+
+    public function test_user_without_permission_gets_403(): void
+    {
+        $user = $this->userWithPermissions([]);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index'))
+            ->assertForbidden();
+    }
+
+    public function test_dashboard_pending_card_links_to_outflow_index(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $this->createOutflow();
+
+        $this->actingAs($staf)
+            ->get(route('admin.finance.dashboard'))
+            ->assertOk()
+            ->assertSee('Dana Donasi Menunggu Verifikasi')
+            ->assertSee(route('admin.donation-outflows.index'));
+    }
+
+    public function test_approve_reject_buttons_appear_per_permission_and_status(): void
+    {
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
+
+        $pending = $this->createOutflow();
+        $this->actingAs($staf)
+            ->get(route('admin.donation-outflows.show', $pending))
+            ->assertOk()
+            ->assertSee('Tindakan Verifikasi')
+            ->assertSee('Setujui / ACC');
+
+        $approved = $this->createOutflow([
+            'transaction_number' => 'DK-20260731-AP2',
+            'status' => 'approved',
+        ]);
+        $this->actingAs($staf)
+            ->get(route('admin.donation-outflows.show', $approved))
+            ->assertOk()
+            ->assertDontSee('Tindakan Verifikasi')
+            ->assertDontSee('Setujui / ACC');
+
+        $viewOnly = $this->userWithPermissions(['donation.outflows.view']);
+        $this->actingAs($viewOnly)
+            ->get(route('admin.donation-outflows.show', $pending))
+            ->assertOk()
+            ->assertDontSee('Tindakan Verifikasi')
+            ->assertDontSee('Setujui / ACC');
+    }
+
+    public function test_income_from_approval_shows_inputter_and_verifier(): void
+    {
+        $creator = User::factory()->create(['role' => 'admin', 'name' => 'Penginput Donasi']);
+        $approver = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $approver->update(['name' => 'Verifikator Keuangan']);
+
+        $outflow = $this->createOutflow(['created_by' => $creator->id]);
+        app(DonationOutflowApprovalService::class)->approve($outflow, $approver);
+
+        $this->actingAs($approver)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['Diinput oleh', 'Penginput Donasi', 'Diverifikasi oleh', 'Verifikator Keuangan']);
+    }
+
+    public function test_manual_income_still_shows_recorder(): void
+    {
+        $recorder = $this->userWithRoleOutflowDefaults('admin');
+        $recorder->update(['name' => 'Pencatat Manual']);
+
+        FinanceIncome::create([
+            'date' => '2026-07-31',
+            'income_type' => 'Bantuan Sekolah',
+            'amount' => 750000,
+            'payment_method' => 'Transfer Bank',
+            'source_name' => 'Manual',
+            'description' => 'Pemasukan manual',
+            'created_by' => $recorder->id,
+        ]);
+
+        $this->actingAs($recorder)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSee('Pencatat Manual');
+    }
+
+    public function test_income_from_approval_handles_missing_inputter_user(): void
+    {
+        $approver = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $creator = User::factory()->create(['role' => 'admin', 'name' => 'Penginput Lama']);
+
+        $outflow = $this->createOutflow(['created_by' => $creator->id]);
+        app(DonationOutflowApprovalService::class)->approve($outflow, $approver);
+
+        DB::statement('PRAGMA foreign_keys = OFF');
+        DB::table('donation_outflows')->where('id', $outflow->id)->update(['created_by' => 999999]);
+        DB::statement('PRAGMA foreign_keys = ON');
+
+        $this->actingAs($approver)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSee('Pengguna tidak tersedia');
+    }
+
+    private function userWithRoleOutflowDefaults(string $roleName): User
+    {
+        $role = Role::firstOrCreate([
+            'name' => $roleName,
+        ], [
+            'display_name' => ucfirst($roleName),
+            'guard_name' => 'web',
+            'is_active' => true,
+        ]);
+        $user = User::factory()->create(['role' => $roleName]);
+        $user->roles()->attach($role);
+
+        $permissionIds = [];
+        foreach (config('permissions') as $perm) {
+            if (str_starts_with($perm['name'], 'donation.outflows.')
+                && in_array($roleName, $perm['default_roles'] ?? [], true)) {
+                $permissionIds[] = Permission::firstOrCreate(
+                    ['name' => $perm['name']],
+                    [
+                        'module' => $perm['module'],
+                        'action' => $perm['action'],
+                        'display_name' => $perm['display_name'],
+                        'group_name' => $perm['group_name'],
+                        'is_active' => true,
+                    ]
+                )->id;
+            }
+        }
+
+        $role->permissions()->syncWithoutDetaching($permissionIds);
+
+        return $user;
     }
 
     private function userWithPermissions(array $permissionNames, string $roleName = 'guru'): User
