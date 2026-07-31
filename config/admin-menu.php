@@ -177,6 +177,15 @@ return [
                     'permission' => 'donation.transactions.view',
                 ],
                 [
+                    'key' => 'donation.outflows',
+                    'label' => 'Donasi Keluar',
+                    'route' => 'admin.donation-outflows.index',
+                    'route_active' => 'admin.donation-outflows.*',
+                    'icon' => 'arrow-up',
+                    'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.outflows.view',
+                ],
+                [
                     'key' => 'donation.education',
                     'label' => 'Donasi Pendidikan',
                     'route' => 'admin.website.donasi-pendidikan.edit',

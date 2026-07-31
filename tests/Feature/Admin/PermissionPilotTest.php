@@ -801,10 +801,10 @@ class PermissionPilotTest extends TestCase
     // CONFIG INTEGRITY
     // ========================================================================
 
-    public function test_all_72_permissions_have_config_entry(): void
+    public function test_all_76_permissions_have_config_entry(): void
     {
         $manifest = config('permissions');
-        $this->assertCount(72, $manifest);
+        $this->assertCount(76, $manifest);
 
         foreach ($manifest as $perm) {
             $this->assertArrayHasKey('name', $perm);

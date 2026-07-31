@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\FosterStudentController;
 use App\Http\Controllers\Admin\DonationItemCommitmentController;
 use App\Http\Controllers\Admin\DonationItemReceiptController;
 use App\Http\Controllers\Admin\DonationTransactionController;
+use App\Http\Controllers\Admin\DonationOutflowController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LetterIncomingController;
 use App\Http\Controllers\Admin\LetterSettingController;
@@ -421,6 +422,27 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
             Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
         });
+
+    Route::name('donation-outflows.')->prefix('donation-outflows')->group(function () {
+        Route::get('/', [DonationOutflowController::class, 'index'])
+            ->middleware('permission:donation.outflows.view,superadmin,admin,staf_keuangan')
+            ->name('index');
+        Route::get('/create', [DonationOutflowController::class, 'create'])
+            ->middleware('permission:donation.outflows.create,superadmin,admin')
+            ->name('create');
+        Route::post('/', [DonationOutflowController::class, 'store'])
+            ->middleware('permission:donation.outflows.create,superadmin,admin')
+            ->name('store');
+        Route::get('/{donationOutflow}', [DonationOutflowController::class, 'show'])
+            ->middleware('permission:donation.outflows.view,superadmin,admin,staf_keuangan')
+            ->name('show');
+        Route::post('/{donationOutflow}/approve', [DonationOutflowController::class, 'approve'])
+            ->middleware('permission:donation.outflows.approve,superadmin,admin,staf_keuangan')
+            ->name('approve');
+        Route::post('/{donationOutflow}/reject', [DonationOutflowController::class, 'reject'])
+            ->middleware('permission:donation.outflows.reject,superadmin,admin,staf_keuangan')
+            ->name('reject');
+    });
 
     Route::name('donasi-transactions.')->prefix('donasi-transactions')
         ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')

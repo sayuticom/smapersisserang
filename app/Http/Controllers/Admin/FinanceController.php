@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DonationOutflow;
 use App\Models\FinanceExpense;
 use App\Models\FinanceIncome;
 use Illuminate\Http\RedirectResponse;
@@ -55,8 +56,17 @@ class FinanceController extends Controller
             ->orderByDesc('total')
             ->first();
 
+        $pendingDonationOutflows = DonationOutflow::where('status', DonationOutflow::STATUS_PENDING);
+        $pendingDonationOutflowCount = (clone $pendingDonationOutflows)->count();
+        $pendingDonationOutflowTotal = (clone $pendingDonationOutflows)->sum('amount');
+
         return view('admin.finance.dashboard', compact(
-            'balance', 'monthIncome', 'monthExpense', 'topExpense'
+            'balance',
+            'monthIncome',
+            'monthExpense',
+            'topExpense',
+            'pendingDonationOutflowCount',
+            'pendingDonationOutflowTotal'
         ));
     }
 
@@ -66,7 +76,7 @@ class FinanceController extends Controller
 
     public function incomesIndex(): View
     {
-        $incomes = FinanceIncome::with('creator')
+        $incomes = FinanceIncome::with(['creator', 'donationOutflow'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -78,6 +88,7 @@ class FinanceController extends Controller
     {
         $incomeTypes = self::INCOME_TYPES;
         $paymentMethods = self::PAYMENT_METHODS;
+
         return view('admin.finance.incomes.create', compact('incomeTypes', 'paymentMethods'));
     }
 
@@ -108,13 +119,18 @@ class FinanceController extends Controller
 
     public function incomesEdit(FinanceIncome $financeIncome): View
     {
+        $this->ensureIncomeIsManuallyManaged($financeIncome);
+
         $incomeTypes = self::INCOME_TYPES;
         $paymentMethods = self::PAYMENT_METHODS;
+
         return view('admin.finance.incomes.edit', compact('financeIncome', 'incomeTypes', 'paymentMethods'));
     }
 
     public function incomesUpdate(Request $request, FinanceIncome $financeIncome): RedirectResponse
     {
+        $this->ensureIncomeIsManuallyManaged($financeIncome);
+
         $validated = $request->validate([
             'date' => ['required', 'date'],
             'income_type' => ['required', 'string'],
@@ -141,6 +157,8 @@ class FinanceController extends Controller
 
     public function incomesDestroy(FinanceIncome $financeIncome): RedirectResponse
     {
+        $this->ensureIncomeIsManuallyManaged($financeIncome);
+
         if ($financeIncome->proof_file) {
             Storage::disk('public')->delete($financeIncome->proof_file);
         }
@@ -168,6 +186,7 @@ class FinanceController extends Controller
     {
         $expenseCategories = FinanceExpense::expenseCategories();
         $paymentMethods = self::PAYMENT_METHODS;
+
         return view('admin.finance.expenses.create', compact('expenseCategories', 'paymentMethods'));
     }
 
@@ -200,6 +219,7 @@ class FinanceController extends Controller
     {
         $expenseCategories = FinanceExpense::expenseCategories();
         $paymentMethods = self::PAYMENT_METHODS;
+
         return view('admin.finance.expenses.edit', compact('financeExpense', 'expenseCategories', 'paymentMethods'));
     }
 
@@ -259,7 +279,7 @@ class FinanceController extends Controller
         $balance = $totalIncome - $totalExpense;
 
         $expenseByCategory = $expenses->groupBy('expense_category')
-            ->map(fn($items) => $items->sum('amount'));
+            ->map(fn ($items) => $items->sum('amount'));
 
         $isPrint = $request->boolean('print');
 
@@ -274,5 +294,14 @@ class FinanceController extends Controller
             'startDate', 'endDate', 'incomes', 'expenses',
             'totalIncome', 'totalExpense', 'balance', 'expenseByCategory'
         ));
+    }
+
+    private function ensureIncomeIsManuallyManaged(FinanceIncome $financeIncome): void
+    {
+        abort_if(
+            $financeIncome->donation_outflow_id !== null,
+            403,
+            'Pemasukan dari Donasi Keluar tidak dapat diedit atau dihapus melalui modul Pemasukan.'
+        );
     }
 }

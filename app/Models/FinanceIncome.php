@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FinanceIncome extends Model
 {
     protected $fillable = [
+        'donation_outflow_id',
         'date',
         'income_type',
         'amount',
@@ -29,6 +30,11 @@ class FinanceIncome extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function donationOutflow(): BelongsTo
+    {
+        return $this->belongsTo(DonationOutflow::class);
     }
 
     public static function incomeTypes(): array

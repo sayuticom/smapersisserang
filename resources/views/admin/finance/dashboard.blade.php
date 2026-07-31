@@ -27,6 +27,21 @@
             </div>
         </div>
 
+        @if(auth()->user()->hasPermissionTo('donation.outflows.view') && $pendingDonationOutflowCount > 0)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="font-semibold text-amber-900">Dana Donasi Menunggu Verifikasi</h3>
+                    <p class="mt-1 text-sm text-amber-800">
+                        {{ $pendingDonationOutflowCount }} transaksi · Rp {{ number_format($pendingDonationOutflowTotal, 0, ',', '.') }}
+                    </p>
+                    <p class="mt-1 text-xs text-amber-700">Dana belum dicatat sebagai Pemasukan sebelum disetujui.</p>
+                </div>
+                <a href="{{ route('admin.donation-outflows.index') }}" class="mt-4 inline-flex rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 sm:mt-0">
+                    Lihat Transaksi
+                </a>
+            </div>
+        @endif
+
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Akses Cepat</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

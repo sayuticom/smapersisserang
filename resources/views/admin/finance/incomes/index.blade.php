@@ -41,19 +41,33 @@
                             @foreach($incomes as $income)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-2.5 text-gray-900 whitespace-nowrap">{{ $income->date->format('d/m/Y') }}</td>
-                                <td class="px-4 py-2.5"><span class="font-medium text-gray-900">{{ $income->income_type }}</span></td>
+                                <td class="px-4 py-2.5">
+                                    <span class="font-medium text-gray-900">{{ $income->income_type }}</span>
+                                    @if($income->donationOutflow)
+                                        <span class="mt-1 block w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Dari Donasi Keluar</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2.5 text-blue-600 font-medium whitespace-nowrap">Rp {{ number_format($income->amount, 0, ',', '.') }}</td>
                                 <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{{ $income->payment_method }}</td>
-                                <td class="px-4 py-2.5 text-gray-600 hidden md:table-cell max-w-[150px] truncate">{{ $income->source_name ?: '-' }}</td>
+                                <td class="px-4 py-2.5 text-gray-600 hidden md:table-cell max-w-[180px]">
+                                    <span class="block truncate">{{ $income->source_name ?: '-' }}</span>
+                                    @if($income->donationOutflow)
+                                        <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="block text-xs font-medium text-emerald-700 hover:underline">{{ $income->donationOutflow->transaction_number }}</a>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2.5 text-gray-400 text-xs hidden lg:table-cell">{{ $income->creator?->name }}</td>
                                 <td class="px-4 py-2.5">
-                                    <div class="flex items-center gap-2">
-                                        <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
-                                        <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Hapus pemasukan ini?')" class="inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
-                                        </form>
-                                    </div>
+                                    @if(!$income->donation_outflow_id)
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
+                                            <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Hapus pemasukan ini?')" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400">Terkunci</span>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
