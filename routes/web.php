@@ -437,10 +437,10 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             ->middleware('permission:donation.outflows.view,superadmin,admin,staf_keuangan')
             ->name('show');
         Route::post('/{donationOutflow}/approve', [DonationOutflowController::class, 'approve'])
-            ->middleware('permission:donation.outflows.approve,superadmin,admin,staf_keuangan')
+            ->middleware('permission:donation.outflows.approve,superadmin,staf_keuangan')
             ->name('approve');
         Route::post('/{donationOutflow}/reject', [DonationOutflowController::class, 'reject'])
-            ->middleware('permission:donation.outflows.reject,superadmin,admin,staf_keuangan')
+            ->middleware('permission:donation.outflows.reject,superadmin,staf_keuangan')
             ->name('reject');
     });
 

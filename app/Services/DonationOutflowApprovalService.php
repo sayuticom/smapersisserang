@@ -17,6 +17,10 @@ class DonationOutflowApprovalService
                 ->lockForUpdate()
                 ->findOrFail($outflow->getKey());
 
+            if ((int) $lockedOutflow->created_by === (int) $approver->id) {
+                abort(403, 'Pembuat transaksi tidak dapat memverifikasi transaksi sendiri.');
+            }
+
             if ($lockedOutflow->status !== DonationOutflow::STATUS_PENDING) {
                 throw ValidationException::withMessages([
                     'status' => 'Transaksi ini sudah diproses dan tidak dapat disetujui kembali.',

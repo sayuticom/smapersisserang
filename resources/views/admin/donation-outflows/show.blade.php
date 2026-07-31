@@ -10,8 +10,10 @@
             'rejected' => 'Ditolak',
             default => 'Menunggu Verifikasi',
         };
-        $canApprove = auth()->user()->hasPermissionTo('donation.outflows.approve');
-        $canReject = auth()->user()->hasPermissionTo('donation.outflows.reject');
+        $isFinanceOfficer = auth()->user()->isFinanceOfficer();
+        $isCreator = (int) $donationOutflow->created_by === (int) auth()->id();
+        $canApprove = $isFinanceOfficer && ! $isCreator && auth()->user()->hasPermissionTo('donation.outflows.approve');
+        $canReject = $isFinanceOfficer && ! $isCreator && auth()->user()->hasPermissionTo('donation.outflows.reject');
     @endphp
 
     <div class="max-w-4xl mx-auto space-y-6" x-data="{ rejectOpen: false }">
@@ -64,7 +66,11 @@
             </div>
         @endif
 
-        @if($donationOutflow->status === 'pending' && ($canApprove || $canReject))
+        @if($donationOutflow->status === 'pending' && $isCreator)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm">
+                <p class="font-medium text-amber-800">Menunggu verifikasi dari bagian Keuangan.</p>
+            </div>
+        @elseif($donationOutflow->status === 'pending' && ($canApprove || $canReject))
             <div class="rounded-xl border border-gray-200 bg-white p-5">
                 <h3 class="text-sm font-semibold text-gray-700">Tindakan Verifikasi</h3>
                 <p class="mt-1 text-xs text-gray-500">Periksa bukti dan data penyerahan sebelum memutuskan.</p>
@@ -104,6 +110,7 @@
             </div>
         </div>
 
+        @if($canReject)
         <div x-show="rejectOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/50" @click="rejectOpen = false"></div>
             <div class="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
@@ -119,5 +126,6 @@
                 </form>
             </div>
         </div>
+        @endif
     </div>
 </x-admin-layout>

@@ -118,6 +118,15 @@ class User extends Authenticatable
         return false;
     }
 
+    public function isFinanceOfficer(): bool
+    {
+        if ($this->isSuperadmin()) {
+            return true;
+        }
+
+        return $this->hasRole('staf_keuangan');
+    }
+
     public function hasPermissionTo(string $permissionName): bool
     {
         if ($this->isSuperadmin()) {

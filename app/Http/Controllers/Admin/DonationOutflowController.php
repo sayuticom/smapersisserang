@@ -84,6 +84,8 @@ class DonationOutflowController extends Controller
         DonationOutflow $donationOutflow,
         DonationOutflowApprovalService $approvalService
     ): RedirectResponse {
+        $this->assertCanVerify($donationOutflow);
+
         $approvalService->approve($donationOutflow, auth()->user());
 
         return redirect()->route('admin.donation-outflows.show', $donationOutflow)
@@ -92,6 +94,8 @@ class DonationOutflowController extends Controller
 
     public function reject(Request $request, DonationOutflow $donationOutflow): RedirectResponse
     {
+        $this->assertCanVerify($donationOutflow);
+
         $validated = $request->validate([
             'rejection_reason' => ['required', 'string', 'max:2000'],
         ]);
@@ -126,6 +130,17 @@ class DonationOutflowController extends Controller
 
         return redirect()->route('admin.donation-outflows.show', $donationOutflow)
             ->with('success', 'Donasi Keluar ditolak.');
+    }
+
+    private function assertCanVerify(DonationOutflow $donationOutflow): void
+    {
+        if ((int) $donationOutflow->created_by === (int) auth()->id()) {
+            abort(403, 'Pembuat transaksi tidak dapat memverifikasi transaksi sendiri.');
+        }
+
+        if (! auth()->user()->isFinanceOfficer()) {
+            abort(403, 'Hanya petugas Keuangan yang dapat memverifikasi transaksi Donasi Keluar.');
+        }
     }
 
     private function generateTransactionNumber(): string

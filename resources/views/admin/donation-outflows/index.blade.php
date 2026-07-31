@@ -59,7 +59,10 @@
                                     <td class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">Detail</a>
-                                            @if($outflow->status === 'pending' && auth()->user()->hasPermissionTo('donation.outflows.approve'))
+                                            @if($outflow->status === 'pending'
+                                                && auth()->user()->isFinanceOfficer()
+                                                && (int) $outflow->created_by !== (int) auth()->id()
+                                                && auth()->user()->hasPermissionTo('donation.outflows.approve'))
                                                 <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm ring-2 ring-emerald-300 hover:bg-emerald-700">Verifikasi / ACC</a>
                                             @endif
                                         </div>

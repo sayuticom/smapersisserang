@@ -169,7 +169,15 @@ class PermissionFoundationTest extends TestCase
     {
         $admin = Role::where('name', 'admin')->first();
         $adminPerms = $admin->permissions->pluck('name')->toArray();
-        $nonSystem = Permission::where('is_system', false)->pluck('name')->toArray();
+        // SoD: verifikasi Donasi Keluar tidak otomatis diberikan ke role admin.
+        $excluded = [
+            'donation.outflows.approve',
+            'donation.outflows.reject',
+        ];
+        $nonSystem = Permission::where('is_system', false)
+            ->whereNotIn('name', $excluded)
+            ->pluck('name')
+            ->toArray();
 
         $missing = array_diff($nonSystem, $adminPerms);
         $this->assertEmpty(
@@ -177,6 +185,10 @@ class PermissionFoundationTest extends TestCase
             'Admin missing non-system permissions: ' . implode(', ', $missing)
         );
         $this->assertCount(count($nonSystem), $adminPerms);
+
+        foreach ($excluded as $name) {
+            $this->assertNotContains($name, $adminPerms, "Admin must not hold '$name'");
+        }
     }
 
     public function test_admin_gets_zero_system_permissions(): void

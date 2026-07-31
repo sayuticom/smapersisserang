@@ -15,6 +15,7 @@ class PermissionSeeder extends Seeder
 
         if (empty($manifest)) {
             $this->command->warn('config/permissions.php is empty or not found.');
+
             return;
         }
 
@@ -22,13 +23,18 @@ class PermissionSeeder extends Seeder
         $manifestNames = array_column($manifest, 'name');
         $orphanNames = Permission::whereNotIn('name', $manifestNames)->pluck('name');
         if ($orphanNames->isNotEmpty()) {
-            $this->command->warn('⚠️  Orphan/stale permission(s) in DB not in manifest: ' . $orphanNames->implode(', '));
+            $this->command->warn('⚠️  Orphan/stale permission(s) in DB not in manifest: '.$orphanNames->implode(', '));
         }
 
         $adminRole = Role::where('name', 'admin')->first();
         $adminNonSystemPermissionIds = [];
+        // SoD: permission verifikasi Donasi Keluar tidak otomatis diberikan ke role admin.
+        $adminExcludedPermissions = [
+            'donation.outflows.approve',
+            'donation.outflows.reject',
+        ];
 
-        DB::transaction(function () use ($manifest, $adminRole, &$adminNonSystemPermissionIds) {
+        DB::transaction(function () use ($manifest, $adminRole, &$adminNonSystemPermissionIds, $adminExcludedPermissions) {
             foreach ($manifest as $data) {
                 $defaultRoles = $data['default_roles'] ?? [];
                 $dbData = $data;
@@ -39,14 +45,14 @@ class PermissionSeeder extends Seeder
                     $dbData
                 );
 
-                if (!$perm->wasRecentlyCreated) {
+                if (! $perm->wasRecentlyCreated) {
                     $perm->update($dbData);
                 }
 
                 // Attach default roles without detaching existing ones
-                if (!empty($defaultRoles)) {
+                if (! empty($defaultRoles)) {
                     $roleIds = Role::whereIn('name', $defaultRoles)->pluck('id')->toArray();
-                    if (!empty($roleIds)) {
+                    if (! empty($roleIds)) {
                         $existing = DB::table('permission_role')
                             ->where('permission_id', $perm->id)
                             ->whereIn('role_id', $roleIds)
@@ -66,13 +72,15 @@ class PermissionSeeder extends Seeder
                 }
 
                 // Collect non-system permission IDs for admin
-                if ($adminRole && !($data['is_system'] ?? false)) {
+                if ($adminRole
+                    && ! ($data['is_system'] ?? false)
+                    && ! in_array($data['name'], $adminExcludedPermissions, true)) {
                     $adminNonSystemPermissionIds[] = $perm->id;
                 }
             }
 
             // Admin gets all non-system permissions
-            if ($adminRole && !empty($adminNonSystemPermissionIds)) {
+            if ($adminRole && ! empty($adminNonSystemPermissionIds)) {
                 $existingAdmin = DB::table('permission_role')
                     ->where('role_id', $adminRole->id)
                     ->whereIn('permission_id', $adminNonSystemPermissionIds)
@@ -87,6 +95,14 @@ class PermissionSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+                }
+            }
+
+            // SoD: cabut hanya pivot verifikasi Donasi Keluar lama pada role admin (idempotent).
+            if ($adminRole) {
+                $outflowVerificationIds = Permission::whereIn('name', $adminExcludedPermissions)->pluck('id');
+                if ($outflowVerificationIds->isNotEmpty()) {
+                    $adminRole->permissions()->detach($outflowVerificationIds);
                 }
             }
         });

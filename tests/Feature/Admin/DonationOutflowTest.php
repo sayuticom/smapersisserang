@@ -143,7 +143,7 @@ class DonationOutflowTest extends TestCase
 
     public function test_rejection_requires_and_saves_reason_without_income(): void
     {
-        $rejector = $this->userWithPermissions(['donation.outflows.reject']);
+        $rejector = $this->userWithRoleOutflowDefaults('staf_keuangan');
         $outflow = $this->createOutflow();
 
         $this->actingAs($rejector)
@@ -177,18 +177,19 @@ class DonationOutflowTest extends TestCase
             'donation.outflows.approve',
             'donation.outflows.reject',
         ]);
+        $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
 
         $approved = $this->createOutflow();
         app(DonationOutflowApprovalService::class)->approve($approved, $user);
 
-        $this->actingAs($user)
+        $this->actingAs($staf)
             ->post(route('admin.donation-outflows.reject', $approved), [
                 'rejection_reason' => 'Tidak boleh diproses.',
             ])
             ->assertSessionHasErrors('status');
 
         $rejected = $this->createOutflow(['transaction_number' => 'DK-20260731-RJ01']);
-        $this->actingAs($user)->post(route('admin.donation-outflows.reject', $rejected), [
+        $this->actingAs($staf)->post(route('admin.donation-outflows.reject', $rejected), [
             'rejection_reason' => 'Ditolak.',
         ]);
 
@@ -353,6 +354,186 @@ class DonationOutflowTest extends TestCase
             ->assertOk()
             ->assertSee('Dana Donasi Menunggu Verifikasi')
             ->assertSee(route('admin.donation-outflows.index'));
+    }
+
+    public function test_creator_can_open_own_detail_but_does_not_see_verify_buttons(): void
+    {
+        $creator = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow(['created_by' => $creator->id]);
+
+        $this->actingAs($creator)
+            ->get(route('admin.donation-outflows.show', $outflow))
+            ->assertOk()
+            ->assertSee($outflow->transaction_number)
+            ->assertSee('Menunggu verifikasi dari bagian Keuangan.')
+            ->assertDontSee('Tindakan Verifikasi')
+            ->assertDontSee('Setujui / ACC')
+            ->assertDontSee('Tolak');
+    }
+
+    public function test_creator_cannot_approve_own_transaction(): void
+    {
+        $creator = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow(['created_by' => $creator->id]);
+
+        $this->actingAs($creator)
+            ->post(route('admin.donation-outflows.approve', $outflow))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_creator_cannot_reject_own_transaction(): void
+    {
+        $creator = $this->userWithRoleOutflowDefaults('staf_keuangan');
+        $outflow = $this->createOutflow(['created_by' => $creator->id]);
+
+        $this->actingAs($creator)
+            ->post(route('admin.donation-outflows.reject', $outflow), [
+                'rejection_reason' => 'Tidak bisa ditolak sendiri.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_non_finance_user_with_approve_permission_cannot_approve(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.approve']);
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($user)
+            ->post(route('admin.donation-outflows.approve', $outflow))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_superadmin_can_approve_transaction_not_created_by_self(): void
+    {
+        $superadmin = $this->userWithRoleOutflowDefaults('superadmin');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($superadmin)
+            ->post(route('admin.donation-outflows.approve', $outflow))
+            ->assertRedirect(route('admin.donation-outflows.show', $outflow));
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'approved',
+            'approved_by' => $superadmin->id,
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 1);
+    }
+
+    public function test_superadmin_cannot_approve_own_transaction(): void
+    {
+        $superadmin = $this->userWithRoleOutflowDefaults('superadmin');
+        $outflow = $this->createOutflow(['created_by' => $superadmin->id]);
+
+        $this->actingAs($superadmin)
+            ->post(route('admin.donation-outflows.approve', $outflow))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_superadmin_can_reject_transaction_not_created_by_self(): void
+    {
+        $superadmin = $this->userWithRoleOutflowDefaults('superadmin');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($superadmin)
+            ->post(route('admin.donation-outflows.reject', $outflow), [
+                'rejection_reason' => 'Dana tidak sesuai bukti.',
+            ])
+            ->assertRedirect(route('admin.donation-outflows.show', $outflow));
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'rejected',
+            'rejected_by' => $superadmin->id,
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_superadmin_cannot_reject_own_transaction(): void
+    {
+        $superadmin = $this->userWithRoleOutflowDefaults('superadmin');
+        $outflow = $this->createOutflow(['created_by' => $superadmin->id]);
+
+        $this->actingAs($superadmin)
+            ->post(route('admin.donation-outflows.reject', $outflow), [
+                'rejection_reason' => 'Tidak boleh ditolak sendiri.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $outflow->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_verification_default_roles_exclude_admin_in_manifest(): void
+    {
+        $manifest = collect(config('permissions'))
+            ->keyBy('name')
+            ->only(['donation.outflows.approve', 'donation.outflows.reject']);
+
+        $this->assertSame(
+            ['donation.outflows.approve', 'donation.outflows.reject'],
+            $manifest->keys()->all(),
+            'Manifest harus memuat kedua permission verifikasi.'
+        );
+
+        foreach ($manifest as $permission) {
+            $this->assertNotContains('admin', $permission['default_roles'] ?? [], "{$permission['name']} tidak boleh berdefault admin.");
+            $this->assertContains('staf_keuangan', $permission['default_roles'] ?? [], "{$permission['name']} harus berdefault staf_keuangan.");
+        }
+    }
+
+    public function test_admin_with_stale_approve_reject_permission_still_forbidden(): void
+    {
+        $admin = $this->userWithPermissions([
+            'donation.outflows.approve',
+            'donation.outflows.reject',
+        ], 'admin');
+
+        $pending = $this->createOutflow();
+        $this->actingAs($admin)
+            ->post(route('admin.donation-outflows.approve', $pending))
+            ->assertForbidden();
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $pending->id,
+            'status' => 'pending',
+        ]);
+
+        $pendingReject = $this->createOutflow(['transaction_number' => 'DK-20260731-AR01']);
+        $this->actingAs($admin)
+            ->post(route('admin.donation-outflows.reject', $pendingReject), [
+                'rejection_reason' => 'Admin tidak boleh memverifikasi.',
+            ])
+            ->assertForbidden();
+        $this->assertDatabaseHas('donation_outflows', [
+            'id' => $pendingReject->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseCount('finance_incomes', 0);
     }
 
     public function test_approve_reject_buttons_appear_per_permission_and_status(): void
