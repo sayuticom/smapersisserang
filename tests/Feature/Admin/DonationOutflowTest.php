@@ -33,6 +33,7 @@ class DonationOutflowTest extends TestCase
             'finance_incomes',
             'finance_expenses',
             'donation_outflows',
+            'donation_transactions',
             'permission_role',
             'permissions',
             'role_user',
@@ -65,9 +66,179 @@ class DonationOutflowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_index_without_filter_shows_all_outflows(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $pending = $this->createOutflow(['status' => 'pending', 'handover_date' => '2026-07-31', 'transaction_number' => 'DK-20260731-PN01']);
+        $approved = $this->createOutflow(['status' => 'approved', 'handover_date' => '2026-08-01', 'transaction_number' => 'DK-20260801-PN02']);
+        $rejected = $this->createOutflow(['status' => 'rejected', 'handover_date' => '2026-08-02', 'transaction_number' => 'DK-20260802-PN03']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index'))
+            ->assertOk()
+            ->assertSee($pending->transaction_number)
+            ->assertSee($approved->transaction_number)
+            ->assertSee($rejected->transaction_number);
+    }
+
+    public function test_date_filter_shows_only_selected_date(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $selected = $this->createOutflow(['handover_date' => '2026-07-31', 'transaction_number' => 'DK-20260731-PN01']);
+        $other = $this->createOutflow(['handover_date' => '2026-08-02', 'transaction_number' => 'DK-20260802-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => '2026-07-31', 'filter_type' => 'date']))
+            ->assertOk()
+            ->assertSee($selected->transaction_number)
+            ->assertDontSee($other->transaction_number);
+    }
+
+    public function test_month_filter_shows_all_selected_month_transactions(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $first = $this->createOutflow(['handover_date' => '2026-08-02', 'transaction_number' => 'DK-20260802-PN01']);
+        $second = $this->createOutflow(['handover_date' => '2026-08-15', 'transaction_number' => 'DK-20260815-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => '2026-08-02', 'filter_type' => 'month']))
+            ->assertOk()
+            ->assertSee($first->transaction_number)
+            ->assertSee($second->transaction_number);
+    }
+
+    public function test_month_filter_excludes_transactions_from_other_months(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $inMonth = $this->createOutflow(['handover_date' => '2026-08-10', 'transaction_number' => 'DK-20260810-PN01']);
+        $otherMonth = $this->createOutflow(['handover_date' => '2026-07-31', 'transaction_number' => 'DK-20260731-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => '2026-08-10', 'filter_type' => 'month']))
+            ->assertOk()
+            ->assertSee($inMonth->transaction_number)
+            ->assertDontSee($otherMonth->transaction_number);
+    }
+
+    public function test_status_filter_pending_shows_only_pending(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $pending = $this->createOutflow(['status' => 'pending', 'transaction_number' => 'DK-20260731-PN01']);
+        $approved = $this->createOutflow(['status' => 'approved', 'transaction_number' => 'DK-20260801-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['status' => 'pending']))
+            ->assertOk()
+            ->assertSee($pending->transaction_number)
+            ->assertDontSee($approved->transaction_number);
+    }
+
+    public function test_status_filter_approved_shows_only_approved(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $approved = $this->createOutflow(['status' => 'approved', 'transaction_number' => 'DK-20260801-PN01']);
+        $pending = $this->createOutflow(['status' => 'pending', 'transaction_number' => 'DK-20260731-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['status' => 'approved']))
+            ->assertOk()
+            ->assertSee($approved->transaction_number)
+            ->assertDontSee($pending->transaction_number);
+    }
+
+    public function test_status_filter_rejected_shows_only_rejected(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $rejected = $this->createOutflow(['status' => 'rejected', 'transaction_number' => 'DK-20260802-PN01']);
+        $pending = $this->createOutflow(['status' => 'pending', 'transaction_number' => 'DK-20260731-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['status' => 'rejected']))
+            ->assertOk()
+            ->assertSee($rejected->transaction_number)
+            ->assertDontSee($pending->transaction_number);
+    }
+
+    public function test_month_and_status_filter_combined(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $pendingAug = $this->createOutflow(['status' => 'pending', 'handover_date' => '2026-08-05', 'transaction_number' => 'DK-20260805-PN01']);
+        $pendingJul = $this->createOutflow(['status' => 'pending', 'handover_date' => '2026-07-31', 'transaction_number' => 'DK-20260731-PN02']);
+        $approvedAug = $this->createOutflow(['status' => 'approved', 'handover_date' => '2026-08-06', 'transaction_number' => 'DK-20260806-PN03']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => '2026-08-05', 'filter_type' => 'month', 'status' => 'pending']))
+            ->assertOk()
+            ->assertSee($pendingAug->transaction_number)
+            ->assertDontSee($pendingJul->transaction_number)
+            ->assertDontSee($approvedAug->transaction_number);
+    }
+
+    public function test_search_by_transaction_number_works(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $target = $this->createOutflow(['transaction_number' => 'DK-20260802-ABCD']);
+        $other = $this->createOutflow(['transaction_number' => 'DK-20260803-WXYZ']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['search' => 'ABCD']))
+            ->assertOk()
+            ->assertSee($target->transaction_number)
+            ->assertDontSee($other->transaction_number);
+    }
+
+    public function test_pagination_preserves_query_string(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+
+        foreach (range(1, 25) as $i) {
+            $this->createOutflow([
+                'status' => 'pending',
+                'handover_date' => '2026-08-' . str_pad((string) ($i % 28) + 1, 2, '0', STR_PAD_LEFT),
+                'transaction_number' => 'DK-202608-P' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+            ]);
+        }
+
+        $response = $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['status' => 'pending']));
+
+        $response->assertOk();
+        $this->assertStringContainsString('page=2', $response->getContent());
+        $this->assertStringContainsString('status=pending', $response->getContent());
+    }
+
+    public function test_date_filter_without_date_returns_validation_error(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['filter_type' => 'date']))
+            ->assertSessionHasErrors('date');
+    }
+
+    public function test_invalid_date_returns_validation_error(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => 'not-a-date', 'filter_type' => 'date']))
+            ->assertSessionHasErrors('date');
+    }
+
+    public function test_reset_link_points_to_clean_index(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['date' => '2026-08-02', 'status' => 'pending']))
+            ->assertOk()
+            ->assertSee('href="' . route('admin.donation-outflows.index') . '"', false);
+    }
+
     public function test_transaction_is_created_pending_with_initial_history(): void
     {
         $user = $this->userWithPermissions(['donation.outflows.create']);
+        $this->createIncomingDonation(1500000);
 
         $response = $this->actingAs($user)->post(route('admin.donation-outflows.store'), [
             'handover_date' => '2026-07-31',
@@ -83,7 +254,7 @@ class DonationOutflowTest extends TestCase
         $outflow = DonationOutflow::firstOrFail();
 
         $response->assertRedirect(route('admin.donation-outflows.show', $outflow));
-        $this->assertMatchesRegularExpression('/^DK-20260731-[A-Z0-9]{4}$/', $outflow->transaction_number);
+        $this->assertMatchesRegularExpression('/^DK-\d{8}-[A-Z0-9]{4}$/', $outflow->transaction_number);
         $this->assertSame(DonationOutflow::STATUS_PENDING, $outflow->status);
         $this->assertDatabaseHas('donation_outflow_status_histories', [
             'donation_outflow_id' => $outflow->id,
@@ -694,7 +865,7 @@ class DonationOutflowTest extends TestCase
     {
         $creator = User::factory()->create(['role' => 'admin']);
 
-        return DonationOutflow::create(array_merge([
+        $data = array_merge([
             'transaction_number' => 'DK-20260731-PN01',
             'handover_date' => '2026-07-31',
             'donation_source' => 'Donasi Pendidikan',
@@ -705,7 +876,28 @@ class DonationOutflowTest extends TestCase
             'notes' => 'Catatan pengujian',
             'status' => 'pending',
             'created_by' => $creator->id,
-        ], $overrides));
+        ], $overrides);
+
+        // Pastikan terdapat dana masuk yang cukup agar approval/store valid.
+        $this->createIncomingDonation((int) round((float) $data['amount']));
+
+        return DonationOutflow::create($data);
+    }
+
+    private function createIncomingDonation(int $amount): void
+    {
+        DB::table('donation_transactions')->insert([
+            'order_id' => 'DON-' . now()->format('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2))),
+            'donor_name' => 'Donatur Uji',
+            'donor_whatsapp' => '-',
+            'support_type' => 'Donasi Pendidikan & Makan Santri',
+            'amount' => $amount,
+            'payment_gateway' => 'midtrans',
+            'status' => 'paid',
+            'paid_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function createIncome(DonationOutflow $outflow): FinanceIncome
@@ -811,6 +1003,19 @@ class DonationOutflowTest extends TestCase
             $table->string('to_status');
             $table->text('reason')->nullable();
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+        Schema::create('donation_transactions', function ($table) {
+            $table->id();
+            $table->string('order_id')->unique();
+            $table->string('donor_name');
+            $table->string('donor_whatsapp');
+            $table->string('support_type');
+            $table->unsignedBigInteger('amount');
+            $table->text('note')->nullable();
+            $table->string('payment_gateway')->default('midtrans');
+            $table->string('status')->default('pending');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
         Schema::create('finance_incomes', function ($table) {

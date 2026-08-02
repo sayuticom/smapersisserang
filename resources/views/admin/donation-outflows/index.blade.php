@@ -1,19 +1,111 @@
 <x-admin-layout>
     <div class="space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">Penyerahan Dana Donasi ke Keuangan</h2>
                 <p class="text-sm text-gray-500 mt-1">Daftar Donasi Keluar dan status verifikasi Keuangan</p>
             </div>
-            @if(auth()->user()->hasPermissionTo('donation.outflows.create'))
-                <a href="{{ route('admin.donation-outflows.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 shadow-sm">
-                    Tambah Donasi Keluar
-                </a>
-            @endif
+
+            <div class="flex flex-col gap-2 sm:flex-row lg:shrink-0">
+                @if(auth()->user()->hasPermissionTo('donation.balance.view'))
+                    <a href="{{ route('admin.donation.dashboard') }}" class="inline-flex items-center justify-center px-4 py-2 whitespace-nowrap border border-emerald-200 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 shadow-sm">
+                        Lihat Dashboard Donasi
+                    </a>
+                @endif
+                @if(auth()->user()->hasPermissionTo('donation.outflows.create'))
+                    <a href="{{ route('admin.donation-outflows.create') }}" class="inline-flex items-center justify-center px-4 py-2 whitespace-nowrap bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 shadow-sm">
+                        Tambah Donasi Keluar
+                    </a>
+                @endif
+            </div>
         </div>
 
         @if(session('success'))
             <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ session('success') }}</div>
+        @endif
+
+        @php
+            $bulanNama = [1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            $filteredDate = request('date');
+            $filterType = request('filter_type');
+            $statusFilter = request('status');
+            $statusLabels = ['pending' => 'Menunggu Verifikasi', 'approved' => 'Disetujui', 'rejected' => 'Ditolak'];
+            $activeFilters = [];
+            if ($filteredDate) {
+                $d = \Carbon\Carbon::parse($filteredDate);
+                if ($filterType === 'month') {
+                    $activeFilters[] = 'Menampilkan data bulan ' . $bulanNama[$d->month] . ' ' . $d->year;
+                } else {
+                    $activeFilters[] = 'Menampilkan data tanggal ' . $d->day . ' ' . $bulanNama[$d->month] . ' ' . $d->year;
+                }
+            }
+            if ($statusFilter) {
+                $activeFilters[] = 'Status: ' . ($statusLabels[$statusFilter] ?? $statusFilter);
+            }
+            if (request('search')) {
+                $activeFilters[] = 'Pencarian: "' . request('search') . '"';
+            }
+        @endphp
+
+        <form method="GET" action="{{ route('admin.donation-outflows.index') }}"
+              class="mb-4 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:p-5">
+            @if($errors->any())
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <ul class="list-disc list-inside">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:items-end">
+                <div class="w-full lg:w-72 lg:shrink-0">
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Tanggal</label>
+                    <input type="date" name="date" value="{{ old('date', request('date')) }}"
+                           class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @error('date')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <button type="submit" name="filter_type" value="date"
+                        class="h-11 w-full whitespace-nowrap rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800 sm:w-auto lg:w-auto lg:shrink-0">
+                    Filter Tanggal
+                </button>
+                <button type="submit" name="filter_type" value="month"
+                        class="h-11 w-full whitespace-nowrap rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800 sm:w-auto lg:w-auto lg:shrink-0">
+                    Filter Bulan
+                </button>
+                <a href="{{ route('admin.donation-outflows.index') }}"
+                   class="flex h-11 w-full items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto lg:w-auto lg:shrink-0">
+                    Reset
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_240px_auto]">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Cari</label>
+                    <input type="text" name="search" value="{{ old('search', request('search')) }}"
+                           placeholder="Nomor, sumber donasi, rekening, keterangan"
+                           class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Status</label>
+                    <select name="status"
+                            class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">Semua Status</option>
+                        <option value="pending" @selected(old('status', request('status')) === 'pending')>Menunggu Verifikasi</option>
+                        <option value="approved" @selected(old('status', request('status')) === 'approved')>Disetujui</option>
+                        <option value="rejected" @selected(old('status', request('status')) === 'rejected')>Ditolak</option>
+                    </select>
+                </div>
+                <button type="submit"
+                        class="h-11 w-full whitespace-nowrap rounded-xl bg-emerald-700 px-6 text-sm font-semibold text-white hover:bg-emerald-800 md:w-auto lg:w-auto lg:shrink-0">
+                    Terapkan
+                </button>
+            </div>
+        </form>
+
+        @if($activeFilters)
+            <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+                {{ implode(' &bull; ', $activeFilters) }}
+            </div>
         @endif
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

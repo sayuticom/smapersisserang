@@ -6,6 +6,12 @@
                 <p class="text-gray-500 mt-1">Daftar transaksi donasi pendidikan & makan santri.</p>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row">
+                @if(auth()->user()->hasPermissionTo('donation.balance.view'))
+                    <a href="{{ route('admin.donation.dashboard') }}"
+                       class="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50">
+                        Lihat Dashboard Donasi
+                    </a>
+                @endif
                 <a href="{{ route('admin.donasi-transactions.create-receipt') }}"
                    class="inline-flex items-center justify-center rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800">
                     Buat Bukti Penerimaan

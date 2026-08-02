@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DonationItemCommitmentController;
 use App\Http\Controllers\Admin\DonationItemReceiptController;
 use App\Http\Controllers\Admin\DonationTransactionController;
 use App\Http\Controllers\Admin\DonationOutflowController;
+use App\Http\Controllers\Admin\DonationDashboardController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LetterIncomingController;
 use App\Http\Controllers\Admin\LetterSettingController;
@@ -444,6 +445,10 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             ->name('reject');
     });
 
+    Route::get('/donasi/dashboard', [DonationDashboardController::class, 'dashboard'])
+        ->middleware('permission:donation.balance.view,superadmin,admin,staf_keuangan')
+        ->name('donation.dashboard');
+
     Route::name('donasi-transactions.')->prefix('donasi-transactions')
         ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')
         ->group(function () {
@@ -510,6 +515,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::post('/pemasukan', [FinanceController::class, 'incomesStore'])->name('incomes.store');
             Route::get('/pemasukan/{financeIncome}/edit', [FinanceController::class, 'incomesEdit'])->name('incomes.edit');
             Route::put('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesUpdate'])->name('incomes.update');
+            Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
 
             Route::get('/pengeluaran', [FinanceController::class, 'expensesIndex'])->name('expenses.index');
             Route::get('/pengeluaran/create', [FinanceController::class, 'expensesCreate'])->name('expenses.create');
@@ -521,7 +527,6 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::name('finance.')->prefix('finance')
         ->middleware('role:superadmin,admin')
         ->group(function () {
-            Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
             Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
         });
 

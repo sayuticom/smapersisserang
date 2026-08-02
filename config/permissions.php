@@ -740,6 +740,7 @@ return [
             'admin.finance.incomes.store',
             'admin.finance.incomes.edit',
             'admin.finance.incomes.update',
+            'admin.finance.incomes.destroy',
             'admin.finance.expenses.index',
             'admin.finance.expenses.create',
             'admin.finance.expenses.store',
@@ -759,7 +760,6 @@ return [
         'description'   => 'Menghapus pemasukan dan pengeluaran',
         'group_name'    => 'KEUANGAN',
         'routes'        => [
-            'admin.finance.incomes.destroy',
             'admin.finance.expenses.destroy',
         ],
         'default_roles' => ['admin'],
@@ -1060,6 +1060,19 @@ return [
         'menu_key'      => null,
         'is_system'     => false,
         'sort_order'    => 77,
+    ],
+    [
+        'name'          => 'donation.balance.view',
+        'module'        => 'donation',
+        'action'        => 'view',
+        'display_name'  => 'Lihat Saldo Donasi',
+        'description'   => 'Melihat saldo dana donasi (masuk, keluar, dan saldo tersedia)',
+        'group_name'    => 'DONASI',
+        'routes'        => ['admin.donation.dashboard'],
+        'default_roles' => ['admin', 'staf_keuangan'],
+        'menu_key'      => null,
+        'is_system'     => false,
+        'sort_order'    => 78,
     ],
 
     // ========================================================================

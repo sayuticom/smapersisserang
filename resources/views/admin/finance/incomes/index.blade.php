@@ -1,4 +1,11 @@
 <x-admin-layout>
+    @php
+        $currentUser = auth()->user();
+        $canManageManualIncome = $currentUser->isAdmin() || $currentUser->hasRole('staf_keuangan');
+        $canEditManualIncome = $canManageManualIncome && $currentUser->hasPermissionTo('finance.transactions.manage');
+        $canDeleteManualIncome = $canEditManualIncome;
+    @endphp
+
     <div class="space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -69,13 +76,19 @@
                                 </td>
                                 <td class="px-4 py-2.5">
                                     @if(!$income->donation_outflow_id)
-                                        <div class="flex items-center gap-2">
-                                            <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
-                                            <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Hapus pemasukan ini?')" class="inline">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
-                                            </form>
-                                        </div>
+                                        @if($canEditManualIncome || $canDeleteManualIncome)
+                                            <div class="flex items-center gap-2">
+                                                @if($canEditManualIncome)
+                                                    <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
+                                                @endif
+                                                @if($canDeleteManualIncome)
+                                                    <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Hapus pemasukan ini?')" class="inline">
+                                                        @csrf @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @endif
                                     @else
                                         <span class="text-xs text-gray-400">Terkunci</span>
                                     @endif

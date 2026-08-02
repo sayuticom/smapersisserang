@@ -119,7 +119,7 @@ class FinanceController extends Controller
 
     public function incomesEdit(FinanceIncome $financeIncome): View
     {
-        $this->ensureIncomeIsManuallyManaged($financeIncome);
+        $this->assertCanManageManualIncome($financeIncome, 'finance.transactions.manage');
 
         $incomeTypes = self::INCOME_TYPES;
         $paymentMethods = self::PAYMENT_METHODS;
@@ -129,7 +129,7 @@ class FinanceController extends Controller
 
     public function incomesUpdate(Request $request, FinanceIncome $financeIncome): RedirectResponse
     {
-        $this->ensureIncomeIsManuallyManaged($financeIncome);
+        $this->assertCanManageManualIncome($financeIncome, 'finance.transactions.manage');
 
         $validated = $request->validate([
             'date' => ['required', 'date'],
@@ -157,7 +157,7 @@ class FinanceController extends Controller
 
     public function incomesDestroy(FinanceIncome $financeIncome): RedirectResponse
     {
-        $this->ensureIncomeIsManuallyManaged($financeIncome);
+        $this->assertCanManageManualIncome($financeIncome, 'finance.transactions.manage');
 
         if ($financeIncome->proof_file) {
             Storage::disk('public')->delete($financeIncome->proof_file);
@@ -296,12 +296,22 @@ class FinanceController extends Controller
         ));
     }
 
-    private function ensureIncomeIsManuallyManaged(FinanceIncome $financeIncome): void
+    private function assertCanManageManualIncome(FinanceIncome $financeIncome, string $permission): void
     {
         abort_if(
             $financeIncome->donation_outflow_id !== null,
             403,
             'Pemasukan dari Donasi Keluar tidak dapat diedit atau dihapus melalui modul Pemasukan.'
         );
+
+        $user = auth()->user();
+
+        if (! $user->isAdmin() && ! $user->hasRole('staf_keuangan')) {
+            abort(403, 'Anda tidak memiliki akses untuk mengelola Pemasukan ini.');
+        }
+
+        if (! $user->hasPermissionTo($permission)) {
+            abort(403, 'Anda tidak memiliki izin untuk tindakan ini.');
+        }
     }
 }

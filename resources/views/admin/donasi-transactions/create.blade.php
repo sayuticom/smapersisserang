@@ -85,6 +85,7 @@
                         <input type="text" id="nominal_amount" name="nominal_amount"
                                value="{{ old('nominal_amount', $parsed['nominal_amount'] ?? '') }}"
                                placeholder="Rp50.000"
+                               oninput="updateTotalTransfer()"
                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
                     </div>
                     <div>
@@ -92,21 +93,46 @@
                         <input type="text" id="admin_fee" name="admin_fee"
                                value="{{ old('admin_fee', $parsed['admin_fee'] ?? '') }}"
                                placeholder="Rp300"
+                               oninput="updateTotalTransfer()"
                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
                     </div>
                     <div>
+                        <label for="payment_method" class="block text-sm font-semibold text-gray-700">Metode Pembayaran</label>
+                        <select id="payment_method" name="payment_method"
+                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                            @php($paymentMethodValue = old('payment_method', $parsed['payment_method'] ?? 'Transfer Bank'))
+                            <option value="QRIS" {{ $paymentMethodValue === 'QRIS' ? 'selected' : '' }}>QRIS</option>
+                            <option value="Transfer Bank" {{ $paymentMethodValue === 'Transfer Bank' ? 'selected' : '' }}>Transfer Bank</option>
+                            <option value="Tunai" {{ $paymentMethodValue === 'Tunai' ? 'selected' : '' }}>Tunai</option>
+                            <option value="Lainnya" {{ $paymentMethodValue === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                        </select>
+                    </div>
+                    @php($useUniqueValue = old('use_unique_code', (is_numeric($parsedCodeValue = old('unique_code', $parsed['unique_code'] ?? '-')) && (int) $parsedCodeValue > 0) ? 'Ya' : 'Tidak'))
+                    <div>
+                        <label for="use_unique_code" class="block text-sm font-semibold text-gray-700">Gunakan Kode Unik</label>
+                        <select id="use_unique_code" name="use_unique_code"
+                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600"
+                                onchange="toggleUniqueCode()">
+                            <option value="Ya" {{ $useUniqueValue === 'Ya' ? 'selected' : '' }}>Ya</option>
+                            <option value="Tidak" {{ $useUniqueValue === 'Tidak' ? 'selected' : '' }}>Tidak</option>
+                        </select>
+                    </div>
+                    <div id="unique_code_wrap">
                         <label for="unique_code" class="block text-sm font-semibold text-gray-700">Kode Unik</label>
                         <input type="text" id="unique_code" name="unique_code"
                                value="{{ old('unique_code', $parsed['unique_code'] ?? '') }}"
                                placeholder="127"
+                               oninput="updateTotalTransfer()"
                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                        <p class="mt-1 text-xs text-gray-500">Isi 001 sampai 299 (Rp1 &ndash; Rp299).</p>
                     </div>
                     <div>
                         <label for="total_transfer" class="block text-sm font-semibold text-gray-700">Total Transfer</label>
-                        <input type="text" id="total_transfer" name="total_transfer"
+                        <input type="text" id="total_transfer"
                                value="{{ old('total_transfer', $parsed['total_transfer'] ?? '') }}"
                                placeholder="Rp50.127"
-                               class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                               readonly
+                               class="mt-1.5 w-full rounded-lg border-gray-300 bg-gray-50 text-sm text-gray-700 focus:border-green-600 focus:ring-green-600">
                     </div>
                     <div>
                         <label for="note" class="block text-sm font-semibold text-gray-700">Catatan</label>
@@ -148,4 +174,49 @@
             </form>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            function parseRupiah(value) {
+                const digits = String(value || '').replace(/[^0-9]/g, '');
+                return digits ? parseInt(digits, 10) : 0;
+            }
+
+            function formatRupiah(value) {
+                return 'Rp' + Number(value).toLocaleString('id-ID');
+            }
+
+            function useUniqueCodeEnabled() {
+                const el = document.getElementById('use_unique_code');
+                return !!el && el.value === 'Ya';
+            }
+
+            function toggleUniqueCode() {
+                const enabled = useUniqueCodeEnabled();
+                const wrap = document.getElementById('unique_code_wrap');
+                const input = document.getElementById('unique_code');
+                if (wrap) {
+                    wrap.style.display = enabled ? '' : 'none';
+                }
+                if (input) {
+                    input.disabled = !enabled;
+                }
+                updateTotalTransfer();
+            }
+
+            function updateTotalTransfer() {
+                const nominal = parseRupiah(document.getElementById('nominal_amount')?.value);
+                const adminFee = parseRupiah(document.getElementById('admin_fee')?.value);
+                const unique = useUniqueCodeEnabled() ? parseRupiah(document.getElementById('unique_code')?.value) : 0;
+                const totalEl = document.getElementById('total_transfer');
+                if (totalEl) {
+                    totalEl.value = formatRupiah(nominal + adminFee + unique);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleUniqueCode();
+            });
+        </script>
+    @endpush
 </x-admin-layout>

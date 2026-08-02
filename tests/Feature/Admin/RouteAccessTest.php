@@ -225,9 +225,13 @@ class RouteAccessTest extends TestCase
                 'roles' => ['superadmin', 'admin', 'staf_keuangan'],
                 'routes' => [['get', '/pemasukan'], ['get', '/pemasukan/create'], ['post', '/pemasukan'], ['get', '/pemasukan/{id}/edit'], ['put', '/pemasukan/{id}'], ['get', '/pengeluaran'], ['get', '/pengeluaran/create'], ['post', '/pengeluaran'], ['get', '/pengeluaran/{id}/edit'], ['put', '/pengeluaran/{id}']],
             ],
-            'finance.delete' => [
+            'finance.delete.pemasukan' => [
+                'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                'routes' => [['delete', '/pemasukan/{id}']],
+            ],
+            'finance.delete.pengeluaran' => [
                 'roles' => ['superadmin', 'admin'],
-                'routes' => [['delete', '/pemasukan/{id}'], ['delete', '/pengeluaran/{id}']],
+                'routes' => [['delete', '/pengeluaran/{id}']],
             ],
 
             // ── Letters Outgoing ──
@@ -503,7 +507,11 @@ class RouteAccessTest extends TestCase
             ->assertOk();
 
         $this->actingAs($user)
-            ->delete('/_test/role/finance.delete/pemasukan/1')
+            ->delete('/_test/role/finance.delete.pemasukan/pemasukan/1')
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->delete('/_test/role/finance.delete.pengeluaran/pengeluaran/1')
             ->assertOk();
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DonationRegularDonor;
 use App\Models\DonationTransaction;
+use App\Services\DonationBalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -35,7 +36,11 @@ class DonationTransactionController extends Controller
         $totalDonations = (clone $summaryQuery)->sum('amount');
         $totalTransactions = (clone $summaryQuery)->count();
 
-        return view('admin.donasi-transactions.index', compact('transactions', 'totalDonations', 'totalTransactions'));
+        $balance = auth()->user()->hasPermissionTo('donation.balance.view')
+            ? app(DonationBalanceService::class)->summary()
+            : [];
+
+        return view('admin.donasi-transactions.index', compact('transactions', 'totalDonations', 'totalTransactions', 'balance'));
     }
 
     public function createReceipt()
@@ -62,45 +67,43 @@ class DonationTransactionController extends Controller
 
     public function storeReceipt(Request $request)
     {
+        $useUniqueCode = $this->parseUseUniqueCode($request->input('use_unique_code'));
+
         $data = $request->validate([
             'donor_name' => ['required', 'string', 'max:100'],
             'allow_future_donation_contact' => ['nullable', 'string', 'max:10'],
             'donor_whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]*$/'],
             'nominal_amount' => ['required', 'string', 'max:50'],
             'admin_fee' => ['nullable', 'string', 'max:50'],
-            'unique_code' => ['required', 'string', 'max:3'],
-            'total_transfer' => ['required', 'string', 'max:50'],
+            'unique_code' => $useUniqueCode
+                ? ['required', 'integer', 'min:1', 'max:299']
+                : ['nullable', 'string', 'max:50'],
+            'payment_method' => ['nullable', 'string', 'max:50'],
             'transfer_date' => ['nullable', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:1000'],
             'confirmation_message' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $nominalAmount = $this->moneyToInteger($data['nominal_amount']);
-        $totalTransfer = $this->moneyToInteger($data['total_transfer']);
         $adminFee = $this->moneyToInteger($data['admin_fee'] ?? '0');
-        $uniqueCode = str_pad((string) ((int) preg_replace('/[^0-9]/', '', $data['unique_code'])), 3, '0', STR_PAD_LEFT);
+        $uniqueCode = $useUniqueCode ? (int) $data['unique_code'] : 0;
+        $totalTransfer = $nominalAmount + $adminFee + $uniqueCode;
         $allowContact = strtolower(trim($data['allow_future_donation_contact'] ?? 'Tidak')) === 'ya';
         $donorWhatsapp = $allowContact ? trim($data['donor_whatsapp'] ?? '') : '';
         $donorWhatsapp = $donorWhatsapp !== '' ? $donorWhatsapp : '-';
         $normalizedWhatsapp = $this->normalizeWhatsappNumber($donorWhatsapp);
+        $paymentMethod = trim($data['payment_method'] ?? '') !== '' ? $data['payment_method'] : 'Transfer Bank';
 
-        if ($nominalAmount < 10000) {
-            return back()->withErrors(['nominal_amount' => 'Nominal donasi minimal Rp10.000.'])->withInput();
-        }
-
-        if ((int) $uniqueCode < 1 || (int) $uniqueCode > 299) {
-            return back()->withErrors(['unique_code' => 'Kode unik harus 001 sampai 299.'])->withInput();
-        }
-
-        if ($totalTransfer !== $nominalAmount + $adminFee + (int) $uniqueCode) {
-            return back()->withErrors(['total_transfer' => 'Total transfer harus sama dengan nominal donasi + biaya admin + kode unik.'])->withInput();
+        if ($nominalAmount <= 0) {
+            return back()->withErrors(['nominal_amount' => 'Nominal donasi harus lebih dari 0.'])->withInput();
         }
 
         $noteLines = [
             'Bersedia Dihubungi: ' . ($allowContact ? 'Ya' : 'Tidak'),
             'Nomor WhatsApp: ' . $donorWhatsapp,
+            'Metode Pembayaran: ' . $paymentMethod,
             'Biaya Admin: Rp' . number_format($adminFee, 0, ',', '.'),
-            'Kode Unik: ' . $uniqueCode,
+            'Kode Unik: ' . ($useUniqueCode ? $uniqueCode : 'Tidak digunakan'),
             'Total Transfer: Rp' . number_format($totalTransfer, 0, ',', '.'),
             'Tanggal Transfer: ' . ($data['transfer_date'] ?: '-'),
         ];
@@ -193,6 +196,30 @@ class DonationTransactionController extends Controller
         return (int) preg_replace('/[^0-9]/', '', $value);
     }
 
+    private function parseUseUniqueCode($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return in_array(strtolower(trim((string) $value)), ['1', 'ya', 'yes', 'true', 'on'], true);
+    }
+
+    private function receiptUniqueCode(?string $raw): string
+    {
+        if ($raw === null || trim($raw) === '' || trim($raw) === '-') {
+            return 'Tidak digunakan';
+        }
+
+        if (in_array(strtolower(trim($raw)), ['tidak digunakan', '0', '000', 'tidak ada', 'none'], true)) {
+            return 'Tidak digunakan';
+        }
+
+        $code = (int) preg_replace('/[^0-9]/', '', $raw);
+
+        return $code > 0 ? str_pad((string) $code, 3, '0', STR_PAD_LEFT) : 'Tidak digunakan';
+    }
+
     private function receiptData(DonationTransaction $transaction): array
     {
         $noteData = $this->parseNoteLines($transaction->note ?? '');
@@ -204,11 +231,12 @@ class DonationTransactionController extends Controller
             'donor_whatsapp' => $transaction->donor_whatsapp ?: '-',
             'nominal_amount' => (int) $transaction->amount,
             'admin_fee' => $this->moneyToInteger($noteData['Biaya Admin'] ?? '0'),
-            'unique_code' => $noteData['Kode Unik'] ?? '-',
+            'unique_code' => $this->receiptUniqueCode($noteData['Kode Unik'] ?? null),
             'total_transfer' => $this->moneyToInteger($noteData['Total Transfer'] ?? (string) $transaction->amount),
             'transfer_date' => $noteData['Tanggal Transfer'] ?? optional($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y'),
             'note' => $noteData['Catatan Donatur'] ?? '-',
             'allow_contact' => $noteData['Bersedia Dihubungi'] ?? '-',
+            'payment_method' => $noteData['Metode Pembayaran'] ?? '-',
             'status' => $transaction->status,
         ];
     }

@@ -34,6 +34,9 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp) <span class="text-red-500">*</span></label>
                     <input type="number" name="amount" value="{{ old('amount') }}" min="1" step="0.01" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                    @if(auth()->user()->hasPermissionTo('donation.balance.view'))
+                        <p class="mt-1 text-xs text-gray-400">Maksimal sesuai Saldo Tersedia: Rp{{ number_format($balance['available_balance'], 0, ',', '.') }}</p>
+                    @endif
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Metode Penyerahan <span class="text-red-500">*</span></label>

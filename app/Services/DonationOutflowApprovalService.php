@@ -33,6 +33,15 @@ class DonationOutflowApprovalService
                 ]);
             }
 
+            $balanceService = app(DonationBalanceService::class);
+            $recordedBalance = $balanceService->recordedBalance();
+
+            if ((float) $recordedBalance < (float) $lockedOutflow->amount) {
+                throw ValidationException::withMessages([
+                    'status' => 'Saldo dana donasi tidak mencukupi untuk menyetujui penyerahan dana ini.',
+                ]);
+            }
+
             FinanceIncome::create([
                 'donation_outflow_id' => $lockedOutflow->id,
                 'date' => $lockedOutflow->handover_date->format('Y-m-d'),

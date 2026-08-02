@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-6xl">
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Data WA Infaq Barang</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Donasi Barang</h2>
                 <p class="mt-1 text-gray-500">Komitmen atau permintaan infaq barang dari pesan WhatsApp donatur.</p>
             </div>
             <a href="{{ route('admin.infaq-barang-wa.create') }}"

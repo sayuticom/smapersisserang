@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonationOutflow;
+use App\Services\DonationBalanceService;
 use App\Services\DonationOutflowApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,19 +15,69 @@ use Illuminate\View\View;
 
 class DonationOutflowController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $outflows = DonationOutflow::with('creator')
-            ->latest('handover_date')
-            ->latest('created_at')
-            ->paginate(20);
+        $validated = $request->validate([
+            'date' => ['nullable', 'date'],
+            'filter_type' => ['nullable', 'in:date,month'],
+            'status' => ['nullable', 'in:pending,approved,rejected'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        return view('admin.donation-outflows.index', compact('outflows'));
+        if ($request->filled('filter_type') && ! $request->filled('date')) {
+            throw ValidationException::withMessages([
+                'date' => 'Tanggal harus dipilih terlebih dahulu.',
+            ]);
+        }
+
+        $query = DonationOutflow::with('creator');
+
+        if ($request->filled('date')) {
+            $date = \Carbon\Carbon::parse($request->date);
+
+            if ($request->input('filter_type') === 'month') {
+                $query->whereYear('handover_date', $date->year)
+                    ->whereMonth('handover_date', $date->month);
+            } else {
+                $query->whereDate('handover_date', $request->date);
+            }
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('transaction_number', 'like', "%{$search}%")
+                    ->orWhere('donation_source', 'like', "%{$search}%")
+                    ->orWhere('destination_account', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $outflows = $query->latest('handover_date')
+            ->latest('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        $balance = auth()->user()->hasPermissionTo('donation.balance.view')
+            ? app(DonationBalanceService::class)->summary()
+            : [];
+
+        return view('admin.donation-outflows.index', compact('outflows', 'balance'));
     }
 
     public function create(): View
     {
-        return view('admin.donation-outflows.create');
+        $balance = auth()->user()->hasPermissionTo('donation.balance.view')
+            ? app(DonationBalanceService::class)->summary()
+            : [];
+
+        return view('admin.donation-outflows.create', [
+            'balance' => $balance,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -41,6 +92,15 @@ class DonationOutflowController extends Controller
             'proof_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $balanceService = app(DonationBalanceService::class);
+        $availableBalance = $balanceService->availableBalance();
+
+        if ((float) $validated['amount'] > (float) $availableBalance) {
+            throw ValidationException::withMessages([
+                'amount' => 'Nominal Donasi Keluar melebihi saldo dana donasi yang tersedia.',
+            ]);
+        }
 
         if ($request->hasFile('proof_file')) {
             $validated['proof_file'] = $request->file('proof_file')

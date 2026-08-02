@@ -71,10 +71,18 @@
                         <dt class="text-slate-500">Biaya Admin</dt>
                         <dd class="text-right font-semibold text-slate-900">Rp{{ number_format($receipt['admin_fee'], 0, ',', '.') }}</dd>
                     </div>
-                    <div class="flex justify-between gap-4">
-                        <dt class="text-slate-500">Kode Unik</dt>
-                        <dd class="text-right font-semibold text-slate-900">{{ $receipt['unique_code'] }}</dd>
-                    </div>
+                    @if($receipt['payment_method'] && $receipt['payment_method'] !== '-')
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500">Metode Pembayaran</dt>
+                            <dd class="text-right font-semibold text-slate-900">{{ $receipt['payment_method'] }}</dd>
+                        </div>
+                    @endif
+                    @if(strtolower($receipt['unique_code']) !== 'tidak digunakan')
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500">Kode Unik</dt>
+                            <dd class="text-right font-semibold text-slate-900">{{ $receipt['unique_code'] }}</dd>
+                        </div>
+                    @endif
                     <div class="flex justify-between gap-4 rounded-xl bg-emerald-50 p-3">
                         <dt class="font-semibold text-emerald-800">Total Transfer</dt>
                         <dd class="text-right text-lg font-bold text-emerald-800">Rp{{ number_format($receipt['total_transfer'], 0, ',', '.') }}</dd>
