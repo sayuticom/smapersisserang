@@ -11,6 +11,12 @@
             </div>
         @endif
 
+        @if(!empty($isIntegrated))
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm mb-6">
+                Pemasukan ini berasal dari Donasi Keluar. Perubahan akan memperbarui data Donasi Keluar terkait dan memengaruhi Saldo Donasi serta laporan Keuangan.
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('admin.finance.incomes.update', $financeIncome) }}" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
             @csrf @method('PUT')
 
@@ -21,12 +27,16 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Pemasukan <span class="text-red-500">*</span></label>
-                    <select name="income_type" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                    <select name="income_type" {{ !empty($isIntegrated) ? 'disabled' : '' }} required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
                         <option value="">-- Pilih --</option>
                         @foreach($incomeTypes as $type)
                             <option value="{{ $type }}" {{ old('income_type', $financeIncome->income_type) === $type ? 'selected' : '' }}>{{ $type }}</option>
                         @endforeach
                     </select>
+                    @if(!empty($isIntegrated))
+                        <input type="hidden" name="income_type" value="{{ $financeIncome->income_type }}">
+                        <p class="text-xs text-gray-500 mt-1">Jenis Pemasukan berasal dari Donasi Keluar dan tidak dapat diubah.</p>
+                    @endif
                 </div>
             </div>
 

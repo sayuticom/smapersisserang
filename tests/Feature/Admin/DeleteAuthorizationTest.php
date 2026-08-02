@@ -1,3 +1,4 @@
+
 <?php
 
 namespace Tests\Feature\Admin;
@@ -238,7 +239,7 @@ class DeleteAuthorizationTest extends TestCase
         $this->assertDatabaseHas('finance_incomes', ['id' => $income->id]);
     }
 
-    public function test_integrated_income_cannot_be_deleted_directly(): void
+    public function test_integrated_income_can_be_deleted_by_superadmin_with_outflow(): void
     {
         $user = $this->user('superadmin');
         $outflow = $this->createOutflow('approved', 100000);
@@ -246,9 +247,10 @@ class DeleteAuthorizationTest extends TestCase
 
         $this->actingAs($user)
             ->delete(route('admin.finance.incomes.destroy', $income))
-            ->assertForbidden();
+            ->assertRedirect();
 
-        $this->assertDatabaseHas('finance_incomes', ['id' => $income->id]);
+        $this->assertDatabaseMissing('finance_incomes', ['id' => $income->id]);
+        $this->assertDatabaseMissing('donation_outflows', ['id' => $outflow->id]);
     }
 
     public function test_report_changes_after_manual_income_deleted(): void

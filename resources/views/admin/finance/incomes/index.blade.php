@@ -4,6 +4,7 @@
         $canManageManualIncome = $currentUser->isAdmin() || $currentUser->hasRole('staf_keuangan');
         $canEditManualIncome = $canManageManualIncome && $currentUser->hasPermissionTo('finance.transactions.manage');
         $canDeleteManualIncome = $currentUser->isSuperadmin();
+        $canManageIntegratedIncome = $currentUser->isSuperadmin();
     @endphp
 
     <div class="space-y-6">
@@ -88,7 +89,16 @@
                                             @endif
                                         </div>
                                     @else
-                                        <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="text-xs font-medium text-emerald-700 hover:underline" title="Pemasukan ini berasal dari Donasi Keluar. Hapus melalui data Donasi Keluar agar pencatatan tetap konsisten.">Lihat Donasi Keluar</a>
+                                        <div class="flex items-center gap-2">
+                                            @if($canManageIntegratedIncome)
+                                                <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
+                                                <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Pemasukan ini berasal dari Donasi Keluar. Menghapusnya juga akan menghapus Donasi Keluar dan riwayat status terkait. Saldo Donasi dan laporan Keuangan akan berubah. Lanjutkan?')" class="inline">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
+                                                </form>
+                                            @endif
+                                            <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="text-xs font-medium text-emerald-700 hover:underline">Lihat Donasi Keluar</a>
+                                        </div>
                                     @endif
                                 </td>
                             </tr>
