@@ -157,6 +157,21 @@
                                                 && auth()->user()->hasPermissionTo('donation.outflows.approve'))
                                                 <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm ring-2 ring-emerald-300 hover:bg-emerald-700">Verifikasi / ACC</a>
                                             @endif
+                                            @if(auth()->user()->isSuperadmin())
+                                                @php
+                                                    $deleteMessage = $outflow->status === 'approved'
+                                                        ? 'Donasi Keluar ini sudah masuk ke Pemasukan Keuangan. Menghapus data ini juga akan menghapus Pemasukan terkait. Lanjutkan?'
+                                                        : 'Yakin ingin menghapus Donasi Keluar ini? Data yang sudah dihapus tidak dapat dikembalikan.';
+                                                @endphp
+                                                <form method="POST" action="{{ route('admin.donation-outflows.destroy', $outflow) }}"
+                                                      onsubmit="return confirm('{{ $deleteMessage }}')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                            class="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

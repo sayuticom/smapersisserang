@@ -457,6 +457,15 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         });
 
     Route::middleware('role:superadmin,admin,staf_keuangan')->group(function () {
+        Route::delete('/donasi-transactions/{transaction}', [DonationTransactionController::class, 'destroy'])
+            ->middleware('superadmin')
+            ->name('donasi-transactions.destroy');
+        Route::delete('/donation-outflows/{donationOutflow}', [DonationOutflowController::class, 'destroy'])
+            ->middleware('superadmin')
+            ->name('donation-outflows.destroy');
+    });
+
+    Route::middleware('role:superadmin,admin,staf_keuangan')->group(function () {
         Route::resource('infaq-barang', DonationItemReceiptController::class)
             ->only(['index', 'create', 'store', 'show'])
             ->parameters(['infaq-barang' => 'infaqBarang']);
@@ -515,7 +524,9 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::post('/pemasukan', [FinanceController::class, 'incomesStore'])->name('incomes.store');
             Route::get('/pemasukan/{financeIncome}/edit', [FinanceController::class, 'incomesEdit'])->name('incomes.edit');
             Route::put('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesUpdate'])->name('incomes.update');
-            Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])->name('incomes.destroy');
+            Route::delete('/pemasukan/{financeIncome}', [FinanceController::class, 'incomesDestroy'])
+                ->middleware('superadmin')
+                ->name('incomes.destroy');
 
             Route::get('/pengeluaran', [FinanceController::class, 'expensesIndex'])->name('expenses.index');
             Route::get('/pengeluaran/create', [FinanceController::class, 'expensesCreate'])->name('expenses.create');
@@ -527,7 +538,9 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::name('finance.')->prefix('finance')
         ->middleware('role:superadmin,admin')
         ->group(function () {
-            Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])->name('expenses.destroy');
+            Route::delete('/pengeluaran/{financeExpense}', [FinanceController::class, 'expensesDestroy'])
+                ->middleware('superadmin')
+                ->name('expenses.destroy');
         });
 
     Route::name('letters.outgoings.')->prefix('surat/keluar')

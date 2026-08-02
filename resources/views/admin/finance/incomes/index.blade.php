@@ -3,7 +3,7 @@
         $currentUser = auth()->user();
         $canManageManualIncome = $currentUser->isAdmin() || $currentUser->hasRole('staf_keuangan');
         $canEditManualIncome = $canManageManualIncome && $currentUser->hasPermissionTo('finance.transactions.manage');
-        $canDeleteManualIncome = $canEditManualIncome;
+        $canDeleteManualIncome = $currentUser->isSuperadmin();
     @endphp
 
     <div class="space-y-6">
@@ -76,21 +76,19 @@
                                 </td>
                                 <td class="px-4 py-2.5">
                                     @if(!$income->donation_outflow_id)
-                                        @if($canEditManualIncome || $canDeleteManualIncome)
-                                            <div class="flex items-center gap-2">
-                                                @if($canEditManualIncome)
-                                                    <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
-                                                @endif
-                                                @if($canDeleteManualIncome)
-                                                    <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Hapus pemasukan ini?')" class="inline">
-                                                        @csrf @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        @endif
+                                        <div class="flex items-center gap-2">
+                                            @if($canEditManualIncome)
+                                                <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
+                                            @endif
+                                            @if($canDeleteManualIncome)
+                                                <form method="POST" action="{{ route('admin.finance.incomes.destroy', $income) }}" onsubmit="return confirm('Yakin ingin menghapus Pemasukan ini? Saldo dan laporan Keuangan akan berubah.')" class="inline">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     @else
-                                        <span class="text-xs text-gray-400">Terkunci</span>
+                                        <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="text-xs font-medium text-emerald-700 hover:underline" title="Pemasukan ini berasal dari Donasi Keluar. Hapus melalui data Donasi Keluar agar pencatatan tetap konsisten.">Lihat Donasi Keluar</a>
                                     @endif
                                 </td>
                             </tr>

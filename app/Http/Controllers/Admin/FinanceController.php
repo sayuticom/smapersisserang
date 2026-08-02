@@ -8,6 +8,8 @@ use App\Models\FinanceExpense;
 use App\Models\FinanceIncome;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -157,12 +159,29 @@ class FinanceController extends Controller
 
     public function incomesDestroy(FinanceIncome $financeIncome): RedirectResponse
     {
-        $this->assertCanManageManualIncome($financeIncome, 'finance.transactions.manage');
+        $this->assertCanDelete();
 
-        if ($financeIncome->proof_file) {
-            Storage::disk('public')->delete($financeIncome->proof_file);
+        if ($financeIncome->donation_outflow_id !== null) {
+            abort(403, 'Pemasukan ini berasal dari Donasi Keluar. Hapus melalui data Donasi Keluar agar pencatatan tetap konsisten.');
         }
-        $financeIncome->delete();
+
+        Log::warning('Pemasukan dihapus', [
+            'deleted_by' => auth()->id(),
+            'income_id' => $financeIncome->id,
+            'nominal' => $financeIncome->amount,
+            'income_type' => $financeIncome->income_type,
+            'deleted_at' => now()->toDateTimeString(),
+        ]);
+
+        $proofFile = $financeIncome->proof_file;
+
+        DB::transaction(function () use ($financeIncome) {
+            $financeIncome->delete();
+        });
+
+        if ($proofFile) {
+            $this->deleteProofFileIfUnused($proofFile);
+        }
 
         return redirect()->route('admin.finance.incomes.index')
             ->with('success', 'Pemasukan berhasil dihapus.');
@@ -251,10 +270,25 @@ class FinanceController extends Controller
 
     public function expensesDestroy(FinanceExpense $financeExpense): RedirectResponse
     {
-        if ($financeExpense->proof_file) {
-            Storage::disk('public')->delete($financeExpense->proof_file);
+        $this->assertCanDelete();
+
+        Log::warning('Pengeluaran dihapus', [
+            'deleted_by' => auth()->id(),
+            'expense_id' => $financeExpense->id,
+            'nominal' => $financeExpense->amount,
+            'expense_category' => $financeExpense->expense_category,
+            'deleted_at' => now()->toDateTimeString(),
+        ]);
+
+        $proofFile = $financeExpense->proof_file;
+
+        DB::transaction(function () use ($financeExpense) {
+            $financeExpense->delete();
+        });
+
+        if ($proofFile) {
+            $this->deleteProofFileIfUnused($proofFile);
         }
-        $financeExpense->delete();
 
         return redirect()->route('admin.finance.expenses.index')
             ->with('success', 'Pengeluaran berhasil dihapus.');
@@ -294,6 +328,24 @@ class FinanceController extends Controller
             'startDate', 'endDate', 'incomes', 'expenses',
             'totalIncome', 'totalExpense', 'balance', 'expenseByCategory'
         ));
+    }
+
+    private function assertCanDelete(): void
+    {
+        if (!auth()->user()->isSuperadmin()) {
+            abort(403, 'Hanya superadmin yang dapat menghapus data ini.');
+        }
+    }
+
+    private function deleteProofFileIfUnused(string $path): void
+    {
+        $stillUsed = FinanceIncome::where('proof_file', $path)->exists()
+            || FinanceExpense::where('proof_file', $path)->exists()
+            || DonationOutflow::where('proof_file', $path)->exists();
+
+        if (! $stillUsed) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function assertCanManageManualIncome(FinanceIncome $financeIncome, string $permission): void

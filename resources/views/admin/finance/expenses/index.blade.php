@@ -49,10 +49,12 @@
                                 <td class="px-4 py-2.5">
                                     <div class="flex items-center gap-2">
                                         <a href="{{ route('admin.finance.expenses.edit', $expense) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>
-                                        <form method="POST" action="{{ route('admin.finance.expenses.destroy', $expense) }}" onsubmit="return confirm('Hapus pengeluaran ini?')" class="inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
-                                        </form>
+                                        @if(auth()->user()->isSuperadmin())
+                                            <form method="POST" action="{{ route('admin.finance.expenses.destroy', $expense) }}" onsubmit="return confirm('Yakin ingin menghapus Pengeluaran ini? Saldo dan laporan Keuangan akan berubah.')" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Hapus</button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

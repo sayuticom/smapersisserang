@@ -64,16 +64,16 @@ class FinanceIncomeManageTest extends TestCase
         ]);
     }
 
-    public function test_staf_keuangan_can_delete_manual_income(): void
+    public function test_staf_keuangan_cannot_delete_manual_income(): void
     {
         $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
         $income = $this->createManualIncome();
 
         $this->actingAs($staf)
             ->delete(route('admin.finance.incomes.destroy', $income))
-            ->assertRedirect(route('admin.finance.incomes.index'));
+            ->assertForbidden();
 
-        $this->assertDatabaseMissing('finance_incomes', ['id' => $income->id]);
+        $this->assertDatabaseHas('finance_incomes', ['id' => $income->id]);
     }
 
     public function test_superadmin_can_edit_update_and_delete_manual_income(): void
@@ -138,7 +138,7 @@ class FinanceIncomeManageTest extends TestCase
         $this->assertDatabaseHas('finance_incomes', ['id' => $income->id]);
     }
 
-    public function test_edit_and_delete_buttons_appear_for_staf_keuangan_on_manual_income(): void
+    public function test_staf_keuangan_sees_edit_but_not_delete_on_manual_income(): void
     {
         $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
         $this->createManualIncome();
@@ -147,10 +147,21 @@ class FinanceIncomeManageTest extends TestCase
             ->get(route('admin.finance.incomes.index'))
             ->assertOk()
             ->assertSee('Edit')
-            ->assertSee('Hapus');
+            ->assertDontSee('>Hapus<', false);
     }
 
-    public function test_edit_and_delete_buttons_hidden_on_integrated_income(): void
+    public function test_superadmin_sees_delete_button_on_manual_income(): void
+    {
+        $superadmin = $this->userWithRoleFinanceDefaults('superadmin');
+        $this->createManualIncome();
+
+        $this->actingAs($superadmin)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSee('>Hapus<', false);
+    }
+
+    public function test_integrated_income_shows_link_and_no_delete_button(): void
     {
         $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
         $this->createIntegratedIncome();
@@ -158,9 +169,9 @@ class FinanceIncomeManageTest extends TestCase
         $this->actingAs($staf)
             ->get(route('admin.finance.incomes.index'))
             ->assertOk()
-            ->assertSee('Terkunci')
-            ->assertDontSee('>Edit<')
-            ->assertDontSee('>Hapus<');
+            ->assertSee('Lihat Donasi Keluar')
+            ->assertDontSee('>Edit<', false)
+            ->assertDontSee('>Hapus<', false);
     }
 
     private function userWithRoleFinanceDefaults(string $roleName): User

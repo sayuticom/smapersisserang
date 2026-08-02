@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonationOutflow;
+use App\Models\FinanceExpense;
+use App\Models\FinanceIncome;
 use App\Services\DonationBalanceService;
 use App\Services\DonationOutflowApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -190,6 +194,63 @@ class DonationOutflowController extends Controller
 
         return redirect()->route('admin.donation-outflows.show', $donationOutflow)
             ->with('success', 'Donasi Keluar ditolak.');
+    }
+
+    public function destroy(DonationOutflow $donationOutflow): RedirectResponse
+    {
+        $this->assertCanDelete();
+
+        $proofFile = null;
+
+        DB::transaction(function () use ($donationOutflow, &$proofFile) {
+            $lockedOutflow = DonationOutflow::query()
+                ->lockForUpdate()
+                ->findOrFail($donationOutflow->getKey());
+
+            $income = $lockedOutflow->financeIncome;
+
+            if ($income) {
+                $income->delete();
+            }
+
+            $proofFile = $lockedOutflow->proof_file;
+
+            $lockedOutflow->statusHistories()->delete();
+            $lockedOutflow->delete();
+        });
+
+        Log::warning('Donasi Keluar dihapus', [
+            'deleted_by' => auth()->id(),
+            'transaction_number' => $donationOutflow->transaction_number,
+            'nominal' => $donationOutflow->amount,
+            'status' => $donationOutflow->status,
+            'deleted_at' => now()->toDateTimeString(),
+        ]);
+
+        if ($proofFile) {
+            $this->deleteProofFileIfUnused($proofFile);
+        }
+
+        return redirect()->route('admin.donation-outflows.index')
+            ->with('success', 'Donasi Keluar beserta data terkait berhasil dihapus.');
+    }
+
+    private function assertCanDelete(): void
+    {
+        if (!auth()->user()->isSuperadmin()) {
+            abort(403, 'Hanya superadmin yang dapat menghapus data ini.');
+        }
+    }
+
+    private function deleteProofFileIfUnused(string $path): void
+    {
+        $stillUsed = FinanceIncome::where('proof_file', $path)->exists()
+            || FinanceExpense::where('proof_file', $path)->exists()
+            || DonationOutflow::where('proof_file', $path)->exists();
+
+        if (! $stillUsed) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function assertCanVerify(DonationOutflow $donationOutflow): void

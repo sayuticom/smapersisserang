@@ -973,6 +973,7 @@ return [
             'admin.donasi-transactions.store-receipt',
             'admin.donasi-transactions.mark-paid',
             'admin.donasi-transactions.mark-cancelled',
+            'admin.donasi-transactions.destroy',
         ],
         'default_roles' => ['admin', 'staf_keuangan'],
         'menu_key'      => 'donation.receipt',
@@ -1013,6 +1014,7 @@ return [
         'routes'        => [
             'admin.donation-outflows.index',
             'admin.donation-outflows.show',
+            'admin.donation-outflows.destroy',
         ],
         'default_roles' => ['admin', 'staf_keuangan'],
         'menu_key'      => 'donation.outflows',

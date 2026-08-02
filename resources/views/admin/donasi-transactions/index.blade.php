@@ -93,14 +93,26 @@
                                 Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
                             </td>
                             <td class="px-4 py-4 text-right">
-                                <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
-                                   title="Tampilkan Tanda Terima"
-                                   class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                                    </svg>
-                                </a>
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
+                                       title="Tampilkan Tanda Terima"
+                                       class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                        </svg>
+                                    </a>
+                                    @if(auth()->user()->isSuperadmin())
+                                        <form method="POST" action="{{ route('admin.donasi-transactions.destroy', $transaction) }}"
+                                              onsubmit="return confirm('Yakin ingin menghapus Donasi Masuk ini? Data yang sudah dihapus tidak dapat dikembalikan.')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit"
+                                                    class="inline-flex h-9 items-center rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -144,14 +156,26 @@
                                 Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
                             </td>
                             <td class="px-2 py-3 text-center">
-                                <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
-                                   title="Tampilkan Tanda Terima"
-                                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                                    </svg>
-                                </a>
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <a href="{{ route('admin.donasi-transactions.show', $transaction) }}"
+                                       title="Tampilkan Tanda Terima"
+                                       class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                        </svg>
+                                    </a>
+                                    @if(auth()->user()->isSuperadmin())
+                                        <form method="POST" action="{{ route('admin.donasi-transactions.destroy', $transaction) }}"
+                                              onsubmit="return confirm('Yakin ingin menghapus Donasi Masuk ini? Data yang sudah dihapus tidak dapat dikembalikan.')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit"
+                                                    class="inline-flex h-8 items-center rounded-lg border border-red-200 px-2 text-xs font-semibold text-red-700 hover:bg-red-50">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

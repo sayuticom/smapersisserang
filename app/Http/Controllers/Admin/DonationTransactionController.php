@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\DonationRegularDonor;
 use App\Models\DonationTransaction;
 use App\Services\DonationBalanceService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -148,6 +151,33 @@ class DonationTransactionController extends Controller
         $schoolSetting = \App\Models\SchoolSetting::first();
 
         return view('admin.donasi-transactions.show', compact('transaction', 'receipt', 'whatsappUrl', 'schoolSetting'));
+    }
+
+    public function destroy(DonationTransaction $transaction): RedirectResponse
+    {
+        $this->assertCanDelete();
+
+        Log::warning('Donasi Masuk dihapus', [
+            'deleted_by' => auth()->id(),
+            'order_id' => $transaction->order_id,
+            'nominal' => $transaction->amount,
+            'status' => $transaction->status,
+            'deleted_at' => now()->toDateTimeString(),
+        ]);
+
+        DB::transaction(function () use ($transaction) {
+            $transaction->delete();
+        });
+
+        return redirect()->route('admin.donasi-transactions.index')
+            ->with('success', 'Donasi Masuk berhasil dihapus.');
+    }
+
+    private function assertCanDelete(): void
+    {
+        if (!auth()->user()->isSuperadmin()) {
+            abort(403, 'Hanya superadmin yang dapat menghapus data ini.');
+        }
     }
 
     public function markPaid(DonationTransaction $transaction)
