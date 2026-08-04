@@ -240,7 +240,10 @@ class LetterOutgoingController extends Controller
 
     public function updateAttachment(Request $request, LetterOutgoing $letterOutgoing): RedirectResponse
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(
+            auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('letters.outgoings.manage'),
+            403
+        );
 
         $data = $request->validate([
             'content' => ['nullable', 'string'],

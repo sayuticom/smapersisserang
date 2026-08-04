@@ -75,7 +75,7 @@
                 'editorValue' => old('content', $attachmentContent?->content ?? ''),
                 'initialMode' => $hasAttachmentContent ? 'view' : 'edit',
                 'showViewMode' => true,
-                'canEditAttachment' => auth()->user()?->isAdmin(),
+                'canEditAttachment' => auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('letters.outgoings.manage'),
                 'showPreviewButton' => true,
                 'previewUrl' => route('admin.letters.outgoings.preview', $letterOutgoing),
                 'showPrintButton' => $letterOutgoing->status === 'issued',

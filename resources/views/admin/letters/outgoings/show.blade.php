@@ -10,7 +10,8 @@
                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                     Kembali
                 </a>
-                @if(auth()->user()?->isAdmin())
+                @php $canManageLetters = auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('letters.outgoings.manage'); @endphp
+                @if($canManageLetters)
                     <a href="{{ route('admin.letters.outgoings.edit', $letterOutgoing) }}"
                        @if($letterOutgoing->status === 'issued') onclick="return confirm('Surat ini sudah diterbitkan. Perubahan akan memengaruhi isi surat dan PDF. Lanjutkan mengedit?')" @endif
                        class="inline-flex items-center justify-center rounded-lg border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
@@ -165,7 +166,7 @@
             </div>
         </div>
 
-        @if($hasAttachment && auth()->user()?->isAdmin())
+        @if($hasAttachment && (auth()->user()?->isAdmin() || auth()->user()?->hasPermissionTo('letters.outgoings.manage')))
             <div class="flex justify-end">
                 <a href="{{ route('admin.letters.outgoings.edit', ['letterOutgoing' => $letterOutgoing, 'tab' => 'lampiran']) }}"
                    class="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
