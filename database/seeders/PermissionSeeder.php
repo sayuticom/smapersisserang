@@ -32,6 +32,8 @@ class PermissionSeeder extends Seeder
         $adminExcludedPermissions = [
             'donation.outflows.approve',
             'donation.outflows.reject',
+            'donation.transfers.approve',
+            'donation.transfers.reject',
         ];
 
         DB::transaction(function () use ($manifest, $adminRole, &$adminNonSystemPermissionIds, $adminExcludedPermissions) {
@@ -98,11 +100,11 @@ class PermissionSeeder extends Seeder
                 }
             }
 
-            // SoD: cabut hanya pivot verifikasi Donasi Keluar lama pada role admin (idempotent).
+            // SoD: cabut pivot verifikasi Donasi Keluar/Mutasi Dana pada role admin (idempotent).
             if ($adminRole) {
-                $outflowVerificationIds = Permission::whereIn('name', $adminExcludedPermissions)->pluck('id');
-                if ($outflowVerificationIds->isNotEmpty()) {
-                    $adminRole->permissions()->detach($outflowVerificationIds);
+                $verificationIds = Permission::whereIn('name', $adminExcludedPermissions)->pluck('id');
+                if ($verificationIds->isNotEmpty()) {
+                    $adminRole->permissions()->detach($verificationIds);
                 }
             }
         });

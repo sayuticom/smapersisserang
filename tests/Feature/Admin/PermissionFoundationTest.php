@@ -111,15 +111,15 @@ class PermissionFoundationTest extends TestCase
         }
     }
 
-    public function test_config_has_77_permissions(): void
+    public function test_config_has_81_permissions(): void
     {
         $manifest = config('permissions');
-        $this->assertCount(77, $manifest);
+        $this->assertCount(81, $manifest);
     }
 
-    public function test_database_has_77_permissions_after_seeding(): void
+    public function test_database_has_81_permissions_after_seeding(): void
     {
-        $this->assertEquals(77, Permission::count());
+        $this->assertEquals(81, Permission::count());
     }
 
     public function test_permission_names_are_unique(): void
@@ -169,10 +169,12 @@ class PermissionFoundationTest extends TestCase
     {
         $admin = Role::where('name', 'admin')->first();
         $adminPerms = $admin->permissions->pluck('name')->toArray();
-        // SoD: verifikasi Donasi Keluar tidak otomatis diberikan ke role admin.
+        // SoD: verifikasi Donasi Keluar & Mutasi Dana tidak otomatis diberikan ke role admin.
         $excluded = [
             'donation.outflows.approve',
             'donation.outflows.reject',
+            'donation.transfers.approve',
+            'donation.transfers.reject',
         ];
         $nonSystem = Permission::where('is_system', false)
             ->whereNotIn('name', $excluded)

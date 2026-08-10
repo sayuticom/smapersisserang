@@ -15,6 +15,7 @@ class DonationTransfer extends Model
 
     protected $fillable = [
         'transfer_number',
+        'transfer_date',
         'from_account_id',
         'to_account_id',
         'amount',
@@ -22,6 +23,9 @@ class DonationTransfer extends Model
         'requested_by',
         'approved_by',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
         'proof_file',
         'note',
     ];
@@ -29,8 +33,10 @@ class DonationTransfer extends Model
     protected function casts(): array
     {
         return [
+            'transfer_date' => 'date',
             'amount' => 'decimal:2',
             'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
         ];
     }
 
@@ -52,6 +58,11 @@ class DonationTransfer extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function isPending(): bool

@@ -457,10 +457,12 @@ class PermissionPilotTest extends TestCase
     {
         $admin = Role::where('name', 'admin')->first();
         $adminPerms = $admin->permissions->pluck('name')->toArray();
-        // SoD: verifikasi Donasi Keluar tidak otomatis diberikan ke role admin.
+        // SoD: verifikasi Donasi Keluar & Mutasi Dana tidak otomatis diberikan ke role admin.
         $excluded = [
             'donation.outflows.approve',
             'donation.outflows.reject',
+            'donation.transfers.approve',
+            'donation.transfers.reject',
         ];
         $nonSystem = Permission::where('is_system', false)
             ->whereNotIn('name', $excluded)
@@ -813,10 +815,10 @@ class PermissionPilotTest extends TestCase
     // CONFIG INTEGRITY
     // ========================================================================
 
-    public function test_all_77_permissions_have_config_entry(): void
+    public function test_all_81_permissions_have_config_entry(): void
     {
         $manifest = config('permissions');
-        $this->assertCount(77, $manifest);
+        $this->assertCount(81, $manifest);
 
         foreach ($manifest as $perm) {
             $this->assertArrayHasKey('name', $perm);

@@ -141,6 +141,52 @@ class DonationBalanceService
     }
 
     /**
+     * Total mutasi dana keluar (dari satu akun) yang masih berstatus pending.
+     *
+     * Digunakan untuk menghitung saldo tersedia sebuah akun sebelum membuat
+     * mutasi baru, agar pending tidak bisa digunakan dua kali.
+     */
+    public function pendingTransferAmountForAccount(int $accountId): int
+    {
+        return (int) DonationTransfer::query()
+            ->where('from_account_id', $accountId)
+            ->where('status', DonationTransfer::STATUS_PENDING)
+            ->sum('amount');
+    }
+
+    /**
+     * Saldo tersedia satu akun dana untuk mutasi keluar.
+     *
+     * Saldo tersedia = saldo bersih akun - total mutasi keluar yang masih pending.
+     */
+    public function availableBalanceForAccount(int $accountId): int
+    {
+        return $this->balanceByAccount($accountId) - $this->pendingTransferAmountForAccount($accountId);
+    }
+
+    /**
+     * Saldo tersedia untuk menyetujui sebuah mutasi pending tertentu.
+     *
+     * availableBalanceForAccount() menyertakan seluruh pending outgoing —
+     * termasuk transaksi yang sedang diapprove — sehingga transaksi yang valid
+     * bisa ditolak oleh reservasi nominalnya sendiri. Metode ini mengecualikan
+     * transaksi yang sedang diproses berdasarkan ID (bukan nominal) dari
+     * reservasi pending, sementara pending lain tetap dihitung agar
+     * over-allocation tetap dicegah. Aman jika ada beberapa pending dengan
+     * nominal yang sama.
+     */
+    public function availableBalanceForApproval(int $accountId, int $transferId): int
+    {
+        $pendingOthers = (int) DonationTransfer::query()
+            ->where('from_account_id', $accountId)
+            ->where('status', DonationTransfer::STATUS_PENDING)
+            ->where('id', '!=', $transferId)
+            ->sum('amount');
+
+        return $this->balanceByAccount($accountId) - $pendingOthers;
+    }
+
+    /**
      * Data ringkasan untuk kartu saldo pada halaman Donasi.
      */
     public function summary(?string $from = null, ?string $to = null): array

@@ -168,13 +168,13 @@ return [
                     'permission' => 'donation.transactions.view',
                 ],
                 [
-                    'key' => 'donation.outflows',
-                    'label' => 'Donasi Keluar',
-                    'route' => 'admin.donation-outflows.index',
-                    'route_active' => 'admin.donation-outflows.*',
+                    'key' => 'donation.transfers',
+                    'label' => 'Mutasi Dana',
+                    'route' => 'admin.donation-transfers.index',
+                    'route_active' => 'admin.donation-transfers.*',
                     'icon' => 'arrow-up',
                     'roles' => ['superadmin', 'admin', 'staf_keuangan'],
-                    'permission' => 'donation.outflows.view',
+                    'permission' => 'donation.transfers.view',
                 ],
                 [
                     'key' => 'donation.infaq-wa',
