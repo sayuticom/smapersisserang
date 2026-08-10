@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DonationPaymentMethod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +22,9 @@ class DonationOutflow extends Model
         'donation_source',
         'description',
         'amount',
+        'payment_method',
         'handover_method',
+        'source_payment_method',
         'destination_account',
         'proof_file',
         'notes',
@@ -67,5 +70,25 @@ class DonationOutflow extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(DonationOutflowStatusHistory::class)->orderBy('created_at');
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return DonationPaymentMethod::labelOf($this->payment_method);
+    }
+
+    public function hasPaymentMethod(): bool
+    {
+        return $this->payment_method !== null;
+    }
+
+    /**
+     * Kompatibilitas sementara untuk importer/kode lama selama kolom legacy
+     * belum dihapus. Alur aplikasi baru tidak lagi memakai atribut ini.
+     */
+    public function setSourcePaymentMethodAttribute(?string $value): void
+    {
+        $this->attributes['source_payment_method'] = $value;
+        $this->attributes['payment_method'] = $value;
     }
 }

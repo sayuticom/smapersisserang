@@ -8,6 +8,7 @@ use App\Models\FinanceIncome;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\DonationBalanceService;
 use App\Services\DonationOutflowApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -159,6 +160,59 @@ class DonationOutflowTest extends TestCase
             ->assertDontSee($pending->transaction_number);
     }
 
+    public function test_source_method_filter_shows_only_selected_method(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $bank = $this->createOutflow(['source_payment_method' => 'bank_transfer', 'transaction_number' => 'DK-20260731-PN01']);
+        $cash = $this->createOutflow(['source_payment_method' => 'cash', 'transaction_number' => 'DK-20260801-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['payment_method' => 'bank_transfer']))
+            ->assertOk()
+            ->assertSee($bank->transaction_number)
+            ->assertDontSee($cash->transaction_number);
+    }
+
+    public function test_source_method_filter_unclassified_shows_null_only(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+        $null = $this->createOutflow(['source_payment_method' => null, 'transaction_number' => 'DK-20260731-PN01']);
+        $cash = $this->createOutflow(['source_payment_method' => 'cash', 'transaction_number' => 'DK-20260801-PN02']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['payment_method' => 'unclassified']))
+            ->assertOk()
+            ->assertSee($null->transaction_number)
+            ->assertDontSee($cash->transaction_number);
+    }
+
+    public function test_source_method_filter_rejects_invalid_value(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.index', ['payment_method' => 'transfer']))
+            ->assertSessionHasErrors('payment_method');
+    }
+
+    public function test_outflow_store_requires_payment_method(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.create']);
+        $this->createIncomingDonation(1500000);
+
+        $this->actingAs($user)
+            ->post(route('admin.donation-outflows.store'), [
+                'handover_date' => '2026-07-31',
+                'donation_source' => 'Donasi Pendidikan',
+                'amount' => 1500000,
+                'payment_method' => '',
+                'destination_account' => 'BSI Operasional',
+            ])
+            ->assertSessionHasErrors('payment_method');
+
+        $this->assertDatabaseCount('donation_outflows', 0);
+    }
+
     public function test_month_and_status_filter_combined(): void
     {
         $user = $this->userWithPermissions(['donation.outflows.view']);
@@ -194,8 +248,8 @@ class DonationOutflowTest extends TestCase
         foreach (range(1, 25) as $i) {
             $this->createOutflow([
                 'status' => 'pending',
-                'handover_date' => '2026-08-' . str_pad((string) ($i % 28) + 1, 2, '0', STR_PAD_LEFT),
-                'transaction_number' => 'DK-202608-P' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'handover_date' => '2026-08-'.str_pad((string) ($i % 28) + 1, 2, '0', STR_PAD_LEFT),
+                'transaction_number' => 'DK-202608-P'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
             ]);
         }
 
@@ -232,7 +286,7 @@ class DonationOutflowTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.donation-outflows.index', ['date' => '2026-08-02', 'status' => 'pending']))
             ->assertOk()
-            ->assertSee('href="' . route('admin.donation-outflows.index') . '"', false);
+            ->assertSee('href="'.route('admin.donation-outflows.index').'"', false);
     }
 
     public function test_transaction_is_created_pending_with_initial_history(): void
@@ -245,7 +299,7 @@ class DonationOutflowTest extends TestCase
             'donation_source' => 'Donasi Pendidikan',
             'description' => 'Periode Juli 2026',
             'amount' => 1500000,
-            'handover_method' => 'transfer',
+            'payment_method' => 'bank_transfer',
             'destination_account' => 'BSI Operasional',
             'proof_file' => UploadedFile::fake()->image('bukti.jpg'),
             'notes' => 'Diserahkan penuh',
@@ -263,6 +317,144 @@ class DonationOutflowTest extends TestCase
             'changed_by' => $user->id,
         ]);
         Storage::disk('public')->assertExists($outflow->proof_file);
+    }
+
+    public function test_create_form_shows_available_balance_for_each_single_payment_method(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.create']);
+        $this->createIncomingDonation(1500000);
+
+        $response = $this->actingAs($user)
+            ->get(route('admin.donation-outflows.create'))
+            ->assertOk()
+            ->assertSee('Metode Pembayaran')
+            ->assertSee('Tunai — Saldo tersedia:')
+            ->assertSee('Transfer Bank — Saldo tersedia:')
+            ->assertSee('QRIS — Saldo tersedia:')
+            ->assertSee('Lainnya — Saldo tersedia:')
+            ->assertDontSee('Sumber Dana yang Digunakan')
+            ->assertDontSee('Metode Penyerahan');
+
+        $this->assertStringNotContainsString('name="source_payment_method"', $response->getContent());
+        $this->assertStringNotContainsString('name="handover_method"', $response->getContent());
+    }
+
+    public function test_superadmin_can_edit_pending_outflow_and_change_amount(): void
+    {
+        $superadmin = $this->userWithPermissions([], 'superadmin');
+        $outflow = $this->createOutflow();
+        $number = $outflow->transaction_number;
+        $creatorId = $outflow->created_by;
+
+        $this->actingAs($superadmin)
+            ->put(route('admin.donation-outflows.update', $outflow), $this->editOutflowPayload([
+                'donation_source' => 'Donasi Makan Santri',
+                'amount' => 1000000,
+                'description' => 'Periode Agustus 2026',
+            ]))
+            ->assertRedirect(route('admin.donation-outflows.show', $outflow));
+
+        $outflow->refresh();
+        $this->assertSame('Donasi Makan Santri', $outflow->donation_source);
+        $this->assertSame('1000000.00', $outflow->amount);
+        $this->assertSame($number, $outflow->transaction_number);
+        $this->assertSame(DonationOutflow::STATUS_PENDING, $outflow->status);
+        $this->assertSame($creatorId, $outflow->created_by);
+    }
+
+    public function test_admin_can_open_and_edit_outflow(): void
+    {
+        $admin = $this->userWithPermissions(['donation.outflows.create'], 'admin');
+        $outflow = $this->createOutflow();
+        $this->createIncomingDonation(1250000);
+        DB::table('donation_transactions')->latest('id')->update(['payment_method' => 'cash']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.donation-outflows.edit', $outflow))
+            ->assertOk()
+            ->assertSee('Edit Donasi Keluar');
+
+        $this->actingAs($admin)
+            ->put(route('admin.donation-outflows.update', $outflow), $this->editOutflowPayload([
+                'payment_method' => 'cash',
+            ]))
+            ->assertRedirect();
+
+        $this->assertSame('cash', $outflow->fresh()->payment_method);
+    }
+
+    public function test_user_without_manage_role_cannot_edit_outflow(): void
+    {
+        $user = $this->userWithPermissions(['donation.outflows.view'], 'staf_keuangan');
+        $outflow = $this->createOutflow();
+
+        $this->actingAs($user)
+            ->get(route('admin.donation-outflows.edit', $outflow))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->put(route('admin.donation-outflows.update', $outflow), $this->editOutflowPayload())
+            ->assertForbidden();
+    }
+
+    public function test_editing_approved_source_method_moves_method_balance_without_changing_total_or_income(): void
+    {
+        $admin = $this->userWithPermissions([], 'admin');
+        $outflow = $this->createOutflow([
+            'status' => DonationOutflow::STATUS_APPROVED,
+            'payment_method' => 'bank_transfer',
+        ]);
+        $income = $this->createIncome($outflow);
+        DB::table('donation_transactions')->insert([
+            'order_id' => 'DON-CASH-EDIT',
+            'donor_name' => 'Donatur Tunai',
+            'donor_whatsapp' => '-',
+            'support_type' => 'Donasi Pendidikan & Makan Santri',
+            'amount' => 1500000,
+            'payment_method' => 'cash',
+            'payment_gateway' => 'manual',
+            'status' => 'paid',
+            'paid_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $service = app(DonationBalanceService::class);
+        $totalBefore = $service->recordedBalance();
+
+        $this->actingAs($admin)
+            ->put(route('admin.donation-outflows.update', $outflow), $this->editOutflowPayload([
+                'payment_method' => 'cash',
+                'description' => 'Keterangan diperbaiki',
+            ]))
+            ->assertRedirect();
+
+        $byMethod = $service->summaryByPaymentMethod();
+        $this->assertSame($totalBefore, $service->recordedBalance());
+        $this->assertSame(1250000, $byMethod['bank_transfer']['recorded_balance']);
+        $this->assertSame(250000, $byMethod['cash']['recorded_balance']);
+        $this->assertDatabaseCount('finance_incomes', 1);
+        $this->assertDatabaseHas('finance_incomes', [
+            'id' => $income->id,
+            'donation_outflow_id' => $outflow->id,
+            'amount' => 1250000,
+        ]);
+    }
+
+    public function test_approved_outflow_amount_cannot_be_changed(): void
+    {
+        $superadmin = $this->userWithPermissions([], 'superadmin');
+        $outflow = $this->createOutflow(['status' => DonationOutflow::STATUS_APPROVED]);
+        $income = $this->createIncome($outflow);
+
+        $this->actingAs($superadmin)
+            ->put(route('admin.donation-outflows.update', $outflow), $this->editOutflowPayload([
+                'amount' => 1000000,
+            ]))
+            ->assertSessionHasErrors('amount');
+
+        $this->assertSame('1250000.00', $outflow->fresh()->amount);
+        $this->assertSame('1250000.00', $income->fresh()->amount);
+        $this->assertDatabaseCount('finance_incomes', 1);
     }
 
     public function test_approval_creates_one_correctly_mapped_finance_income(): void
@@ -871,7 +1063,7 @@ class DonationOutflowTest extends TestCase
             'donation_source' => 'Donasi Pendidikan',
             'description' => 'Periode Juli 2026',
             'amount' => 1250000,
-            'handover_method' => 'transfer',
+            'payment_method' => 'bank_transfer',
             'destination_account' => 'BSI Operasional',
             'notes' => 'Catatan pengujian',
             'status' => 'pending',
@@ -887,11 +1079,12 @@ class DonationOutflowTest extends TestCase
     private function createIncomingDonation(int $amount): void
     {
         DB::table('donation_transactions')->insert([
-            'order_id' => 'DON-' . now()->format('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2))),
+            'order_id' => 'DON-'.now()->format('Ymd').'-'.strtoupper(bin2hex(random_bytes(2))),
             'donor_name' => 'Donatur Uji',
             'donor_whatsapp' => '-',
             'support_type' => 'Donasi Pendidikan & Makan Santri',
             'amount' => $amount,
+            'payment_method' => 'bank_transfer',
             'payment_gateway' => 'midtrans',
             'status' => 'paid',
             'paid_at' => now(),
@@ -920,6 +1113,17 @@ class DonationOutflowTest extends TestCase
             'source_name' => 'Donasi Pendidikan',
             'description' => 'Pemasukan terintegrasi',
         ];
+    }
+
+    private function editOutflowPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'handover_date' => '2026-08-03',
+            'donation_source' => 'Donasi Pendidikan',
+            'description' => 'Periode Agustus 2026',
+            'amount' => 1250000,
+            'payment_method' => 'bank_transfer',
+        ], $overrides);
     }
 
     private function createTables(): void
@@ -983,7 +1187,9 @@ class DonationOutflowTest extends TestCase
             $table->string('donation_source');
             $table->text('description')->nullable();
             $table->decimal('amount', 15, 2);
-            $table->string('handover_method');
+            $table->string('payment_method')->nullable();
+            $table->string('handover_method')->nullable();
+            $table->string('source_payment_method')->nullable();
             $table->string('destination_account');
             $table->string('proof_file')->nullable();
             $table->text('notes')->nullable();
@@ -1012,6 +1218,7 @@ class DonationOutflowTest extends TestCase
             $table->string('donor_whatsapp');
             $table->string('support_type');
             $table->unsignedBigInteger('amount');
+            $table->string('payment_method')->nullable();
             $table->text('note')->nullable();
             $table->string('payment_gateway')->default('midtrans');
             $table->string('status')->default('pending');

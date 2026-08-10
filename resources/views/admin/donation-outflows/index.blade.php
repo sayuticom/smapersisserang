@@ -42,6 +42,13 @@
             if ($statusFilter) {
                 $activeFilters[] = 'Status: ' . ($statusLabels[$statusFilter] ?? $statusFilter);
             }
+            if (request('payment_method')) {
+                $sourceFilter = request('payment_method');
+                $sourceLabel = $sourceFilter === 'unclassified'
+                    ? 'Belum Ditentukan'
+                    : (App\Enums\DonationPaymentMethod::labelOf($sourceFilter));
+                $activeFilters[] = 'Sumber Dana: ' . $sourceLabel;
+            }
             if (request('search')) {
                 $activeFilters[] = 'Pencarian: "' . request('search') . '"';
             }
@@ -78,12 +85,23 @@
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_240px_auto]">
+            <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_200px_200px_auto]">
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-600">Cari</label>
                     <input type="text" name="search" value="{{ old('search', request('search')) }}"
                            placeholder="Nomor, sumber donasi, rekening, keterangan"
                            class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Sumber Dana</label>
+                    <select name="payment_method"
+                            class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">Semua</option>
+                        @foreach(App\Enums\DonationPaymentMethod::labels() as $value => $label)
+                            <option value="{{ $value }}" @selected(request('payment_method') === $value)>{{ $label }}</option>
+                        @endforeach
+                        <option value="unclassified" @selected(request('payment_method') === 'unclassified')>Belum Ditentukan</option>
+                    </select>
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-600">Status</label>
@@ -119,8 +137,8 @@
                                 <th class="px-4 py-3 text-gray-500 font-medium">Nomor</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Tanggal</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Sumber Donasi</th>
+                                <th class="px-4 py-3 text-gray-500 font-medium">Metode Pembayaran</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Nominal</th>
-                                <th class="px-4 py-3 text-gray-500 font-medium">Metode</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Status</th>
                                 <th class="px-4 py-3 text-gray-500 font-medium">Diinput oleh</th>
                                 <th class="px-4 py-3"></th>
@@ -144,13 +162,29 @@
                                     <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{{ $outflow->transaction_number }}</td>
                                     <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $outflow->handover_date->format('d/m/Y') }}</td>
                                     <td class="px-4 py-3 text-gray-700">{{ $outflow->donation_source }}</td>
+                                    <td class="px-4 py-3">
+                                        @if($outflow->payment_method)
+                                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{{ $outflow->payment_method_label }}</span>
+                                        @else
+                                            <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Belum Ditentukan</span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">Rp {{ number_format($outflow->amount, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $outflow->handover_method === 'cash' ? 'Tunai' : 'Transfer' }}</td>
                                     <td class="px-4 py-3"><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">{{ $statusLabel }}</span></td>
                                     <td class="px-4 py-3 text-gray-500">{{ $outflow->creator?->name ?? '-' }}</td>
                                     <td class="px-4 py-3 text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('admin.donation-outflows.show', $outflow) }}" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">Detail</a>
+                                            @if(auth()->user()->isSuperadmin() || auth()->user()->isAdmin())
+                                                <a href="{{ route('admin.donation-outflows.edit', $outflow) }}"
+                                                   title="Edit Donasi Keluar"
+                                                   class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L8.25 18.463 3.75 19.5l1.037-4.5L16.862 3.487z" />
+                                                    </svg>
+                                                    Edit
+                                                </a>
+                                            @endif
                                             @if($outflow->status === 'pending'
                                                 && auth()->user()->isFinanceOfficer()
                                                 && (int) $outflow->created_by !== (int) auth()->id()

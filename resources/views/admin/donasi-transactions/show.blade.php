@@ -113,6 +113,7 @@
                     </a>
                 @endif
             </div>
+
         </div>
 
     @push('styles')

@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\DonationPaymentMethod;
 use App\Models\DonationOutflow;
 use App\Models\DonationTransaction;
+use App\Models\DonationTransfer;
 
 class DonationBalanceService
 {
@@ -15,6 +17,8 @@ class DonationBalanceService
      * pending/cancelled/expired/failed tidak dihitung.
      */
     public const INCOME_STATUSES = ['paid', 'settlement', 'capture'];
+
+    public const UNCLASSIFIED = 'unclassified';
 
     public function totalIncoming(?string $from = null, ?string $to = null): int
     {
@@ -57,6 +61,86 @@ class DonationBalanceService
     }
 
     /**
+     * Saldo dana masuk (valid) per akun donasi.
+     *
+     * Kunci = donation_account_id, nilai = total dana masuk valid.
+     * Baris tanpa akun dikelompokkan ke kunci 0.
+     */
+    public function incomingPerAccount(): array
+    {
+        $rows = DonationTransaction::query()
+            ->selectRaw('COALESCE(donation_account_id, 0) as account_id, SUM(amount) as total')
+            ->whereIn('status', self::INCOME_STATUSES)
+            ->groupBy('account_id')
+            ->get();
+
+        $result = [];
+
+        foreach ($rows as $row) {
+            $result[(int) $row->account_id] = (int) $row->total;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Saldo tercatat satu akun donasi (dari dana masuk valid).
+     */
+    public function accountBalance(int $accountId): int
+    {
+        return (int) DonationTransaction::query()
+            ->where('donation_account_id', $accountId)
+            ->whereIn('status', self::INCOME_STATUSES)
+            ->sum('amount');
+    }
+
+    /**
+     * Saldo bersih per akun dana (konsep akun dana).
+     *
+     * Saldo akun =
+     *   Donasi Masuk valid (donation_transactions)
+     *   + Mutasi Dana masuk approved (to_account_id)
+     *   - Mutasi Dana keluar approved (from_account_id)
+     *
+     * Kunci = donation_account_id, nilai = saldo bersih. Baris tanpa akun
+     * dikelompokkan ke kunci 0. Mutasi pending/rejected tidak dihitung.
+     */
+    public function balancesByAccount(): array
+    {
+        $result = $this->incomingPerAccount();
+
+        $incoming = DonationTransfer::query()
+            ->selectRaw('to_account_id as account_id, SUM(amount) as total')
+            ->where('status', DonationTransfer::STATUS_APPROVED)
+            ->groupBy('to_account_id')
+            ->get();
+
+        $outgoing = DonationTransfer::query()
+            ->selectRaw('from_account_id as account_id, SUM(amount) as total')
+            ->where('status', DonationTransfer::STATUS_APPROVED)
+            ->groupBy('from_account_id')
+            ->get();
+
+        foreach ($incoming as $row) {
+            $result[$row->account_id] = ($result[$row->account_id] ?? 0) + (int) $row->total;
+        }
+
+        foreach ($outgoing as $row) {
+            $result[$row->account_id] = ($result[$row->account_id] ?? 0) - (int) $row->total;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Saldo bersih satu akun dana (konsep akun dana).
+     */
+    public function balanceByAccount(int $accountId): int
+    {
+        return $this->balancesByAccount()[$accountId] ?? 0;
+    }
+
+    /**
      * Data ringkasan untuk kartu saldo pada halaman Donasi.
      */
     public function summary(?string $from = null, ?string $to = null): array
@@ -68,6 +152,116 @@ class DonationBalanceService
             'total_approved_outflow' => $this->totalApprovedOutflow(),
             'total_pending_outflow' => $this->totalPendingOutflow(),
             'pending_count' => $this->pendingCount(),
+            'by_payment_method' => $this->summaryByPaymentMethod(),
         ];
+    }
+
+    /**
+     * Ringkasan saldo per metode pembayaran (Donasi Masuk vs Donasi Keluar).
+     *
+     * - record_balance = incoming valid - approved outflow (per metode)
+     * - available_balance = recorded_balance - pending outflow (per metode)
+     *
+     * Transaksi dengan payment_method NULL dikelompokkan
+     * ke dalam 'unclassified' (label tampilan 'Belum Ditentukan').
+     */
+    public function summaryByPaymentMethod(?string $from = null, ?string $to = null): array
+    {
+        $methods = DonationPaymentMethod::values();
+
+        $incoming = $this->incomingPerMethod($methods, $from, $to);
+        $approved = $this->outflowPerMethod($methods, DonationOutflow::STATUS_APPROVED);
+        $pending = $this->outflowPerMethod($methods, DonationOutflow::STATUS_PENDING);
+
+        $result = [];
+
+        foreach ($methods as $method) {
+            $recorded = $incoming[$method] - $approved[$method];
+            $result[$method] = [
+                'key' => $method,
+                'label' => DonationPaymentMethod::labelOf($method),
+                'incoming' => $incoming[$method],
+                'approved_outflow' => $approved[$method],
+                'pending_outflow' => $pending[$method],
+                'recorded_balance' => $recorded,
+                'available_balance' => $recorded - $pending[$method],
+            ];
+        }
+
+        $result[self::UNCLASSIFIED] = [
+            'key' => self::UNCLASSIFIED,
+            'label' => 'Belum Ditentukan',
+            'incoming' => $incoming[self::UNCLASSIFIED],
+            'approved_outflow' => $approved[self::UNCLASSIFIED],
+            'pending_outflow' => $pending[self::UNCLASSIFIED],
+            'recorded_balance' => $incoming[self::UNCLASSIFIED] - $approved[self::UNCLASSIFIED],
+            'available_balance' => $incoming[self::UNCLASSIFIED] - $approved[self::UNCLASSIFIED] - $pending[self::UNCLASSIFIED],
+        ];
+
+        return $result;
+    }
+
+    /**
+     * Saldo tersedia (available) untuk satu metode tertentu.
+     */
+    public function availableBalanceForMethod(string $method): int
+    {
+        $summary = $this->summaryByPaymentMethod();
+
+        return $summary[$method]['available_balance'] ?? 0;
+    }
+
+    /**
+     * Saldo tercatat (recorded) untuk satu metode tertentu.
+     */
+    public function recordedBalanceForMethod(string $method): int
+    {
+        $summary = $this->summaryByPaymentMethod();
+
+        return $summary[$method]['recorded_balance'] ?? 0;
+    }
+
+    /**
+     * Jumlah donasi masuk valid per metode, termasuk kelompok 'unclassified'.
+     */
+    private function incomingPerMethod(array $methods, ?string $from, ?string $to): array
+    {
+        $totals = array_fill_keys([...$methods, self::UNCLASSIFIED], 0);
+
+        $rows = DonationTransaction::query()
+            ->selectRaw('COALESCE(payment_method, ?) as method, SUM(amount) as total', [self::UNCLASSIFIED])
+            ->whereIn('status', self::INCOME_STATUSES)
+            ->when($from, fn ($query) => $query->whereDate('created_at', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('created_at', '<=', $to))
+            ->groupBy('method')
+            ->get();
+
+        foreach ($rows as $row) {
+            $key = in_array($row->method, $methods, true) ? $row->method : self::UNCLASSIFIED;
+            $totals[$key] += (int) $row->total;
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Jumlah donasi keluar per metode (approved/pending), termasuk 'unclassified'.
+     */
+    private function outflowPerMethod(array $methods, string $status): array
+    {
+        $totals = array_fill_keys([...$methods, self::UNCLASSIFIED], 0);
+
+        $rows = DonationOutflow::query()
+            ->selectRaw('COALESCE(payment_method, ?) as method, SUM(amount) as total', [self::UNCLASSIFIED])
+            ->where('status', $status)
+            ->groupBy('method')
+            ->get();
+
+        foreach ($rows as $row) {
+            $key = in_array($row->method, $methods, true) ? $row->method : self::UNCLASSIFIED;
+            $totals[$key] += (int) $row->total;
+        }
+
+        return $totals;
     }
 }

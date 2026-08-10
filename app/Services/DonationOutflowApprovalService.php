@@ -33,12 +33,21 @@ class DonationOutflowApprovalService
                 ]);
             }
 
-            $balanceService = app(DonationBalanceService::class);
-            $recordedBalance = $balanceService->recordedBalance();
-
-            if ((float) $recordedBalance < (float) $lockedOutflow->amount) {
+            if (! $lockedOutflow->hasPaymentMethod()) {
                 throw ValidationException::withMessages([
-                    'status' => 'Saldo dana donasi tidak mencukupi untuk menyetujui penyerahan dana ini.',
+                    'status' => 'Sumber dana belum ditentukan. Perbaiki sumber dana sebelum menyetujui.',
+                ]);
+            }
+
+            $balanceService = app(DonationBalanceService::class);
+            $method = $lockedOutflow->payment_method;
+            $recordedForMethod = $balanceService->recordedBalanceForMethod($method);
+
+            if ((float) $recordedForMethod < (float) $lockedOutflow->amount) {
+                throw ValidationException::withMessages([
+                    'status' => 'Saldo dana donasi pada metode '
+                        . $lockedOutflow->payment_method_label
+                        . ' tidak mencukupi untuk menyetujui penyerahan dana ini.',
                 ]);
             }
 
@@ -47,9 +56,7 @@ class DonationOutflowApprovalService
                 'date' => $lockedOutflow->handover_date->format('Y-m-d'),
                 'income_type' => 'Transfer dari Donasi',
                 'amount' => $lockedOutflow->amount,
-                'payment_method' => $lockedOutflow->handover_method === 'cash'
-                    ? 'Tunai'
-                    : 'Transfer Bank',
+                'payment_method' => $lockedOutflow->payment_method_label,
                 'source_name' => $lockedOutflow->donation_source,
                 'description' => $this->buildDescription($lockedOutflow),
                 'proof_file' => $lockedOutflow->proof_file,

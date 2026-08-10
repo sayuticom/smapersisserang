@@ -13,6 +13,39 @@
             </div>
         @endif
 
+        @php($rows = $balance['by_payment_method'] ?? [])
+        @if(count($rows))
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-semibold">Metode Pembayaran</th>
+                                <th class="px-4 py-3 text-right font-semibold">Donasi Masuk</th>
+                                <th class="px-4 py-3 text-right font-semibold">Donasi Keluar</th>
+                                <th class="px-4 py-3 text-right font-semibold">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($rows as $row)
+                                <tr class="{{ $row['key'] === 'unclassified' ? 'bg-amber-50/50' : 'hover:bg-slate-50' }}">
+                                    <td class="px-4 py-3 text-slate-800">
+                                        {{ $row['label'] }}
+                                        @if($row['key'] === 'unclassified')
+                                            <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Belum Ditentukan</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['incoming'], 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['approved_outflow'], 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3 text-right font-bold text-emerald-700">Rp{{ number_format($row['recorded_balance'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
             <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 md:p-5">
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 md:text-xs">Saldo Donasi</p>

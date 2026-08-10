@@ -311,7 +311,8 @@ class FinanceIncomeManageTest extends TestCase
             $table->string('donation_source');
             $table->text('description')->nullable();
             $table->decimal('amount', 15, 2);
-            $table->string('handover_method');
+            $table->string('payment_method')->nullable();
+            $table->string('handover_method')->nullable();
             $table->string('destination_account');
             $table->string('proof_file')->nullable();
             $table->text('notes')->nullable();

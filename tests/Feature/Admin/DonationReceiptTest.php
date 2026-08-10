@@ -3,7 +3,6 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\DonationTransaction;
-use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
@@ -170,7 +169,7 @@ class DonationReceiptTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('admin.donasi-transactions.store-receipt'), $this->receiptPayload([
-                'payment_method' => 'Tunai',
+                'payment_method' => 'cash',
             ]))
             ->assertRedirect();
 
@@ -192,7 +191,7 @@ class DonationReceiptTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('admin.donasi-transactions.store-receipt'), $this->receiptPayload([
-                'payment_method' => 'QRIS',
+                'payment_method' => 'qris',
             ]))
             ->assertRedirect();
 
@@ -201,6 +200,34 @@ class DonationReceiptTest extends TestCase
         $this->assertStringContainsString('Metode Pembayaran: QRIS', $transaction->note);
         $this->assertStringContainsString('Kode Unik: Tidak digunakan', $transaction->note);
         $this->assertStringContainsString('Total Transfer: Rp50.000', $transaction->note);
+    }
+
+    public function test_new_transaction_stores_internal_payment_method(): void
+    {
+        $user = $this->user('admin');
+
+        $this->actingAs($user)
+            ->post(route('admin.donasi-transactions.store-receipt'), $this->receiptPayload([
+                'payment_method' => 'bank_transfer',
+            ]))
+            ->assertRedirect();
+
+        $transaction = DonationTransaction::first();
+        $this->assertNotNull($transaction);
+        $this->assertSame('bank_transfer', $transaction->payment_method);
+    }
+
+    public function test_receipt_without_payment_method_is_rejected(): void
+    {
+        $user = $this->user('admin');
+
+        $this->actingAs($user)
+            ->post(route('admin.donasi-transactions.store-receipt'), $this->receiptPayload([
+                'payment_method' => '',
+            ]))
+            ->assertSessionHasErrors('payment_method');
+
+        $this->assertSame(0, DonationTransaction::count());
     }
 
     private function user(string $roleName): User
@@ -230,7 +257,7 @@ class DonationReceiptTest extends TestCase
             'admin_fee' => 'Rp0',
             'use_unique_code' => 'Tidak',
             'unique_code' => '',
-            'payment_method' => 'Transfer Bank',
+            'payment_method' => 'bank_transfer',
             'transfer_date' => '01/08/2026',
             'note' => '-',
         ], $overrides);
@@ -239,7 +266,7 @@ class DonationReceiptTest extends TestCase
     private function createTransactionWithNote(string $note): DonationTransaction
     {
         return DonationTransaction::create([
-            'order_id' => 'REC-' . strtoupper(bin2hex(random_bytes(4))),
+            'order_id' => 'REC-'.strtoupper(bin2hex(random_bytes(4))),
             'donor_name' => 'Budi',
             'donor_whatsapp' => '-',
             'support_type' => 'Donasi Pendidikan & Makan Santri',
@@ -312,6 +339,7 @@ class DonationReceiptTest extends TestCase
             $table->string('donor_whatsapp');
             $table->string('support_type');
             $table->unsignedBigInteger('amount');
+            $table->string('payment_method')->nullable();
             $table->text('note')->nullable();
             $table->string('payment_gateway')->default('midtrans');
             $table->string('status')->default('pending');

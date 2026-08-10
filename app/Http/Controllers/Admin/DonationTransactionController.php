@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DonationPaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Models\DonationRegularDonor;
 use App\Models\DonationTransaction;
+use App\Models\DonationTransactionHistory;
+use App\Models\SchoolSetting;
 use App\Services\DonationBalanceService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class DonationTransactionController extends Controller
 {
@@ -20,7 +25,7 @@ class DonationTransactionController extends Controller
         $query = DonationTransaction::query();
 
         if ($request->filled('date')) {
-            $date = \Carbon\Carbon::parse($request->date);
+            $date = Carbon::parse($request->date);
 
             if ($request->filter_type === 'month') {
                 $query->whereYear('created_at', $date->year)
@@ -30,20 +35,36 @@ class DonationTransactionController extends Controller
             }
         }
 
+        if ($request->filled('payment_method')) {
+            $filter = $request->payment_method;
+            if ($filter === 'unclassified') {
+                $query->whereNull('payment_method');
+            } elseif (in_array($filter, DonationPaymentMethod::values(), true)) {
+                $query->where('payment_method', $filter);
+            }
+        }
+
         $summaryQuery = clone $query;
 
         $transactions = $query->orderBy('created_at', 'desc')
             ->paginate(20)
             ->withQueryString();
 
-        $totalDonations = (clone $summaryQuery)->sum('amount');
         $totalTransactions = (clone $summaryQuery)->count();
 
-        $balance = auth()->user()->hasPermissionTo('donation.balance.view')
-            ? app(DonationBalanceService::class)->summary()
-            : [];
+        $balanceService = app(DonationBalanceService::class);
+        $incomingSummary = [
+            'total_incoming' => $balanceService->totalIncoming(),
+            'by_payment_method' => collect($balanceService->summaryByPaymentMethod())
+                ->map(fn (array $row) => [
+                    'key' => $row['key'],
+                    'label' => $row['label'],
+                    'incoming' => $row['incoming'],
+                ])
+                ->all(),
+        ];
 
-        return view('admin.donasi-transactions.index', compact('transactions', 'totalDonations', 'totalTransactions', 'balance'));
+        return view('admin.donasi-transactions.index', compact('transactions', 'totalTransactions', 'incomingSummary'));
     }
 
     public function createReceipt()
@@ -81,7 +102,7 @@ class DonationTransactionController extends Controller
             'unique_code' => $useUniqueCode
                 ? ['required', 'integer', 'min:1', 'max:299']
                 : ['nullable', 'string', 'max:50'],
-            'payment_method' => ['nullable', 'string', 'max:50'],
+            'payment_method' => ['required', Rule::in(DonationPaymentMethod::values())],
             'transfer_date' => ['nullable', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:1000'],
             'confirmation_message' => ['nullable', 'string', 'max:5000'],
@@ -95,28 +116,29 @@ class DonationTransactionController extends Controller
         $donorWhatsapp = $allowContact ? trim($data['donor_whatsapp'] ?? '') : '';
         $donorWhatsapp = $donorWhatsapp !== '' ? $donorWhatsapp : '-';
         $normalizedWhatsapp = $this->normalizeWhatsappNumber($donorWhatsapp);
-        $paymentMethod = trim($data['payment_method'] ?? '') !== '' ? $data['payment_method'] : 'Transfer Bank';
+        $paymentMethod = DonationPaymentMethod::fromValue($data['payment_method'])
+            ?? DonationPaymentMethod::BankTransfer;
 
         if ($nominalAmount <= 0) {
             return back()->withErrors(['nominal_amount' => 'Nominal donasi harus lebih dari 0.'])->withInput();
         }
 
         $noteLines = [
-            'Bersedia Dihubungi: ' . ($allowContact ? 'Ya' : 'Tidak'),
-            'Nomor WhatsApp: ' . $donorWhatsapp,
-            'Metode Pembayaran: ' . $paymentMethod,
-            'Biaya Admin: Rp' . number_format($adminFee, 0, ',', '.'),
-            'Kode Unik: ' . ($useUniqueCode ? $uniqueCode : 'Tidak digunakan'),
-            'Total Transfer: Rp' . number_format($totalTransfer, 0, ',', '.'),
-            'Tanggal Transfer: ' . ($data['transfer_date'] ?: '-'),
+            'Bersedia Dihubungi: '.($allowContact ? 'Ya' : 'Tidak'),
+            'Nomor WhatsApp: '.$donorWhatsapp,
+            'Metode Pembayaran: '.$paymentMethod->label(),
+            'Biaya Admin: Rp'.number_format($adminFee, 0, ',', '.'),
+            'Kode Unik: '.($useUniqueCode ? $uniqueCode : 'Tidak digunakan'),
+            'Total Transfer: Rp'.number_format($totalTransfer, 0, ',', '.'),
+            'Tanggal Transfer: '.($data['transfer_date'] ?: '-'),
         ];
 
         if (trim($data['note'] ?? '') && trim($data['note']) !== '-') {
-            $noteLines[] = 'Catatan Donatur: ' . trim($data['note']);
+            $noteLines[] = 'Catatan Donatur: '.trim($data['note']);
         }
 
         if (trim($data['confirmation_message'] ?? '')) {
-            $noteLines[] = 'Pesan WA: ' . trim($data['confirmation_message']);
+            $noteLines[] = 'Pesan WA: '.trim($data['confirmation_message']);
         }
 
         $transaction = DonationTransaction::create([
@@ -125,6 +147,7 @@ class DonationTransactionController extends Controller
             'donor_whatsapp' => $donorWhatsapp,
             'support_type' => 'Donasi Pendidikan & Makan Santri',
             'amount' => $nominalAmount,
+            'payment_method' => $paymentMethod->value,
             'note' => implode("\n", $noteLines),
             'payment_gateway' => 'manual-qris',
             'status' => 'paid',
@@ -140,7 +163,7 @@ class DonationTransactionController extends Controller
         }
 
         return redirect()->route('admin.donasi-transactions.show', $transaction)
-            ->with('success', 'Bukti penerimaan donasi berhasil diterbitkan. Referensi: ' . $transaction->order_id)
+            ->with('success', 'Bukti penerimaan donasi berhasil diterbitkan. Referensi: '.$transaction->order_id)
             ->with('regular_donor_message', $regularDonorMessage);
     }
 
@@ -148,7 +171,7 @@ class DonationTransactionController extends Controller
     {
         $receipt = $this->receiptData($transaction);
         $whatsappUrl = $this->donorReceiptWhatsappUrl($transaction, $receipt);
-        $schoolSetting = \App\Models\SchoolSetting::first();
+        $schoolSetting = SchoolSetting::first();
 
         return view('admin.donasi-transactions.show', compact('transaction', 'receipt', 'whatsappUrl', 'schoolSetting'));
     }
@@ -175,7 +198,7 @@ class DonationTransactionController extends Controller
 
     private function assertCanDelete(): void
     {
-        if (!auth()->user()->isSuperadmin()) {
+        if (! auth()->user()->isSuperadmin()) {
             abort(403, 'Hanya superadmin yang dapat menghapus data ini.');
         }
     }
@@ -214,7 +237,7 @@ class DonationTransactionController extends Controller
 
     private function extractLabel(string $message, string $label): ?string
     {
-        if (preg_match('/^' . preg_quote($label, '/') . '\s*:\s*(.+)$/mi', $message, $matches)) {
+        if (preg_match('/^'.preg_quote($label, '/').'\s*:\s*(.+)$/mi', $message, $matches)) {
             return trim($matches[1]);
         }
 
@@ -266,9 +289,98 @@ class DonationTransactionController extends Controller
             'transfer_date' => $noteData['Tanggal Transfer'] ?? optional($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y'),
             'note' => $noteData['Catatan Donatur'] ?? '-',
             'allow_contact' => $noteData['Bersedia Dihubungi'] ?? '-',
-            'payment_method' => $noteData['Metode Pembayaran'] ?? '-',
+            'payment_method' => $transaction->payment_method !== null
+                ? $transaction->payment_method_label
+                : ($noteData['Metode Pembayaran'] ?? '-'),
             'status' => $transaction->status,
         ];
+    }
+
+    public function edit(Request $request, DonationTransaction $transaction)
+    {
+        $this->assertCanEdit($request);
+
+        return view('admin.donasi-transactions.edit', compact('transaction'));
+    }
+
+    public function update(Request $request, DonationTransaction $transaction): RedirectResponse
+    {
+        $this->assertCanEdit($request);
+
+        $data = $request->validate([
+            'donor_name' => ['required', 'string', 'max:100'],
+            'donor_phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s]*$/'],
+            'donor_email' => ['nullable', 'email', 'max:255'],
+            'amount' => ['required', 'integer', 'min:1'],
+            'donation_date' => ['required', 'date'],
+            'payment_method' => ['nullable', Rule::in(DonationPaymentMethod::values())],
+            'note' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $editableValues = [
+            'donor_name' => trim($data['donor_name']),
+            'donor_whatsapp' => trim($data['donor_phone'] ?? '') ?: '-',
+            'donor_email' => $data['donor_email'] ?: null,
+            'amount' => (int) $data['amount'],
+            'paid_at' => Carbon::parse($data['donation_date'])->startOfDay(),
+            'payment_method' => $data['payment_method'] ?? null,
+            'note' => $data['note'] ?: null,
+        ];
+
+        DB::transaction(function () use ($request, $transaction, $editableValues) {
+            $oldValues = $transaction->only(array_keys($editableValues));
+            $transaction->update($editableValues);
+            $transaction->refresh();
+
+            DonationTransactionHistory::create([
+                'donation_transaction_id' => $transaction->id,
+                'user_id' => $request->user()->id,
+                'action' => 'updated',
+                'old_values' => $oldValues,
+                'new_values' => $transaction->only(array_keys($editableValues)),
+            ]);
+        });
+
+        return redirect()->route('admin.donasi-transactions.show', $transaction)
+            ->with('success', 'Donasi Masuk berhasil diperbarui.');
+    }
+
+    /**
+     * Memperbarui hanya payment_method. Field lain (amount, status, donor_name,
+     * donor_phone, transaction_code, created_at, note) tidak pernah disentuh.
+     */
+    public function updatePaymentMethod(Request $request, DonationTransaction $transaction): RedirectResponse
+    {
+        $this->assertCanEdit($request);
+
+        $data = $request->validate([
+            'payment_method' => ['nullable', Rule::in(DonationPaymentMethod::values())],
+        ]);
+
+        $oldPaymentMethod = $transaction->payment_method;
+        $newPaymentMethod = $data['payment_method'] ?? null;
+
+        DB::transaction(function () use ($request, $transaction, $oldPaymentMethod, $newPaymentMethod) {
+            $transaction->update(['payment_method' => $newPaymentMethod]);
+            $transaction->refresh();
+
+            DonationTransactionHistory::create([
+                'donation_transaction_id' => $transaction->id,
+                'user_id' => $request->user()->id,
+                'action' => 'payment_method_updated',
+                'old_values' => ['payment_method' => $oldPaymentMethod],
+                'new_values' => ['payment_method' => $newPaymentMethod],
+            ]);
+        });
+
+        return back()->with('success', 'Metode pembayaran berhasil diperbarui.');
+    }
+
+    private function assertCanEdit(Request $request): void
+    {
+        if (! $request->user()?->isSuperadmin()) {
+            abort(403, 'Hanya superadmin yang dapat mengubah Donasi Masuk.');
+        }
     }
 
     private function parseNoteLines(string $note): array
@@ -276,7 +388,7 @@ class DonationTransactionController extends Controller
         $data = [];
 
         foreach (preg_split('/\r\n|\r|\n/', $note) as $line) {
-            if (!str_contains($line, ':')) {
+            if (! str_contains($line, ':')) {
                 continue;
             }
 
@@ -291,38 +403,38 @@ class DonationTransactionController extends Controller
     {
         $number = $this->normalizeWhatsappNumber($receipt['donor_whatsapp'] ?? $transaction->donor_whatsapp);
 
-        if (!$number) {
+        if (! $number) {
             return null;
         }
 
         $message = "Assalamu'alaikum {$receipt['donor_name']}.\n\n"
-            . "Terima kasih, donasi pendidikan untuk SMA Persis Serang sudah kami terima.\n\n"
-            . "Nomor Bukti: {$receipt['receipt_number']}\n"
-            . "Nama Donatur: {$receipt['donor_name']}\n"
-            . "Nominal Donasi: Rp" . number_format($receipt['nominal_amount'], 0, ',', '.') . "\n"
-            . "Total Transfer: Rp" . number_format($receipt['total_transfer'], 0, ',', '.') . "\n"
-            . "Tanggal: " . $receipt['received_at']->format('d/m/Y') . "\n\n"
-            . "Semoga Allah membalas dengan pahala terbaik dan menjadikan donasi ini sebagai amal jariyah.\n\n"
-            . "Aamiin.\n\n"
-            . "SMA Persis Serang";
+            ."Terima kasih, donasi pendidikan untuk SMA Persis Serang sudah kami terima.\n\n"
+            ."Nomor Bukti: {$receipt['receipt_number']}\n"
+            ."Nama Donatur: {$receipt['donor_name']}\n"
+            .'Nominal Donasi: Rp'.number_format($receipt['nominal_amount'], 0, ',', '.')."\n"
+            .'Total Transfer: Rp'.number_format($receipt['total_transfer'], 0, ',', '.')."\n"
+            .'Tanggal: '.$receipt['received_at']->format('d/m/Y')."\n\n"
+            ."Semoga Allah membalas dengan pahala terbaik dan menjadikan donasi ini sebagai amal jariyah.\n\n"
+            ."Aamiin.\n\n"
+            .'SMA Persis Serang';
 
-        return 'https://wa.me/' . $number . '?text=' . urlencode($message);
+        return 'https://wa.me/'.$number.'?text='.urlencode($message);
     }
 
     private function normalizeWhatsappNumber(?string $number): ?string
     {
         $clean = preg_replace('/[^0-9]/', '', (string) $number);
 
-        if (!$clean || $clean === '-') {
+        if (! $clean || $clean === '-') {
             return null;
         }
 
         if (str_starts_with($clean, '0')) {
-            return '62' . substr($clean, 1);
+            return '62'.substr($clean, 1);
         }
 
         if (str_starts_with($clean, '8')) {
-            return '62' . $clean;
+            return '62'.$clean;
         }
 
         return $clean;
@@ -330,12 +442,12 @@ class DonationTransactionController extends Controller
 
     private function upsertRegularDonor(DonationTransaction $transaction, string $normalizedWhatsapp): ?string
     {
-        if (!Schema::hasTable('donation_regular_donors')) {
+        if (! Schema::hasTable('donation_regular_donors')) {
             return 'Tabel donatur tetap belum tersedia. Jalankan migration sebelum data donatur tetap dapat disimpan.';
         }
 
         $donor = DonationRegularDonor::firstOrNew(['whatsapp_number' => $normalizedWhatsapp]);
-        $isNew = !$donor->exists;
+        $isNew = ! $donor->exists;
 
         $donor->fill([
             'name' => $transaction->donor_name ?: 'Hamba Allah',
@@ -344,7 +456,7 @@ class DonationTransactionController extends Controller
             'last_donation_at' => $transaction->paid_at ?? now(),
         ]);
 
-        if ($isNew || !$donor->first_donation_at) {
+        if ($isNew || ! $donor->first_donation_at) {
             $donor->first_donation_at = $transaction->paid_at ?? now();
         }
 
@@ -360,7 +472,7 @@ class DonationTransactionController extends Controller
     private function generateOrderId(): string
     {
         do {
-            $orderId = 'DON-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+            $orderId = 'DON-'.now()->format('Ymd').'-'.strtoupper(Str::random(4));
         } while (DonationTransaction::where('order_id', $orderId)->exists());
 
         return $orderId;

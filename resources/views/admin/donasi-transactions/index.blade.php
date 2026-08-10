@@ -21,14 +21,25 @@
 
         <form method="GET" action="{{ route('admin.donasi-transactions.index') }}"
               class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div class="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(260px,1fr)_auto_auto_auto] lg:items-end">
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_auto_auto_auto] lg:items-end">
                 <div class="col-span-1">
                     <label class="mb-1 block text-xs font-medium text-slate-600">Tanggal</label>
                     <input type="date" name="date" value="{{ request('date') }}"
                            class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                 </div>
+                <div class="col-span-1">
+                    <label class="mb-1 block text-xs font-medium text-slate-600">Metode Pembayaran</label>
+                    <select name="payment_method"
+                            class="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">Semua</option>
+                        @foreach(App\Enums\DonationPaymentMethod::labels() as $value => $label)
+                            <option value="{{ $value }}" @selected(request('payment_method') === $value)>{{ $label }}</option>
+                        @endforeach
+                        <option value="unclassified" @selected(request('payment_method') === 'unclassified')>Belum Ditentukan</option>
+                    </select>
+                </div>
                 <button type="submit" name="filter_type" value="date"
-                        class="mt-5 h-11 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800 md:mt-0">
+                        class="mt-1 h-11 rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white hover:bg-emerald-800 md:mt-0">
                     Filter Tanggal
                 </button>
                 <button type="submit" name="filter_type" value="month"
@@ -44,12 +55,35 @@
 
         <div class="mb-4 grid grid-cols-2 gap-3 md:gap-4">
             <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 md:p-5">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 md:text-xs">Total Donasi Masuk</p>
-                <p class="mt-2 text-xl font-bold text-emerald-800 md:text-2xl">Rp{{ number_format($totalDonations, 0, ',', '.') }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 md:text-xs">Total Donasi Masuk Valid</p>
+                <p class="mt-2 text-xl font-bold text-emerald-800 md:text-2xl">Rp{{ number_format($incomingSummary['total_incoming'], 0, ',', '.') }}</p>
             </div>
-            <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 md:p-5">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-yellow-700 md:text-xs">Jumlah Transaksi</p>
-                <p class="mt-2 text-xl font-bold text-yellow-800 md:text-2xl">{{ $totalTransactions }} transaksi</p>
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 md:p-5">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 md:text-xs">Jumlah Transaksi</p>
+                <p class="mt-2 text-xl font-bold text-amber-800 md:text-2xl">{{ $totalTransactions }} transaksi</p>
+            </div>
+        </div>
+
+        <div class="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 text-slate-600">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold">Metode Pembayaran</th>
+                            <th class="px-4 py-3 text-right font-semibold">Donasi Masuk</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($incomingSummary['by_payment_method'] as $row)
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 text-slate-800">{{ $row['label'] }}</td>
+                                <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['incoming'], 0, ',', '.') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="px-4 py-6 text-center text-sm text-slate-500">Belum ada data metode pembayaran.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -66,6 +100,7 @@
                         <th class="px-4 py-3 text-left font-semibold">Referensi</th>
                         <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
                         <th class="px-4 py-3 text-left font-semibold">Donatur</th>
+                        <th class="px-4 py-3 text-left font-semibold">Metode</th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal</th>
                         <th class="px-4 py-3 text-right font-semibold">Aksi</th>
                     </tr>
@@ -89,6 +124,13 @@
                                     </div>
                                 @endif
                             </td>
+                            <td class="px-4 py-4">
+                                @if($transaction->payment_method)
+                                    <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{{ $transaction->payment_method_label }}</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Belum Ditentukan</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-4 font-semibold text-slate-900">
                                 Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
                             </td>
@@ -103,6 +145,23 @@
                                         </svg>
                                     </a>
                                     @if(auth()->user()->isSuperadmin())
+                                        <button type="button"
+                                                @click="$dispatch('open-modal', 'edit-method-{{ $transaction->id }}')"
+                                                title="Edit Metode Pembayaran"
+                                                class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-violet-200 px-3 text-xs font-semibold text-violet-700 hover:bg-violet-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                                            </svg>
+                                            Edit Metode
+                                        </button>
+                                        <a href="{{ route('admin.donasi-transactions.edit', $transaction) }}"
+                                                title="Edit Donasi Masuk"
+                                                class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-blue-200 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L8.25 18.463 3.75 19.5l1.037-4.5L16.862 3.487z" />
+                                            </svg>
+                                            Edit
+                                        </a>
                                         <form method="POST" action="{{ route('admin.donasi-transactions.destroy', $transaction) }}"
                                               onsubmit="return confirm('Yakin ingin menghapus Donasi Masuk ini? Data yang sudah dihapus tidak dapat dikembalikan.')">
                                             @csrf @method('DELETE')
@@ -117,7 +176,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-500">
                                 Belum ada data donasi masuk.
                             </td>
                         </tr>
@@ -137,6 +196,7 @@
                     <tr>
                         <th class="px-2 py-2 text-left font-semibold">Tgl</th>
                         <th class="px-2 py-2 text-left font-semibold">Donatur</th>
+                        <th class="px-2 py-2 text-left font-semibold">Metode</th>
                         <th class="px-2 py-2 text-right font-semibold">Nominal</th>
                         <th class="px-2 py-2 text-center font-semibold">Aksi</th>
                     </tr>
@@ -152,6 +212,13 @@
                                     {{ $transaction->donor_name ?? '-' }}
                                 </div>
                             </td>
+                            <td class="px-2 py-3">
+                                @if($transaction->payment_method)
+                                    <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{{ $transaction->payment_method_label }}</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Belum Ditentukan</span>
+                                @endif
+                            </td>
                             <td class="px-2 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">
                                 Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
                             </td>
@@ -166,6 +233,23 @@
                                         </svg>
                                     </a>
                                     @if(auth()->user()->isSuperadmin())
+                                        <button type="button"
+                                                @click="$dispatch('open-modal', 'edit-method-{{ $transaction->id }}')"
+                                                title="Edit Metode Pembayaran"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                                            </svg>
+                                            <span class="sr-only">Edit Metode</span>
+                                        </button>
+                                        <a href="{{ route('admin.donasi-transactions.edit', $transaction) }}"
+                                                title="Edit Donasi Masuk"
+                                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L8.25 18.463 3.75 19.5l1.037-4.5L16.862 3.487z" />
+                                            </svg>
+                                            <span class="sr-only">Edit</span>
+                                        </a>
                                         <form method="POST" action="{{ route('admin.donasi-transactions.destroy', $transaction) }}"
                                               onsubmit="return confirm('Yakin ingin menghapus Donasi Masuk ini? Data yang sudah dihapus tidak dapat dikembalikan.')">
                                             @csrf @method('DELETE')
@@ -180,7 +264,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-2 py-6 text-center text-xs text-slate-500">
+                            <td colspan="5" class="px-2 py-6 text-center text-xs text-slate-500">
                                 Belum ada data donasi.
                             </td>
                         </tr>
@@ -193,5 +277,46 @@
                 </div>
             @endif
         </div>
+
+        @if(auth()->user()->isSuperadmin())
+            @foreach($transactions as $transaction)
+                <x-modal name="edit-method-{{ $transaction->id }}" maxWidth="md">
+                    <div class="p-6">
+                        <h2 class="text-lg font-bold text-gray-900">Edit Metode Pembayaran</h2>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ $transaction->order_id ?? $transaction->reference ?? '-' }}
+                            &middot; Rp{{ number_format($transaction->amount ?? 0, 0, ',', '.') }}
+                        </p>
+
+                        <form method="POST" action="{{ route('admin.donasi-transactions.payment-method', $transaction) }}" class="mt-5">
+                            @csrf @method('PATCH')
+                            <div>
+                                <label for="payment_method_{{ $transaction->id }}" class="block text-sm font-semibold text-gray-700">Metode Pembayaran</label>
+                                <select name="payment_method" id="payment_method_{{ $transaction->id }}"
+                                        class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
+                                    <option value="" @selected($transaction->payment_method === null)>Belum Ditentukan</option>
+                                    @foreach(App\Enums\DonationPaymentMethod::labels() as $value => $label)
+                                        <option value="{{ $value }}" @selected($transaction->payment_method === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-slate-400">Hanya metode pembayaran yang diperbarui. Nominal dan status tidak berubah.</p>
+                            </div>
+
+                            <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                <button type="button" @click="$dispatch('close-modal', 'edit-method-{{ $transaction->id }}')"
+                                        class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                                    Batal
+                                </button>
+                                <button type="submit"
+                                        class="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800">
+                                    Simpan Metode
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </x-modal>
+            @endforeach
+        @endif
+
     </div>
 </x-admin-layout>

@@ -40,7 +40,7 @@
                 <div><dt class="text-gray-500">Tanggal Penyerahan</dt><dd class="mt-1 font-medium text-gray-900">{{ $donationOutflow->handover_date->format('d/m/Y') }}</dd></div>
                 <div><dt class="text-gray-500">Sumber/Jenis Donasi</dt><dd class="mt-1 font-medium text-gray-900">{{ $donationOutflow->donation_source }}</dd></div>
                 <div><dt class="text-gray-500">Nominal</dt><dd class="mt-1 font-bold text-emerald-700">Rp {{ number_format($donationOutflow->amount, 0, ',', '.') }}</dd></div>
-                <div><dt class="text-gray-500">Metode</dt><dd class="mt-1 font-medium text-gray-900">{{ $donationOutflow->handover_method === 'cash' ? 'Tunai' : 'Transfer' }}</dd></div>
+                <div><dt class="text-gray-500">Metode Pembayaran</dt><dd class="mt-1 font-medium text-gray-900">@if($donationOutflow->payment_method){{ $donationOutflow->payment_method_label }}@else<span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Belum Ditentukan</span>@endif</dd></div>
                 <div><dt class="text-gray-500">Kas/Rekening Tujuan</dt><dd class="mt-1 font-medium text-gray-900">{{ $donationOutflow->destination_account }}</dd></div>
                 <div><dt class="text-gray-500">Bukti Penyerahan</dt><dd class="mt-1">@if($donationOutflow->proof_file)<a href="{{ asset('storage/'.$donationOutflow->proof_file) }}" target="_blank" class="font-medium text-blue-600 hover:underline">Lihat Bukti</a>@else<span class="text-gray-400">Tidak ada</span>@endif</dd></div>
                 <div class="sm:col-span-2"><dt class="text-gray-500">Keterangan/Periode</dt><dd class="mt-1 text-gray-900 whitespace-pre-line">{{ $donationOutflow->description ?: '-' }}</dd></div>

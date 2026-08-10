@@ -169,7 +169,7 @@ class FinanceIncomeIntegratedManageTest extends TestCase
         $this->assertSame('2026-08-15', $income->date->format('Y-m-d'));
         $this->assertSame('2026-08-15', $outflow->handover_date->format('Y-m-d'));
         $this->assertSame('Tunai', $income->payment_method);
-        $this->assertSame('cash', $outflow->handover_method);
+        $this->assertSame('cash', $outflow->payment_method);
     }
 
     public function test_edit_that_exceeds_donation_balance_is_rejected(): void
@@ -235,7 +235,7 @@ class FinanceIncomeIntegratedManageTest extends TestCase
         $outflow = DonationOutflow::findOrFail($income->donation_outflow_id);
 
         $this->assertSame('Tunai', $income->payment_method);
-        $this->assertSame('cash', $outflow->handover_method);
+        $this->assertSame('cash', $outflow->payment_method);
     }
 
     public function test_qris_payment_rejected_for_integrated_income(): void
@@ -624,7 +624,8 @@ class FinanceIncomeIntegratedManageTest extends TestCase
             $table->string('donation_source');
             $table->text('description')->nullable();
             $table->decimal('amount', 15, 2);
-            $table->string('handover_method');
+            $table->string('payment_method')->nullable();
+            $table->string('handover_method')->nullable();
             $table->string('destination_account');
             $table->string('proof_file')->nullable();
             $table->text('notes')->nullable();

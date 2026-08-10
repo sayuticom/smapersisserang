@@ -1,4 +1,3 @@
-
 <?php
 
 namespace Tests\Feature\Admin;
@@ -374,7 +373,7 @@ class DeleteAuthorizationTest extends TestCase
     private function createTransaction(int $amount): DonationTransaction
     {
         return DonationTransaction::create([
-            'order_id' => 'DON-' . now()->format('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2))),
+            'order_id' => 'DON-'.now()->format('Ymd').'-'.strtoupper(bin2hex(random_bytes(2))),
             'donor_name' => 'Donatur Uji',
             'donor_whatsapp' => '-',
             'support_type' => 'Donasi Pendidikan & Makan Santri',
@@ -388,7 +387,7 @@ class DeleteAuthorizationTest extends TestCase
     private function createOutflow(string $status, int $amount, ?string $proofFile = null): DonationOutflow
     {
         return DonationOutflow::create([
-            'transaction_number' => 'DK-' . now()->format('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2))),
+            'transaction_number' => 'DK-'.now()->format('Ymd').'-'.strtoupper(bin2hex(random_bytes(2))),
             'handover_date' => now()->toDateString(),
             'donation_source' => 'Donasi Pendidikan',
             'description' => 'Periode pengujian',
@@ -489,6 +488,7 @@ class DeleteAuthorizationTest extends TestCase
             $table->string('donor_whatsapp');
             $table->string('support_type');
             $table->unsignedBigInteger('amount');
+            $table->string('payment_method')->nullable();
             $table->text('note')->nullable();
             $table->string('payment_gateway')->default('midtrans');
             $table->string('status')->default('pending');
@@ -502,7 +502,9 @@ class DeleteAuthorizationTest extends TestCase
             $table->string('donation_source');
             $table->text('description')->nullable();
             $table->decimal('amount', 15, 2);
-            $table->string('handover_method');
+            $table->string('payment_method')->nullable();
+            $table->string('handover_method')->nullable();
+            $table->string('source_payment_method')->nullable();
             $table->string('destination_account');
             $table->string('proof_file')->nullable();
             $table->text('notes')->nullable();

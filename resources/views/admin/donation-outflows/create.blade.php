@@ -34,17 +34,18 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp) <span class="text-red-500">*</span></label>
                     <input type="number" name="amount" value="{{ old('amount') }}" min="1" step="0.01" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                    @if(auth()->user()->hasPermissionTo('donation.balance.view'))
-                        <p class="mt-1 text-xs text-gray-400">Maksimal sesuai Saldo Tersedia: Rp{{ number_format($balance['available_balance'], 0, ',', '.') }}</p>
-                    @endif
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Metode Penyerahan <span class="text-red-500">*</span></label>
-                    <select name="handover_method" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                        <option value="">-- Pilih --</option>
-                        <option value="cash" @selected(old('handover_method') === 'cash')>Tunai</option>
-                        <option value="transfer" @selected(old('handover_method') === 'transfer')>Transfer</option>
-                    </select>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
+                <select id="payment_method" name="payment_method" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                    <option value="">-- Pilih Metode Pembayaran --</option>
+                    @foreach(App\Enums\DonationPaymentMethod::labels() as $value => $label)
+                        <option value="{{ $value }}" data-balance="{{ $balance['by_payment_method'][$value]['available_balance'] }}" @selected(old('payment_method') === $value)>
+                            {{ $label }} — Saldo tersedia: Rp{{ number_format($balance['by_payment_method'][$value]['available_balance'], 0, ',', '.') }}
+                        </option>
+                    @endforeach
+                </select>
+                <p id="selected-balance" class="mt-2 text-sm font-medium text-emerald-700"></p>
                 </div>
             </div>
 
@@ -70,4 +71,17 @@
             </div>
         </form>
     </div>
+    <script>
+        (() => {
+            const select = document.getElementById('payment_method');
+            const output = document.getElementById('selected-balance');
+            const format = value => new Intl.NumberFormat('id-ID').format(Number(value));
+            const update = () => {
+                const option = select.options[select.selectedIndex];
+                output.textContent = option?.dataset.balance === undefined ? '' : `Saldo tersedia untuk metode ini: Rp${format(option.dataset.balance)}`;
+            };
+            select.addEventListener('change', update);
+            update();
+        })();
+    </script>
 </x-admin-layout>

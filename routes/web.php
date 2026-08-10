@@ -422,6 +422,15 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
             Route::post('/buat-bukti-penerimaan', [DonationTransactionController::class, 'storeReceipt'])->name('store-receipt');
             Route::patch('/{transaction}/mark-paid', [DonationTransactionController::class, 'markPaid'])->name('mark-paid');
             Route::patch('/{transaction}/mark-cancelled', [DonationTransactionController::class, 'markCancelled'])->name('mark-cancelled');
+            Route::patch('/{transaction}/payment-method', [DonationTransactionController::class, 'updatePaymentMethod'])
+                ->middleware('superadmin')
+                ->name('payment-method');
+            Route::get('/{transaction}/edit', [DonationTransactionController::class, 'edit'])
+                ->middleware('superadmin')
+                ->name('edit');
+            Route::put('/{transaction}', [DonationTransactionController::class, 'update'])
+                ->middleware('superadmin')
+                ->name('update');
         });
 
     Route::name('donation-outflows.')->prefix('donation-outflows')->group(function () {
@@ -437,6 +446,12 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         Route::get('/{donationOutflow}', [DonationOutflowController::class, 'show'])
             ->middleware('permission:donation.outflows.view,superadmin,admin,staf_keuangan')
             ->name('show');
+        Route::get('/{donationOutflow}/edit', [DonationOutflowController::class, 'edit'])
+            ->middleware('role:superadmin,admin')
+            ->name('edit');
+        Route::put('/{donationOutflow}', [DonationOutflowController::class, 'update'])
+            ->middleware('role:superadmin,admin')
+            ->name('update');
         Route::post('/{donationOutflow}/approve', [DonationOutflowController::class, 'approve'])
             ->middleware('permission:donation.outflows.approve,superadmin,staf_keuangan')
             ->name('approve');

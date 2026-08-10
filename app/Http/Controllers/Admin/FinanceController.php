@@ -182,7 +182,7 @@ class FinanceController extends Controller
                 $outflowData = [
                     'handover_date' => $validated['date'],
                     'amount' => $validated['amount'],
-                    'handover_method' => $this->mapPaymentToHandoverMethod($validated['payment_method']),
+                    'payment_method' => $validated['payment_method'] === 'Tunai' ? 'cash' : 'bank_transfer',
                     'donation_source' => $validated['source_name'] ?? $outflow->donation_source,
                     'description' => $validated['description'] ?? $outflow->description,
                 ];

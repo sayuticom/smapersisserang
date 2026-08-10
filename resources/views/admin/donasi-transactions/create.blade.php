@@ -97,14 +97,13 @@
                                class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
                     </div>
                     <div>
-                        <label for="payment_method" class="block text-sm font-semibold text-gray-700">Metode Pembayaran</label>
-                        <select id="payment_method" name="payment_method"
+                        <label for="payment_method" class="block text-sm font-semibold text-gray-700">Metode Pembayaran <span class="text-red-500">*</span></label>
+                        <select id="payment_method" name="payment_method" required
                                 class="mt-1.5 w-full rounded-lg border-gray-300 text-sm focus:border-green-600 focus:ring-green-600">
-                            @php($paymentMethodValue = old('payment_method', $parsed['payment_method'] ?? 'Transfer Bank'))
-                            <option value="QRIS" {{ $paymentMethodValue === 'QRIS' ? 'selected' : '' }}>QRIS</option>
-                            <option value="Transfer Bank" {{ $paymentMethodValue === 'Transfer Bank' ? 'selected' : '' }}>Transfer Bank</option>
-                            <option value="Tunai" {{ $paymentMethodValue === 'Tunai' ? 'selected' : '' }}>Tunai</option>
-                            <option value="Lainnya" {{ $paymentMethodValue === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                            @php($paymentMethodValue = old('payment_method', 'bank_transfer'))
+                            @foreach(App\Enums\DonationPaymentMethod::labels() as $value => $label)
+                                <option value="{{ $value }}" {{ $paymentMethodValue === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
                         </select>
                     </div>
                     @php($useUniqueValue = old('use_unique_code', (is_numeric($parsedCodeValue = old('unique_code', $parsed['unique_code'] ?? '-')) && (int) $parsedCodeValue > 0) ? 'Ya' : 'Tidak'))
