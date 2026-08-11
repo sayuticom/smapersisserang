@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\DonationPaymentMethod;
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
 use App\Models\DonationTransaction;
 use App\Models\DonationTransfer;
+use Illuminate\Support\Facades\Schema;
 
 class DonationBalanceService
 {
@@ -50,14 +52,56 @@ class DonationBalanceService
             ->count();
     }
 
+    /**
+     * Total Mutasi Dana approved dari akun kategori Donasi ke akun kategori
+     * Keuangan. Dana ini sudah lepas dari pengelolaan bagian Donasi sehingga
+     * dikurangkan dari saldo donasi global.
+     */
+    public function approvedDonationToFinanceTransferAmount(): int
+    {
+        return $this->donationToFinanceTransferAmount(DonationTransfer::STATUS_APPROVED);
+    }
+
+    /**
+     * Total Mutasi Dana pending dari akun kategori Donasi ke akun kategori
+     * Keuangan. Nominal ini mereservasi saldo donasi yang belum disetujui.
+     */
+    public function pendingDonationToFinanceTransferAmount(): int
+    {
+        return $this->donationToFinanceTransferAmount(DonationTransfer::STATUS_PENDING);
+    }
+
+    private function donationToFinanceTransferAmount(string $status): int
+    {
+        if (! Schema::hasTable('donation_transfers')) {
+            return 0;
+        }
+
+        return (int) DonationTransfer::query()
+            ->join('donation_accounts as from_acc', 'from_acc.id', '=', 'donation_transfers.from_account_id')
+            ->join('donation_accounts as to_acc', 'to_acc.id', '=', 'donation_transfers.to_account_id')
+            ->where('donation_transfers.status', $status)
+            ->where('from_acc.category', DonationAccount::CATEGORY_DONATION)
+            ->where('to_acc.category', DonationAccount::CATEGORY_FINANCE)
+            ->sum('donation_transfers.amount');
+    }
+
+    /**
+     * Saldo Donasi Aktif: donasi masuk valid dikurangi approved Donasi Keluar
+     * (legacy) dan approved Mutasi Dana Donasi -> Keuangan.
+     */
     public function recordedBalance(): int
     {
-        return $this->totalIncoming() - $this->totalApprovedOutflow();
+        return $this->totalIncoming()
+            - $this->totalApprovedOutflow()
+            - $this->approvedDonationToFinanceTransferAmount();
     }
 
     public function availableBalance(): int
     {
-        return $this->recordedBalance() - $this->totalPendingOutflow();
+        return $this->recordedBalance()
+            - $this->totalPendingOutflow()
+            - $this->pendingDonationToFinanceTransferAmount();
     }
 
     /**
@@ -141,6 +185,27 @@ class DonationBalanceService
     }
 
     /**
+     * Saldo Donasi Aktif berdasarkan akun kategori Donasi.
+     *
+     * = sum saldo seluruh akun category=donation (incoming + transfer masuk -
+     * transfer keluar). Akun category=finance tidak dihitung karena dana pada
+     * akun itu sudah menjadi tanggung jawab bagian Keuangan.
+     */
+    public function activeDonationBalance(): int
+    {
+        $balances = $this->balancesByAccount();
+        $accountIds = DonationAccount::donation()->pluck('id')->all();
+
+        $sum = 0;
+
+        foreach ($accountIds as $accountId) {
+            $sum += $balances[$accountId] ?? 0;
+        }
+
+        return $sum;
+    }
+
+    /**
      * Total mutasi dana keluar (dari satu akun) yang masih berstatus pending.
      *
      * Digunakan untuk menghitung saldo tersedia sebuah akun sebelum membuat
@@ -218,19 +283,23 @@ class DonationBalanceService
         $incoming = $this->incomingPerMethod($methods, $from, $to);
         $approved = $this->outflowPerMethod($methods, DonationOutflow::STATUS_APPROVED);
         $pending = $this->outflowPerMethod($methods, DonationOutflow::STATUS_PENDING);
+        $approvedTransfer = $this->transferOutPerMethod($methods, DonationTransfer::STATUS_APPROVED);
+        $pendingTransfer = $this->transferOutPerMethod($methods, DonationTransfer::STATUS_PENDING);
 
         $result = [];
 
         foreach ($methods as $method) {
-            $recorded = $incoming[$method] - $approved[$method];
+            $recorded = $incoming[$method] - $approved[$method] - $approvedTransfer[$method];
             $result[$method] = [
                 'key' => $method,
                 'label' => DonationPaymentMethod::labelOf($method),
                 'incoming' => $incoming[$method],
                 'approved_outflow' => $approved[$method],
                 'pending_outflow' => $pending[$method],
+                'approved_transfer_out' => $approvedTransfer[$method],
+                'pending_transfer_out' => $pendingTransfer[$method],
                 'recorded_balance' => $recorded,
-                'available_balance' => $recorded - $pending[$method],
+                'available_balance' => $recorded - $pending[$method] - $pendingTransfer[$method],
             ];
         }
 
@@ -240,8 +309,14 @@ class DonationBalanceService
             'incoming' => $incoming[self::UNCLASSIFIED],
             'approved_outflow' => $approved[self::UNCLASSIFIED],
             'pending_outflow' => $pending[self::UNCLASSIFIED],
-            'recorded_balance' => $incoming[self::UNCLASSIFIED] - $approved[self::UNCLASSIFIED],
-            'available_balance' => $incoming[self::UNCLASSIFIED] - $approved[self::UNCLASSIFIED] - $pending[self::UNCLASSIFIED],
+            'approved_transfer_out' => $approvedTransfer[self::UNCLASSIFIED],
+            'pending_transfer_out' => $pendingTransfer[self::UNCLASSIFIED],
+            'recorded_balance' => $incoming[self::UNCLASSIFIED] - $approved[self::UNCLASSIFIED] - $approvedTransfer[self::UNCLASSIFIED],
+            'available_balance' => $incoming[self::UNCLASSIFIED]
+                - $approved[self::UNCLASSIFIED]
+                - $approvedTransfer[self::UNCLASSIFIED]
+                - $pending[self::UNCLASSIFIED]
+                - $pendingTransfer[self::UNCLASSIFIED],
         ];
 
         return $result;
@@ -300,6 +375,37 @@ class DonationBalanceService
         $rows = DonationOutflow::query()
             ->selectRaw('COALESCE(payment_method, ?) as method, SUM(amount) as total', [self::UNCLASSIFIED])
             ->where('status', $status)
+            ->groupBy('method')
+            ->get();
+
+        foreach ($rows as $row) {
+            $key = in_array($row->method, $methods, true) ? $row->method : self::UNCLASSIFIED;
+            $totals[$key] += (int) $row->total;
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Jumlah Mutasi Dana per metode (approved/pending) dari akun Donasi ke
+     * akun Keuangan. Metode diambil dari kolom type akun sumber (cash/qris/
+     * bank_transfer/other); akun tanpa type masuk ke 'unclassified'.
+     */
+    private function transferOutPerMethod(array $methods, string $status): array
+    {
+        $totals = array_fill_keys([...$methods, self::UNCLASSIFIED], 0);
+
+        if (! Schema::hasTable('donation_transfers')) {
+            return $totals;
+        }
+
+        $rows = DonationTransfer::query()
+            ->join('donation_accounts as from_acc', 'from_acc.id', '=', 'donation_transfers.from_account_id')
+            ->join('donation_accounts as to_acc', 'to_acc.id', '=', 'donation_transfers.to_account_id')
+            ->selectRaw('COALESCE(from_acc.type, ?) as method, SUM(donation_transfers.amount) as total', [self::UNCLASSIFIED])
+            ->where('donation_transfers.status', $status)
+            ->where('from_acc.category', DonationAccount::CATEGORY_DONATION)
+            ->where('to_acc.category', DonationAccount::CATEGORY_FINANCE)
             ->groupBy('method')
             ->get();
 

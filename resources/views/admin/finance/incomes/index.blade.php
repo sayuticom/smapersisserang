@@ -51,7 +51,9 @@
                                 <td class="px-4 py-2.5 text-gray-900 whitespace-nowrap">{{ $income->date->format('d/m/Y') }}</td>
                                 <td class="px-4 py-2.5">
                                     <span class="font-medium text-gray-900">{{ $income->income_type }}</span>
-                                    @if($income->donationOutflow)
+                                    @if($income->donationTransfer)
+                                        <span class="mt-1 block w-fit rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">Mutasi Donasi</span>
+                                    @elseif($income->donationOutflow)
                                         <span class="mt-1 block w-fit rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Dari Donasi Keluar</span>
                                     @endif
                                 </td>
@@ -61,6 +63,8 @@
                                     <span class="block truncate">{{ $income->source_name ?: '-' }}</span>
                                     @if($income->donationOutflow)
                                         <a href="{{ route('admin.donation-outflows.show', $income->donationOutflow) }}" class="block text-xs font-medium text-emerald-700 hover:underline">{{ $income->donationOutflow->transaction_number }}</a>
+                                    @elseif($income->donationTransfer)
+                                        <a href="{{ route('admin.donation-transfers.show', $income->donationTransfer) }}" class="block text-xs font-medium text-blue-700 hover:underline">{{ $income->donationTransfer->transfer_number }}</a>
                                     @endif
                                 </td>
                                 <td class="px-4 py-2.5 text-xs hidden lg:table-cell">
@@ -71,12 +75,22 @@
                                         <div class="text-gray-600 mt-0.5">
                                             <span class="font-medium">Diverifikasi oleh:</span> {{ $income->creator?->name ?? '-' }}
                                         </div>
+                                    @elseif($income->donationTransfer)
+                                        <div class="text-gray-600">
+                                            <span class="font-medium">Diajukan oleh:</span> {{ $income->donationTransfer->requester?->name ?? '-' }}
+                                        </div>
+                                        <div class="text-gray-600 mt-0.5">
+                                            <span class="font-medium">Diverifikasi oleh:</span> {{ $income->creator?->name ?? '-' }}
+                                        </div>
                                     @else
                                         <span class="text-gray-400">{{ $income->creator?->name ?? '-' }}</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-2.5">
-                                    @if(!$income->donation_outflow_id)
+                                    @if($income->donationTransfer)
+                                        <span class="text-xs font-medium text-gray-400">Read-only</span>
+                                        <a href="{{ route('admin.donation-transfers.show', $income->donationTransfer) }}" class="text-xs font-medium text-blue-700 hover:underline">Lihat Mutasi</a>
+                                    @elseif(!$income->donation_outflow_id)
                                         <div class="flex items-center gap-2">
                                             @if($canEditManualIncome)
                                                 <a href="{{ route('admin.finance.incomes.edit', $income) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Edit</a>

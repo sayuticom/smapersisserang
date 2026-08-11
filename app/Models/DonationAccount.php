@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DonationPaymentMethod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,9 +13,18 @@ class DonationAccount extends Model
 
     public const CATEGORY_FINANCE = 'finance';
 
+    public const TYPE_CASH = 'cash';
+
+    public const TYPE_QRIS = 'qris';
+
+    public const TYPE_BANK_TRANSFER = 'bank_transfer';
+
+    public const TYPE_OTHER = 'other';
+
     protected $fillable = [
         'name',
         'category',
+        'type',
         'description',
         'is_active',
     ];
@@ -64,5 +74,17 @@ class DonationAccount extends Model
     public function getCategoryLabelAttribute(): string
     {
         return $this->category === self::CATEGORY_DONATION ? 'Donasi' : 'Keuangan';
+    }
+
+    /**
+     * Label metode pembayaran yang sah untuk FinanceIncome saat akun menjadi
+     * tujuan Mutasi Dana (akun kategori Keuangan). Berbasis kolom type, bukan
+     * nama string. Akun tanpa type fallback ke 'Lainnya'.
+     */
+    public function financePaymentMethodLabel(): string
+    {
+        $label = DonationPaymentMethod::labelOf($this->type);
+
+        return $label === 'Belum Ditentukan' ? 'Lainnya' : $label;
     }
 }

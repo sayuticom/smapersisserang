@@ -81,7 +81,7 @@ class FinanceController extends Controller
 
     public function incomesIndex(): View
     {
-        $incomes = FinanceIncome::with(['creator', 'donationOutflow.creator'])
+        $incomes = FinanceIncome::with(['creator', 'donationOutflow.creator', 'donationTransfer.requester'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -248,6 +248,10 @@ class FinanceController extends Controller
     public function incomesDestroy(FinanceIncome $financeIncome): RedirectResponse
     {
         $this->assertCanDelete();
+
+        if ($financeIncome->donation_transfer_id !== null) {
+            abort(403, 'Pemasukan dari Mutasi Dana bersifat read-only dan tidak dapat dihapus.');
+        }
 
         $isIntegrated = $financeIncome->donation_outflow_id !== null;
         $proofFile = $financeIncome->proof_file;
@@ -481,6 +485,10 @@ class FinanceController extends Controller
     {
         $user = auth()->user();
 
+        if ($financeIncome->donation_transfer_id !== null) {
+            abort(403, 'Pemasukan dari Mutasi Dana bersifat read-only dan tidak dapat diubah.');
+        }
+
         if ($financeIncome->donation_outflow_id !== null) {
             abort_unless(
                 $user->isSuperadmin(),
@@ -513,7 +521,9 @@ class FinanceController extends Controller
             ->whereKeyNot($financeIncome->donation_outflow_id)
             ->sum('amount');
 
-        $availableBefore = $service->totalIncoming() - (float) $otherApprovedOutflow;
+        $approvedTransfer = $service->approvedDonationToFinanceTransferAmount();
+
+        $availableBefore = $service->totalIncoming() - (float) $otherApprovedOutflow - (float) $approvedTransfer;
 
         if ($newAmount > $availableBefore) {
             throw ValidationException::withMessages([

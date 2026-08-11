@@ -9,6 +9,7 @@ class FinanceIncome extends Model
 {
     protected $fillable = [
         'donation_outflow_id',
+        'donation_transfer_id',
         'date',
         'income_type',
         'amount',
@@ -35,6 +36,26 @@ class FinanceIncome extends Model
     public function donationOutflow(): BelongsTo
     {
         return $this->belongsTo(DonationOutflow::class);
+    }
+
+    public function donationTransfer(): BelongsTo
+    {
+        return $this->belongsTo(DonationTransfer::class);
+    }
+
+    public function isFromDonationOutflow(): bool
+    {
+        return $this->donation_outflow_id !== null;
+    }
+
+    public function isFromDonationTransfer(): bool
+    {
+        return $this->donation_transfer_id !== null;
+    }
+
+    public function isIntegrated(): bool
+    {
+        return $this->isFromDonationOutflow() || $this->isFromDonationTransfer();
     }
 
     public static function incomeTypes(): array

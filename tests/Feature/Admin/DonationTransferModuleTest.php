@@ -5,6 +5,8 @@ namespace Tests\Feature\Admin;
 use App\Models\DonationAccount;
 use App\Models\DonationTransaction;
 use App\Models\DonationTransfer;
+use App\Models\FinanceExpense;
+use App\Models\FinanceIncome;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -29,10 +31,12 @@ class DonationTransferModuleTest extends TestCase
     protected function tearDown(): void
     {
         foreach ([
+            'finance_expenses',
+            'finance_incomes',
             'donation_transfers',
             'donation_transactions',
             'donation_accounts',
-            'finance_incomes',
+            'donation_outflows',
             'permission_role',
             'permissions',
             'role_user',
@@ -642,7 +646,63 @@ class DonationTransferModuleTest extends TestCase
         $this->assertSame(100000, $service->availableBalanceForAccount($from->id));
     }
 
-    public function test_approval_does_not_create_finance_income(): void
+    public function test_approval_creates_one_finance_income_with_correct_fields(): void
+    {
+        $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation', 'type' => 'cash']);
+        $to = DonationAccount::create(['name' => 'Rekening Keuangan', 'category' => 'finance', 'type' => 'bank_transfer']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 40000,
+            'transfer_date' => '2026-08-10',
+            'note' => 'Mutasi operasional',
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+
+        app(DonationTransferApprovalService::class)->approve($transfer, $approver);
+
+        $this->assertDatabaseCount('finance_incomes', 1);
+        $this->assertDatabaseHas('finance_incomes', [
+            'donation_transfer_id' => $transfer->id,
+            'income_type' => 'Transfer dari Donasi',
+            'amount' => 40000,
+            'date' => '2026-08-10',
+            'payment_method' => 'Transfer Bank',
+            'source_name' => 'Tunai Donasi',
+            'created_by' => $approver->id,
+        ]);
+
+        $income = FinanceIncome::where('donation_transfer_id', $transfer->id)->first();
+        $this->assertStringContainsString($transfer->transfer_number, $income->description);
+        $this->assertStringContainsString('Tunai Donasi', $income->description);
+        $this->assertStringContainsString('Rekening Keuangan', $income->description);
+        $this->assertStringContainsString('Mutasi operasional', $income->description);
+    }
+
+    public function test_approval_maps_tunai_finance_account_to_tunai_payment_method(): void
+    {
+        $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation', 'type' => 'cash']);
+        $to = DonationAccount::create(['name' => 'Tunai Keuangan', 'category' => 'finance', 'type' => 'cash']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 30000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+
+        app(DonationTransferApprovalService::class)->approve($transfer, $approver);
+
+        $this->assertDatabaseHas('finance_incomes', [
+            'donation_transfer_id' => $transfer->id,
+            'payment_method' => 'Tunai',
+        ]);
+    }
+
+    public function test_approval_twice_creates_only_one_finance_income(): void
     {
         $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
         $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
@@ -654,10 +714,156 @@ class DonationTransferModuleTest extends TestCase
             'amount' => 40000,
             'status' => DonationTransfer::STATUS_PENDING,
         ]);
+        $service = app(DonationTransferApprovalService::class);
+        $service->approve($transfer, $approver);
+
+        try {
+            $service->approve($transfer->fresh(), $approver);
+            $this->fail('Approval kedua seharusnya ditolak.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('finance_incomes', 1);
+        }
+    }
+
+    public function test_rejection_creates_no_finance_income(): void
+    {
+        $rejector = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
+        $to = DonationAccount::create(['name' => 'Kas Sekolah', 'category' => 'finance']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 40000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($rejector)
+            ->post(route('admin.donation-transfers.reject', $transfer), [
+                'rejection_reason' => 'Nominal tidak sesuai bukti.',
+            ]);
+
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_approval_with_insufficient_balance_creates_no_finance_income(): void
+    {
+        $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
+        $to = DonationAccount::create(['name' => 'Kas Sekolah', 'category' => 'finance']);
+        $this->createIncomingDonation($from->id, 50000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 60000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+
+        try {
+            app(DonationTransferApprovalService::class)->approve($transfer, $approver);
+            $this->fail('Approval dengan saldo kurang seharusnya ditolak.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('finance_incomes', 0);
+            $this->assertDatabaseHas('donation_transfers', [
+                'id' => $transfer->id,
+                'status' => DonationTransfer::STATUS_PENDING,
+            ]);
+        }
+    }
+
+    public function test_approval_increases_finance_balance_and_decreases_donation_active_balance(): void
+    {
+        $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
+        $to = DonationAccount::create(['name' => 'Rekening Keuangan', 'category' => 'finance']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 40000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+
+        $service = app(DonationBalanceService::class);
+        $this->assertSame(0, (int) FinanceIncome::sum('amount'));
+        $this->assertSame(100000, $service->activeDonationBalance());
+        $this->assertSame(100000, $service->recordedBalance());
 
         app(DonationTransferApprovalService::class)->approve($transfer, $approver);
 
-        $this->assertDatabaseCount('finance_incomes', 0);
+        $this->assertSame(1, FinanceIncome::count());
+        $this->assertSame(40000, (int) FinanceIncome::sum('amount'));
+        $this->assertSame(0, (int) FinanceExpense::sum('amount'));
+        $this->assertSame(40000, $service->balanceByAccount($to->id));
+        $this->assertSame(60000, $service->balanceByAccount($from->id));
+        $this->assertSame(60000, $service->activeDonationBalance());
+        $this->assertSame(60000, $service->recordedBalance());
+        $this->assertSame(40000, (int) FinanceIncome::sum('amount') - (int) FinanceExpense::sum('amount'));
+    }
+
+    public function test_transfer_integrated_income_is_read_only_in_finance_module(): void
+    {
+        $superadmin = User::factory()->create(['role' => 'superadmin']);
+        $role = Role::firstOrCreate(
+            ['name' => 'superadmin'],
+            ['display_name' => 'Superadmin', 'guard_name' => 'web', 'is_active' => true]
+        );
+        $superadmin->roles()->attach($role->id);
+
+        $approver = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
+        $to = DonationAccount::create(['name' => 'Kas Sekolah', 'category' => 'finance']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 40000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+        app(DonationTransferApprovalService::class)->approve($transfer, $approver);
+        $income = FinanceIncome::where('donation_transfer_id', $transfer->id)->firstOrFail();
+
+        $this->actingAs($superadmin)
+            ->get(route('admin.finance.incomes.edit', $income))
+            ->assertForbidden();
+
+        $this->actingAs($superadmin)
+            ->put(route('admin.finance.incomes.update', $income), [
+                'date' => '2026-08-01',
+                'amount' => 999999,
+                'payment_method' => 'Tunai',
+                'source_name' => 'Diubah',
+                'description' => 'Diubah',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($superadmin)
+            ->delete(route('admin.finance.incomes.destroy', $income))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('finance_incomes', ['id' => $income->id, 'amount' => 40000]);
+        $this->assertDatabaseHas('donation_transfers', ['id' => $transfer->id, 'status' => DonationTransfer::STATUS_APPROVED]);
+    }
+
+    public function test_incomes_index_shows_mutasi_donasi_badge_and_transfer_reference(): void
+    {
+        $staf = $this->userWithRoleTransferDefaults('staf_keuangan');
+        $from = DonationAccount::create(['name' => 'Tunai Donasi', 'category' => 'donation']);
+        $to = DonationAccount::create(['name' => 'Kas Sekolah', 'category' => 'finance']);
+        $this->createIncomingDonation($from->id, 100000);
+        $transfer = $this->createTransfer([
+            'from_account_id' => $from->id,
+            'to_account_id' => $to->id,
+            'amount' => 40000,
+            'status' => DonationTransfer::STATUS_PENDING,
+        ]);
+        app(DonationTransferApprovalService::class)->approve($transfer, $staf);
+
+        $this->actingAs($staf)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSee('Mutasi Donasi')
+            ->assertSee($transfer->transfer_number);
     }
 
     public function test_store_rejects_when_source_account_is_inactive(): void
@@ -870,6 +1076,7 @@ class DonationTransferModuleTest extends TestCase
             $table->id();
             $table->string('name');
             $table->string('category');
+            $table->string('type')->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -907,13 +1114,47 @@ class DonationTransferModuleTest extends TestCase
             $table->text('note')->nullable();
             $table->timestamps();
         });
+        Schema::create('donation_outflows', function ($table) {
+            $table->id();
+            $table->string('transaction_number')->unique();
+            $table->date('handover_date');
+            $table->string('donation_source');
+            $table->text('description')->nullable();
+            $table->decimal('amount', 15, 2);
+            $table->string('payment_method')->nullable();
+            $table->string('handover_method')->nullable();
+            $table->string('destination_account');
+            $table->string('proof_file')->nullable();
+            $table->text('notes')->nullable();
+            $table->string('status')->default('pending');
+            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('rejected_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('rejected_at')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->timestamps();
+        });
         Schema::create('finance_incomes', function ($table) {
             $table->id();
+            $table->foreignId('donation_transfer_id')->nullable()->unique()->constrained('donation_transfers')->restrictOnDelete();
             $table->date('date');
             $table->string('income_type');
             $table->decimal('amount', 15, 2);
             $table->string('payment_method');
             $table->string('source_name')->nullable();
+            $table->text('description')->nullable();
+            $table->string('proof_file')->nullable();
+            $table->foreignId('created_by')->constrained('users');
+            $table->timestamps();
+        });
+        Schema::create('finance_expenses', function ($table) {
+            $table->id();
+            $table->date('date');
+            $table->string('expense_category');
+            $table->decimal('amount', 15, 2);
+            $table->string('paid_to')->nullable();
+            $table->string('payment_method');
             $table->text('description')->nullable();
             $table->string('proof_file')->nullable();
             $table->foreignId('created_by')->constrained('users');

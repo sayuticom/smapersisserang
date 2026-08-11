@@ -153,6 +153,7 @@ class DonationTransferController extends Controller
             'requester',
             'approver',
             'rejector',
+            'financeIncome',
         ]);
 
         return view('admin.donation-transfers.show', compact('donationTransfer'));

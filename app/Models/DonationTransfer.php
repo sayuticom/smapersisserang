@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DonationTransfer extends Model
 {
@@ -63,6 +64,11 @@ class DonationTransfer extends Model
     public function rejector(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function financeIncome(): HasOne
+    {
+        return $this->hasOne(FinanceIncome::class);
     }
 
     public function isPending(): bool

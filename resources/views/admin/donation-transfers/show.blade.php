@@ -52,6 +52,12 @@
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm">
                 <h3 class="font-semibold text-emerald-800">Informasi Persetujuan</h3>
                 <p class="mt-2 text-emerald-700">Disetujui oleh {{ $donationTransfer->approver?->name ?? '-' }} pada {{ $donationTransfer->approved_at?->format('d/m/Y H:i') }}.</p>
+                @if($donationTransfer->financeIncome)
+                    <p class="mt-2 text-emerald-700">
+                        Dana telah tercatat sebagai Pemasukan Keuangan.
+                        <a href="{{ route('admin.finance.incomes.index') }}" class="font-semibold text-emerald-800 underline">Lihat Pemasukan</a>
+                    </p>
+                @endif
             </div>
         @elseif($donationTransfer->status === 'rejected')
             <div class="rounded-xl border border-red-200 bg-red-50 p-5 text-sm">

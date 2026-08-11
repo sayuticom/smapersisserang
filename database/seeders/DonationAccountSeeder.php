@@ -10,17 +10,17 @@ class DonationAccountSeeder extends Seeder
     public function run(): void
     {
         $accounts = [
-            ['name' => 'Tunai Donasi', 'category' => 'donation', 'description' => 'Kas tunai dari donasi.'],
-            ['name' => 'QRIS Donasi', 'category' => 'donation', 'description' => 'Penerimaan donasi via QRIS.'],
-            ['name' => 'Transfer Donasi', 'category' => 'donation', 'description' => 'Penerimaan donasi via transfer bank.'],
-            ['name' => 'Tunai Keuangan', 'category' => 'finance', 'description' => 'Kas tunai bagian keuangan.'],
-            ['name' => 'Rekening Keuangan', 'category' => 'finance', 'description' => 'Rekening bank bagian keuangan.'],
+            ['name' => 'Tunai Donasi', 'category' => 'donation', 'type' => 'cash', 'description' => 'Kas tunai dari donasi.'],
+            ['name' => 'QRIS Donasi', 'category' => 'donation', 'type' => 'qris', 'description' => 'Penerimaan donasi via QRIS.'],
+            ['name' => 'Transfer Donasi', 'category' => 'donation', 'type' => 'bank_transfer', 'description' => 'Penerimaan donasi via transfer bank.'],
+            ['name' => 'Tunai Keuangan', 'category' => 'finance', 'type' => 'cash', 'description' => 'Kas tunai bagian keuangan.'],
+            ['name' => 'Rekening Keuangan', 'category' => 'finance', 'type' => 'bank_transfer', 'description' => 'Rekening bank bagian keuangan.'],
         ];
 
         foreach ($accounts as $account) {
             DonationAccount::updateOrCreate(
                 ['name' => $account['name'], 'category' => $account['category']],
-                ['description' => $account['description']]
+                ['type' => $account['type'], 'description' => $account['description']]
             );
         }
     }
