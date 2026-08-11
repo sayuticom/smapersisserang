@@ -1038,8 +1038,18 @@ class DonationBalanceTest extends TestCase
             $table->timestamps();
             $table->unique(['permission_id', 'role_id']);
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
         Schema::create('donation_transactions', function ($table) {
             $table->id();
+            $table->foreignId('donation_account_id')->nullable()->constrained('donation_accounts')->nullOnDelete();
             $table->string('order_id')->unique();
             $table->string('donor_name');
             $table->string('donor_whatsapp');
@@ -1097,15 +1107,6 @@ class DonationBalanceTest extends TestCase
             $table->string('to_status');
             $table->text('reason')->nullable();
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-        });
-        Schema::create('donation_accounts', function ($table) {
-            $table->id();
-            $table->string('name');
-            $table->string('category');
-            $table->string('type')->nullable();
-            $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
         Schema::create('donation_transfers', function ($table) {

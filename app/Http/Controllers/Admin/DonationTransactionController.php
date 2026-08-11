@@ -8,6 +8,7 @@ use App\Models\DonationRegularDonor;
 use App\Models\DonationTransaction;
 use App\Models\DonationTransactionHistory;
 use App\Models\SchoolSetting;
+use App\Services\DonationAccountResolver;
 use App\Services\DonationBalanceService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,11 @@ use Illuminate\Validation\Rule;
 
 class DonationTransactionController extends Controller
 {
+    public function __construct(
+        private readonly DonationAccountResolver $donationAccountResolver,
+    ) {
+    }
+
     public function index(Request $request)
     {
         $query = DonationTransaction::query();
@@ -148,6 +154,7 @@ class DonationTransactionController extends Controller
             'support_type' => 'Donasi Pendidikan & Makan Santri',
             'amount' => $nominalAmount,
             'payment_method' => $paymentMethod->value,
+            'donation_account_id' => $this->donationAccountResolver->resolveDonationAccountId($paymentMethod->value),
             'note' => implode("\n", $noteLines),
             'payment_gateway' => 'manual-qris',
             'status' => 'paid',
@@ -324,6 +331,7 @@ class DonationTransactionController extends Controller
             'amount' => (int) $data['amount'],
             'paid_at' => Carbon::parse($data['donation_date'])->startOfDay(),
             'payment_method' => $data['payment_method'] ?? null,
+            'donation_account_id' => $this->donationAccountResolver->resolveDonationAccountId($data['payment_method'] ?? null),
             'note' => $data['note'] ?: null,
         ];
 
@@ -348,6 +356,10 @@ class DonationTransactionController extends Controller
     /**
      * Memperbarui hanya payment_method. Field lain (amount, status, donor_name,
      * donor_phone, transaction_code, created_at, note) tidak pernah disentuh.
+     *
+     * donation_account_id ikut disinkronkan bersama payment_method memakai
+     * DonationAccountResolver di dalam transaction yang sama, agar saldo akun
+     * Mutasi Dana selalu mengikuti metode pembayaran.
      */
     public function updatePaymentMethod(Request $request, DonationTransaction $transaction): RedirectResponse
     {
@@ -359,17 +371,28 @@ class DonationTransactionController extends Controller
 
         $oldPaymentMethod = $transaction->payment_method;
         $newPaymentMethod = $data['payment_method'] ?? null;
+        $oldDonationAccountId = $transaction->donation_account_id;
+        $newDonationAccountId = $this->donationAccountResolver->resolveDonationAccountId($newPaymentMethod);
 
-        DB::transaction(function () use ($request, $transaction, $oldPaymentMethod, $newPaymentMethod) {
-            $transaction->update(['payment_method' => $newPaymentMethod]);
+        DB::transaction(function () use ($request, $transaction, $oldPaymentMethod, $newPaymentMethod, $oldDonationAccountId, $newDonationAccountId) {
+            $transaction->update([
+                'payment_method' => $newPaymentMethod,
+                'donation_account_id' => $newDonationAccountId,
+            ]);
             $transaction->refresh();
 
             DonationTransactionHistory::create([
                 'donation_transaction_id' => $transaction->id,
                 'user_id' => $request->user()->id,
                 'action' => 'payment_method_updated',
-                'old_values' => ['payment_method' => $oldPaymentMethod],
-                'new_values' => ['payment_method' => $newPaymentMethod],
+                'old_values' => [
+                    'payment_method' => $oldPaymentMethod,
+                    'donation_account_id' => $oldDonationAccountId,
+                ],
+                'new_values' => [
+                    'payment_method' => $newPaymentMethod,
+                    'donation_account_id' => $newDonationAccountId,
+                ],
             ]);
         });
 

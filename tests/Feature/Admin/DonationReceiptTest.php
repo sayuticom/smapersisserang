@@ -14,12 +14,14 @@ class DonationReceiptTest extends TestCase
     {
         parent::setUp();
         $this->createTables();
+        $this->seedDonationAccounts();
     }
 
     protected function tearDown(): void
     {
         foreach ([
             'donation_transactions',
+            'donation_accounts',
             'permission_role',
             'permissions',
             'role_user',
@@ -217,6 +219,31 @@ class DonationReceiptTest extends TestCase
         $this->assertSame('bank_transfer', $transaction->payment_method);
     }
 
+    public function test_store_receipt_sets_donation_account_by_payment_method(): void
+    {
+        $user = $this->user('admin');
+        $tunai = \App\Models\DonationAccount::where('type', 'cash')->where('category', 'donation')->firstOrFail();
+        $qris = \App\Models\DonationAccount::where('type', 'qris')->where('category', 'donation')->firstOrFail();
+        $transfer = \App\Models\DonationAccount::where('type', 'bank_transfer')->where('category', 'donation')->firstOrFail();
+
+        foreach ([
+            ['method' => 'cash', 'account' => $tunai],
+            ['method' => 'qris', 'account' => $qris],
+            ['method' => 'bank_transfer', 'account' => $transfer],
+        ] as $case) {
+            $this->actingAs($user)
+                ->post(route('admin.donasi-transactions.store-receipt'), $this->receiptPayload([
+                    'payment_method' => $case['method'],
+                ]))
+                ->assertRedirect();
+
+            $transaction = DonationTransaction::where('payment_method', $case['method'])->latest('id')->first();
+            $this->assertNotNull($transaction);
+            $this->assertSame($case['account']->id, $transaction->donation_account_id);
+            $this->assertNotNull($transaction->donation_account_id);
+        }
+    }
+
     public function test_receipt_without_payment_method_is_rejected(): void
     {
         $user = $this->user('admin');
@@ -332,8 +359,19 @@ class DonationReceiptTest extends TestCase
             $table->timestamps();
             $table->unique(['permission_id', 'role_id']);
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->unique(['name', 'category']);
+        });
         Schema::create('donation_transactions', function ($table) {
             $table->id();
+            $table->foreignId('donation_account_id')->nullable()->constrained()->nullOnDelete();
             $table->string('order_id')->unique();
             $table->string('donor_name');
             $table->string('donor_whatsapp');
@@ -346,5 +384,19 @@ class DonationReceiptTest extends TestCase
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
+    }
+
+    private function seedDonationAccounts(): void
+    {
+        foreach ([
+            ['name' => 'Tunai Donasi', 'category' => 'donation', 'type' => 'cash'],
+            ['name' => 'QRIS Donasi', 'category' => 'donation', 'type' => 'qris'],
+            ['name' => 'Transfer Donasi', 'category' => 'donation', 'type' => 'bank_transfer'],
+        ] as $account) {
+            \App\Models\DonationAccount::updateOrCreate(
+                ['name' => $account['name'], 'category' => $account['category']],
+                ['type' => $account['type']]
+            );
+        }
     }
 }
