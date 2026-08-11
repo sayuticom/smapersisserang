@@ -36,13 +36,14 @@
                     <input type="number" name="amount" value="{{ old('amount', $financeExpense->amount) }}" required min="1" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
-                    <select name="payment_method" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                        <option value="">-- Pilih --</option>
-                        @foreach($paymentMethods as $method)
-                            <option value="{{ $method }}" {{ old('payment_method', $financeExpense->payment_method) === $method ? 'selected' : '' }}>{{ $method }}</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Keluar dari Akun Keuangan <span class="text-red-500">*</span></label>
+                    <select name="finance_account_id" required class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
+                        <option value="">-- Pilih Akun --</option>
+                        @foreach($financeAccounts as $account)
+                            <option value="{{ $account->id }}" {{ old('finance_account_id', $financeExpense->finance_account_id) == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-400 mt-1">Saldo pengeluaran tidak boleh melebihi saldo akun terpilih.</p>
                 </div>
             </div>
 

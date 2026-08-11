@@ -22,7 +22,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold">Metode Pembayaran</th>
                                 <th class="px-4 py-3 text-right font-semibold">Donasi Masuk</th>
-                                <th class="px-4 py-3 text-right font-semibold">Donasi Keluar</th>
+                                <th class="px-4 py-3 text-right font-semibold">Mutasi Dana</th>
                                 <th class="px-4 py-3 text-right font-semibold">Saldo</th>
                             </tr>
                         </thead>
@@ -36,7 +36,7 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['incoming'], 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['approved_outflow'], 0, ',', '.') }}</td>
+                                    <td class="px-4 py-3 text-right font-medium text-slate-900">Rp{{ number_format($row['approved_outflow'] + $row['approved_transfer_out'], 0, ',', '.') }}</td>
                                     <td class="px-4 py-3 text-right font-bold text-emerald-700">Rp{{ number_format($row['recorded_balance'], 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
@@ -58,50 +58,56 @@
                 <p class="mt-1 text-xs text-sky-600">Transaksi uang yang telah diterima</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-700 md:text-xs">Donasi Keluar</p>
-                <p class="mt-2 text-xl font-bold text-slate-800 md:text-2xl">Rp{{ number_format($balance['total_approved_outflow'], 0, ',', '.') }}</p>
-                <p class="mt-1 text-xs text-slate-600">Penyerahan dana disetujui</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-700 md:text-xs">Mutasi Dana</p>
+                <p class="mt-2 text-xl font-bold text-slate-800 md:text-2xl">Rp{{ number_format($outflowTotal, 0, ',', '.') }}</p>
+                <p class="mt-1 text-xs text-slate-600">Dana diserahkan ke Keuangan dan disetujui</p>
             </div>
             <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 md:p-5">
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 md:text-xs">Menunggu Verifikasi</p>
-                <p class="mt-2 text-xl font-bold text-amber-800 md:text-2xl">Rp{{ number_format($balance['total_pending_outflow'], 0, ',', '.') }}</p>
-                <p class="mt-1 text-xs text-amber-600">{{ $balance['pending_count'] }} transaksi pending</p>
+                <p class="mt-2 text-xl font-bold text-amber-800 md:text-2xl">Rp{{ number_format($pendingTransferTotal, 0, ',', '.') }}</p>
+                <p class="mt-1 text-xs text-amber-600">{{ $pendingTransferCount }} transaksi pending</p>
             </div>
         </div>
 
         <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <h3 class="text-base font-bold text-gray-900">Donasi Keluar Menunggu Verifikasi</h3>
-                <a href="{{ route('admin.donation-outflows.index') }}"
+                <h3 class="text-base font-bold text-gray-900">Mutasi Dana Menunggu Verifikasi</h3>
+                <a href="{{ route('admin.donation-transfers.index') }}"
                    class="text-sm font-semibold text-emerald-700 hover:text-emerald-800">Lihat Semua</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50 text-slate-600">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold">Nomor</th>
+                            <th class="px-4 py-3 text-left font-semibold">Nomor Mutasi</th>
                             <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
-                            <th class="px-4 py-3 text-left font-semibold">Sumber Donasi</th>
+                            <th class="px-4 py-3 text-left font-semibold">Dari Akun</th>
+                            <th class="px-4 py-3 text-left font-semibold">Ke Akun</th>
                             <th class="px-4 py-3 text-left font-semibold">Nominal</th>
+                            <th class="px-4 py-3 text-left font-semibold">Status</th>
                             <th class="px-4 py-3 text-right font-semibold">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse ($pendingOutflows as $outflow)
+                        @forelse ($pendingTransfers as $transfer)
                             <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $outflow->transaction_number }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ $outflow->handover_date->format('d/m/Y') }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $outflow->donation_source }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-900">Rp{{ number_format($outflow->amount, 0, ',', '.') }}</td>
+                                <td class="px-4 py-3 font-mono text-xs font-medium text-gray-900">{{ $transfer->transfer_number }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">{{ $transfer->transfer_date?->format('d/m/Y') ?? '-' }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $transfer->fromAccount?->name ?? '-' }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $transfer->toAccount?->name ?? '-' }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-900">Rp{{ number_format($transfer->amount, 0, ',', '.') }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Menunggu</span>
+                                </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.donation-outflows.show', $outflow) }}"
+                                    <a href="{{ route('admin.donation-transfers.show', $transfer) }}"
                                        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">Detail</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
-                                    Tidak ada donasi keluar yang menunggu verifikasi.
+                                <td colspan="7" class="px-4 py-8 text-center text-sm text-slate-500">
+                                    Tidak ada mutasi dana yang menunggu verifikasi.
                                 </td>
                             </tr>
                         @endforelse

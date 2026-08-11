@@ -48,6 +48,7 @@ class DonationTransferApprovalService
 
             FinanceIncome::create([
                 'donation_transfer_id' => $locked->id,
+                'finance_account_id' => $locked->to_account_id,
                 'date' => $locked->transfer_date->format('Y-m-d'),
                 'income_type' => 'Transfer dari Donasi',
                 'amount' => $locked->amount,

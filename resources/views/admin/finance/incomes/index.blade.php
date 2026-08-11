@@ -39,7 +39,7 @@
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Tanggal</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Jenis</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Nominal</th>
-                                <th class="px-4 py-2.5 text-gray-500 font-medium hidden sm:table-cell">Metode</th>
+                                <th class="px-4 py-2.5 text-gray-500 font-medium hidden sm:table-cell">Akun Keuangan</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium hidden md:table-cell">Sumber</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium hidden lg:table-cell">Dicatat oleh</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium"></th>
@@ -58,7 +58,12 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-2.5 text-blue-600 font-medium whitespace-nowrap">Rp {{ number_format($income->amount, 0, ',', '.') }}</td>
-                                <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{{ $income->payment_method }}</td>
+                                <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">
+                                    <span class="block">{{ $income->financeAccount?->name ?? $income->payment_method }}</span>
+                                    @if($income->payment_method && $income->financeAccount)
+                                        <span class="text-[11px] text-gray-400">{{ $income->payment_method }}</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2.5 text-gray-600 hidden md:table-cell max-w-[180px]">
                                     <span class="block truncate">{{ $income->source_name ?: '-' }}</span>
                                     @if($income->donationOutflow)

@@ -10,6 +10,7 @@ class FinanceIncome extends Model
     protected $fillable = [
         'donation_outflow_id',
         'donation_transfer_id',
+        'finance_account_id',
         'date',
         'income_type',
         'amount',
@@ -43,6 +44,15 @@ class FinanceIncome extends Model
         return $this->belongsTo(DonationTransfer::class);
     }
 
+    /**
+     * Akun Keuangan (donation_accounts.category = finance) tempat uang
+     * diterima. NULL untuk data lama yang dicatat sebelum konsep akun ini.
+     */
+    public function financeAccount(): BelongsTo
+    {
+        return $this->belongsTo(DonationAccount::class, 'finance_account_id');
+    }
+
     public function isFromDonationOutflow(): bool
     {
         return $this->donation_outflow_id !== null;
@@ -56,6 +66,11 @@ class FinanceIncome extends Model
     public function isIntegrated(): bool
     {
         return $this->isFromDonationOutflow() || $this->isFromDonationTransfer();
+    }
+
+    public function isManual(): bool
+    {
+        return ! $this->isIntegrated();
     }
 
     public static function incomeTypes(): array

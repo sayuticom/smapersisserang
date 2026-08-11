@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
+use App\Models\DonationTransfer;
 use App\Models\FinanceExpense;
 use App\Models\FinanceIncome;
 use App\Services\DonationBalanceService;
@@ -61,17 +63,45 @@ class FinanceController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        $pendingDonationOutflows = DonationOutflow::where('status', DonationOutflow::STATUS_PENDING);
-        $pendingDonationOutflowCount = (clone $pendingDonationOutflows)->count();
-        $pendingDonationOutflowTotal = (clone $pendingDonationOutflows)->sum('amount');
+        $pendingTransfers = DonationTransfer::query()
+            ->with(['fromAccount', 'toAccount', 'requester'])
+            ->where('status', DonationTransfer::STATUS_PENDING)
+            ->latest('transfer_date')
+            ->latest('created_at')
+            ->limit(5)
+            ->get();
+
+        $pendingTransferCount = DonationTransfer::query()
+            ->where('status', DonationTransfer::STATUS_PENDING)
+            ->count();
+
+        $pendingTransferTotal = (int) DonationTransfer::query()
+            ->where('status', DonationTransfer::STATUS_PENDING)
+            ->sum('amount');
+
+        $accountSummaries = [];
+
+        foreach (DonationAccount::finance()->orderBy('name')->get() as $account) {
+            $income = FinanceIncome::where('finance_account_id', $account->id)->sum('amount');
+            $expense = FinanceExpense::where('finance_account_id', $account->id)->sum('amount');
+
+            $accountSummaries[] = [
+                'account' => $account,
+                'income' => $income,
+                'expense' => $expense,
+                'balance' => $income - $expense,
+            ];
+        }
 
         return view('admin.finance.dashboard', compact(
             'balance',
             'monthIncome',
             'monthExpense',
             'topExpense',
-            'pendingDonationOutflowCount',
-            'pendingDonationOutflowTotal'
+            'pendingTransfers',
+            'pendingTransferCount',
+            'pendingTransferTotal',
+            'accountSummaries'
         ));
     }
 
@@ -81,7 +111,7 @@ class FinanceController extends Controller
 
     public function incomesIndex(): View
     {
-        $incomes = FinanceIncome::with(['creator', 'donationOutflow.creator', 'donationTransfer.requester'])
+        $incomes = FinanceIncome::with(['creator', 'donationOutflow.creator', 'donationTransfer.requester', 'financeAccount'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -92,9 +122,9 @@ class FinanceController extends Controller
     public function incomesCreate(): View
     {
         $incomeTypes = self::INCOME_TYPES;
-        $paymentMethods = self::PAYMENT_METHODS;
+        $financeAccounts = DonationAccount::finance()->active()->orderBy('name')->get();
 
-        return view('admin.finance.incomes.create', compact('incomeTypes', 'paymentMethods'));
+        return view('admin.finance.incomes.create', compact('incomeTypes', 'financeAccounts'));
     }
 
     public function incomesStore(Request $request): RedirectResponse
@@ -103,12 +133,22 @@ class FinanceController extends Controller
             'date' => ['required', 'date'],
             'income_type' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:1'],
-            'payment_method' => ['required', 'string'],
+            'finance_account_id' => [
+                'required',
+                'integer',
+                Rule::exists('donation_accounts', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('category', DonationAccount::CATEGORY_FINANCE)
+                        ->where('is_active', true)),
+            ],
             'source_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
+        $financeAccount = DonationAccount::findOrFail($validated['finance_account_id']);
+
+        $validated['payment_method'] = $financeAccount->financePaymentMethodLabel();
         $validated['created_by'] = auth()->id();
 
         if ($request->hasFile('proof_file')) {
@@ -128,9 +168,23 @@ class FinanceController extends Controller
 
         $isIntegrated = $financeIncome->donation_outflow_id !== null;
         $incomeTypes = self::INCOME_TYPES;
-        $paymentMethods = self::PAYMENT_METHODS;
 
-        return view('admin.finance.incomes.edit', compact('financeIncome', 'incomeTypes', 'paymentMethods', 'isIntegrated'));
+        $financeAccounts = DonationAccount::finance()->active()->orderBy('name')->get();
+        $currentAccount = $financeIncome->financeAccount;
+
+        if (! $isIntegrated && $currentAccount && $financeAccounts->where('id', $currentAccount->id)->isEmpty()) {
+            $financeAccounts->push($currentAccount);
+        }
+
+        $paymentMethods = $isIntegrated ? ['Tunai', 'Transfer Bank'] : [];
+
+        return view('admin.finance.incomes.edit', compact(
+            'financeIncome',
+            'incomeTypes',
+            'financeAccounts',
+            'paymentMethods',
+            'isIntegrated'
+        ));
     }
 
     public function incomesUpdate(Request $request, FinanceIncome $financeIncome): RedirectResponse
@@ -142,7 +196,6 @@ class FinanceController extends Controller
         $rules = [
             'date' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'min:1'],
-            'payment_method' => ['required', 'string'],
             'source_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
@@ -150,10 +203,16 @@ class FinanceController extends Controller
 
         if ($isIntegrated) {
             $rules['payment_method'] = ['required', Rule::in(['Tunai', 'Transfer Bank'])];
-        }
-
-        if (! $isIntegrated) {
+        } else {
             $rules['income_type'] = ['required', 'string'];
+            $rules['finance_account_id'] = [
+                'required',
+                'integer',
+                Rule::exists('donation_accounts', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('category', DonationAccount::CATEGORY_FINANCE)
+                        ->where('is_active', true)),
+            ];
         }
 
         $validated = $request->validate($rules);
@@ -207,10 +266,13 @@ class FinanceController extends Controller
 
                 $lockedIncome->update($incomeData);
             } else {
+                $financeAccount = DonationAccount::findOrFail($validated['finance_account_id']);
+
                 $incomeData = [
                     'date' => $validated['date'],
                     'amount' => $validated['amount'],
-                    'payment_method' => $validated['payment_method'],
+                    'finance_account_id' => $validated['finance_account_id'],
+                    'payment_method' => $financeAccount->financePaymentMethodLabel(),
                     'source_name' => $validated['source_name'],
                     'income_type' => $validated['income_type'],
                     'description' => $validated['description'],
@@ -300,7 +362,7 @@ class FinanceController extends Controller
 
     public function expensesIndex(): View
     {
-        $expenses = FinanceExpense::with('creator')
+        $expenses = FinanceExpense::with(['creator', 'financeAccount'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -311,9 +373,9 @@ class FinanceController extends Controller
     public function expensesCreate(): View
     {
         $expenseCategories = FinanceExpense::expenseCategories();
-        $paymentMethods = self::PAYMENT_METHODS;
+        $financeAccounts = DonationAccount::finance()->active()->orderBy('name')->get();
 
-        return view('admin.finance.expenses.create', compact('expenseCategories', 'paymentMethods'));
+        return view('admin.finance.expenses.create', compact('expenseCategories', 'financeAccounts'));
     }
 
     public function expensesStore(Request $request): RedirectResponse
@@ -323,11 +385,30 @@ class FinanceController extends Controller
             'expense_category' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:1'],
             'paid_to' => ['nullable', 'string', 'max:255'],
-            'payment_method' => ['required', 'string'],
+            'finance_account_id' => [
+                'required',
+                'integer',
+                Rule::exists('donation_accounts', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('category', DonationAccount::CATEGORY_FINANCE)
+                        ->where('is_active', true)),
+            ],
             'description' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
+        $financeAccount = DonationAccount::findOrFail($validated['finance_account_id']);
+
+        $available = app(DonationBalanceService::class)->financeBalanceByAccount((int) $financeAccount->id);
+
+        if ((float) $validated['amount'] > $available) {
+            throw ValidationException::withMessages([
+                'amount' => "Saldo {$financeAccount->name} tidak mencukupi. Saldo tersedia Rp "
+                    .number_format($available, 0, ',', '.').'.',
+            ]);
+        }
+
+        $validated['payment_method'] = $financeAccount->financePaymentMethodLabel();
         $validated['created_by'] = auth()->id();
 
         if ($request->hasFile('proof_file')) {
@@ -344,9 +425,15 @@ class FinanceController extends Controller
     public function expensesEdit(FinanceExpense $financeExpense): View
     {
         $expenseCategories = FinanceExpense::expenseCategories();
-        $paymentMethods = self::PAYMENT_METHODS;
 
-        return view('admin.finance.expenses.edit', compact('financeExpense', 'expenseCategories', 'paymentMethods'));
+        $financeAccounts = DonationAccount::finance()->active()->orderBy('name')->get();
+        $currentAccount = $financeExpense->financeAccount;
+
+        if ($currentAccount && $financeAccounts->where('id', $currentAccount->id)->isEmpty()) {
+            $financeAccounts->push($currentAccount);
+        }
+
+        return view('admin.finance.expenses.edit', compact('financeExpense', 'expenseCategories', 'financeAccounts'));
     }
 
     public function expensesUpdate(Request $request, FinanceExpense $financeExpense): RedirectResponse
@@ -356,10 +443,34 @@ class FinanceController extends Controller
             'expense_category' => ['required', 'string'],
             'amount' => ['required', 'numeric', 'min:1'],
             'paid_to' => ['nullable', 'string', 'max:255'],
-            'payment_method' => ['required', 'string'],
+            'finance_account_id' => [
+                'required',
+                'integer',
+                Rule::exists('donation_accounts', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('category', DonationAccount::CATEGORY_FINANCE)
+                        ->where('is_active', true)),
+            ],
             'description' => ['nullable', 'string'],
             'proof_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
+
+        $financeAccount = DonationAccount::findOrFail($validated['finance_account_id']);
+
+        $service = app(DonationBalanceService::class);
+        $available = $service->financeBalanceByAccountExcludingExpense(
+            (int) $financeAccount->id,
+            (int) $financeExpense->getKey()
+        );
+
+        if ((float) $validated['amount'] > $available) {
+            throw ValidationException::withMessages([
+                'amount' => "Saldo {$financeAccount->name} tidak mencukupi. Saldo tersedia Rp "
+                    .number_format($available, 0, ',', '.').'.',
+            ]);
+        }
+
+        $validated['payment_method'] = $financeAccount->financePaymentMethodLabel();
 
         if ($request->hasFile('proof_file')) {
             if ($financeExpense->proof_file) {
@@ -369,7 +480,12 @@ class FinanceController extends Controller
                 ->store('finance/proofs', 'public');
         }
 
-        $financeExpense->update($validated);
+        DB::transaction(function () use ($financeExpense, $validated) {
+            FinanceExpense::query()
+                ->lockForUpdate()
+                ->findOrFail($financeExpense->getKey())
+                ->update($validated);
+        });
 
         return redirect()->route('admin.finance.expenses.index')
             ->with('success', 'Pengeluaran berhasil diperbarui.');

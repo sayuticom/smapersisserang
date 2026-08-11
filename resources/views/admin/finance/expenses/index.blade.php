@@ -31,7 +31,7 @@
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Tanggal</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Kategori</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium">Nominal</th>
-                                <th class="px-4 py-2.5 text-gray-500 font-medium hidden sm:table-cell">Metode</th>
+                                <th class="px-4 py-2.5 text-gray-500 font-medium hidden sm:table-cell">Akun Keuangan</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium hidden md:table-cell">Dibayar Kepada</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium hidden lg:table-cell">Dicatat oleh</th>
                                 <th class="px-4 py-2.5 text-gray-500 font-medium"></th>
@@ -43,7 +43,7 @@
                                 <td class="px-4 py-2.5 text-gray-900 whitespace-nowrap">{{ $expense->date->format('d/m/Y') }}</td>
                                 <td class="px-4 py-2.5"><span class="font-medium text-gray-900">{{ $expense->expense_category }}</span></td>
                                 <td class="px-4 py-2.5 text-red-600 font-medium whitespace-nowrap">Rp {{ number_format($expense->amount, 0, ',', '.') }}</td>
-                                <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{{ $expense->payment_method }}</td>
+                                <td class="px-4 py-2.5 text-gray-600 hidden sm:table-cell">{{ $expense->financeAccount?->name ?? $expense->payment_method }}</td>
                                 <td class="px-4 py-2.5 text-gray-600 hidden md:table-cell max-w-[150px] truncate">{{ $expense->paid_to ?: '-' }}</td>
                                 <td class="px-4 py-2.5 text-gray-400 text-xs hidden lg:table-cell">{{ $expense->creator?->name }}</td>
                                 <td class="px-4 py-2.5">

@@ -545,6 +545,7 @@ class DeleteAuthorizationTest extends TestCase
             $table->string('expense_category');
             $table->decimal('amount', 15, 2);
             $table->string('paid_to')->nullable();
+            $table->unsignedBigInteger('finance_account_id')->nullable();
             $table->string('payment_method');
             $table->text('description')->nullable();
             $table->string('proof_file')->nullable();

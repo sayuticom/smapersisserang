@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
 use App\Models\DonationTransaction;
+use App\Models\DonationTransfer;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -31,6 +33,8 @@ class DonationBalanceTest extends TestCase
             'donation_item_receipts',
             'donation_transaction_histories',
             'donation_outflow_status_histories',
+            'donation_transfers',
+            'donation_accounts',
             'donation_outflows',
             'donation_transactions',
             'permission_role',
@@ -258,18 +262,89 @@ class DonationBalanceTest extends TestCase
             ->assertSee('Saldo Donasi');
     }
 
-    public function test_dashboard_lists_pending_outflows(): void
+    public function test_dashboard_lists_pending_transfers(): void
     {
         $user = $this->userWithPermissions(['donation.balance.view']);
-        $this->createOutflow(['status' => 'pending', 'amount' => 500000]);
-        $pending = $this->createOutflow(['status' => 'pending', 'amount' => 750000]);
-        $this->createOutflow(['status' => 'approved', 'amount' => 200000]);
+        $from = $this->donationAccount('Tunai Donasi', DonationAccount::CATEGORY_DONATION);
+        $to = $this->donationAccount('Kas Keuangan', DonationAccount::CATEGORY_FINANCE);
+        $transfer = $this->createTransfer($from->id, $to->id, 500000);
 
         $this->actingAs($user)
             ->get(route('admin.donation.dashboard'))
             ->assertOk()
-            ->assertSee($pending->transaction_number)
-            ->assertSee('Donasi Keluar Menunggu Verifikasi');
+            ->assertSee('Mutasi Dana Menunggu Verifikasi')
+            ->assertSee($transfer->transfer_number)
+            ->assertSee('Tunai Donasi')
+            ->assertSee('Kas Keuangan')
+            ->assertSee(route('admin.donation-transfers.show', $transfer))
+            ->assertSee(route('admin.donation-transfers.index'));
+    }
+
+    public function test_dashboard_does_not_list_approved_or_rejected_transfers(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $from = $this->donationAccount('Tunai Donasi', DonationAccount::CATEGORY_DONATION);
+        $to = $this->donationAccount('Kas Keuangan', DonationAccount::CATEGORY_FINANCE);
+        $approved = $this->createTransfer($from->id, $to->id, 500000, ['status' => DonationTransfer::STATUS_APPROVED]);
+        $rejected = $this->createTransfer($from->id, $to->id, 250000, ['status' => DonationTransfer::STATUS_REJECTED]);
+
+        $response = $this->actingAs($user)
+            ->get(route('admin.donation.dashboard'))
+            ->assertOk();
+
+        $this->assertStringNotContainsString($approved->transfer_number, $response->getContent());
+        $this->assertStringNotContainsString($rejected->transfer_number, $response->getContent());
+    }
+
+    public function test_dashboard_pending_widget_ignores_legacy_donation_outflows(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $legacy = $this->createOutflow(['status' => 'pending', 'amount' => 900000]);
+
+        $response = $this->actingAs($user)
+            ->get(route('admin.donation.dashboard'))
+            ->assertOk()
+            ->assertSee('Mutasi Dana Menunggu Verifikasi');
+
+        $this->assertStringNotContainsString($legacy->transaction_number, $response->getContent());
+        $this->assertStringContainsString('0 transaksi pending', $response->getContent());
+    }
+
+    public function test_dashboard_pending_count_and_total_match_pending_transfers(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $from = $this->donationAccount('Tunai Donasi', DonationAccount::CATEGORY_DONATION);
+        $to = $this->donationAccount('Kas Keuangan', DonationAccount::CATEGORY_FINANCE);
+        $this->createTransfer($from->id, $to->id, 500000);
+        $this->createTransfer($from->id, $to->id, 750000);
+
+        $this->actingAs($user)
+            ->get(route('admin.donation.dashboard'))
+            ->assertOk()
+            ->assertSee('2 transaksi pending')
+            ->assertSee('Rp1.250.000');
+    }
+
+    public function test_dashboard_does_not_execute_per_row_queries_for_pending_transfers(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $from = $this->donationAccount('Tunai Donasi', DonationAccount::CATEGORY_DONATION);
+        $to = $this->donationAccount('Kas Keuangan', DonationAccount::CATEGORY_FINANCE);
+
+        DB::enableQueryLog();
+        $this->actingAs($user)->get(route('admin.donation.dashboard'))->assertOk();
+        $baseline = count(DB::getQueryLog());
+        DB::flushQueryLog();
+
+        foreach (range(1, 5) as $i) {
+            $this->createTransfer($from->id, $to->id, 100000);
+        }
+
+        DB::flushQueryLog();
+        $this->actingAs($user)->get(route('admin.donation.dashboard'))->assertOk();
+        $withRows = count(DB::getQueryLog());
+
+        $this->assertLessThanOrEqual($baseline + 10, $withRows, 'Dashboard menjalankan query per-baris (N+1).');
     }
 
     public function test_dashboard_lists_latest_valid_income(): void
@@ -808,6 +883,27 @@ class DonationBalanceTest extends TestCase
         ], $overrides));
     }
 
+    private function donationAccount(string $name, string $category): DonationAccount
+    {
+        return DonationAccount::create([
+            'name' => $name,
+            'category' => $category,
+        ]);
+    }
+
+    private function createTransfer(int $fromAccountId, int $toAccountId, int $amount, array $overrides = []): DonationTransfer
+    {
+        return DonationTransfer::create(array_merge([
+            'transfer_number' => 'MD-'.now()->format('Ymd').'-'.strtoupper(uniqid()),
+            'transfer_date' => now()->toDateString(),
+            'from_account_id' => $fromAccountId,
+            'to_account_id' => $toAccountId,
+            'amount' => $amount,
+            'status' => DonationTransfer::STATUS_PENDING,
+            'requested_by' => User::factory()->create(['role' => 'admin'])->id,
+        ], $overrides));
+    }
+
     private function createOutflow(array $overrides = []): DonationOutflow
     {
         $creator = User::factory()->create(['role' => 'admin']);
@@ -1003,6 +1099,33 @@ class DonationBalanceTest extends TestCase
             $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+        Schema::create('donation_transfers', function ($table) {
+            $table->id();
+            $table->string('transfer_number')->unique();
+            $table->date('transfer_date')->nullable();
+            $table->foreignId('from_account_id')->constrained('donation_accounts')->restrictOnDelete();
+            $table->foreignId('to_account_id')->constrained('donation_accounts')->restrictOnDelete();
+            $table->decimal('amount', 15, 2);
+            $table->string('status')->default('pending');
+            $table->foreignId('requested_by')->constrained('users');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('rejected_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('rejected_at')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->string('proof_file')->nullable();
+            $table->text('note')->nullable();
+            $table->timestamps();
+        });
         Schema::create('donation_item_receipts', function ($table) {
             $table->id();
             $table->string('receipt_number')->unique();
@@ -1043,6 +1166,7 @@ class DonationBalanceTest extends TestCase
             $table->string('expense_category');
             $table->decimal('amount', 15, 2);
             $table->string('paid_to')->nullable();
+            $table->unsignedBigInteger('finance_account_id')->nullable();
             $table->string('payment_method');
             $table->text('description')->nullable();
             $table->string('proof_file')->nullable();

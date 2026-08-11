@@ -7,6 +7,8 @@ use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
 use App\Models\DonationTransaction;
 use App\Models\DonationTransfer;
+use App\Models\FinanceExpense;
+use App\Models\FinanceIncome;
 use Illuminate\Support\Facades\Schema;
 
 class DonationBalanceService
@@ -203,6 +205,49 @@ class DonationBalanceService
         }
 
         return $sum;
+    }
+
+    /**
+     * Saldo per akun Keuangan:
+     * = FinanceIncome pada finance_account_id - FinanceExpense pada finance_account_id.
+     */
+    public function financeBalanceByAccount(int $accountId): int
+    {
+        $income = (int) FinanceIncome::where('finance_account_id', $accountId)->sum('amount');
+        $expense = (int) FinanceExpense::where('finance_account_id', $accountId)->sum('amount');
+
+        return $income - $expense;
+    }
+
+    /**
+     * Saldo tersedia akun Keuangan untuk sebuah Pengeluaran (nilai baru).
+     *
+     * Menggunakan konsep exclude current expense berdasarkan ID: pengeluaran
+     * yang sedang diedit (dan sudah tercatat pada akun tersebut) dikeluarkan
+     * dari sisi pengeluaran agar tidak double-count saat menghitung ulang.
+     */
+    public function financeBalanceByAccountExcludingExpense(int $accountId, int $expenseId): int
+    {
+        $income = (int) FinanceIncome::where('finance_account_id', $accountId)->sum('amount');
+        $expense = (int) FinanceExpense::where('finance_account_id', $accountId)
+            ->where('id', '!=', $expenseId)
+            ->sum('amount');
+
+        return $income - $expense;
+    }
+
+    /**
+     * Ringkasan saldo seluruh akun Keuangan (donation_accounts.category=finance).
+     */
+    public function financeAccountBalances(): array
+    {
+        $balances = [];
+
+        foreach (DonationAccount::finance()->get() as $account) {
+            $balances[$account->id] = $this->financeBalanceByAccount((int) $account->id);
+        }
+
+        return $balances;
     }
 
     /**

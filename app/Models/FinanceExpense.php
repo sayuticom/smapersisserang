@@ -12,6 +12,7 @@ class FinanceExpense extends Model
         'expense_category',
         'amount',
         'paid_to',
+        'finance_account_id',
         'payment_method',
         'description',
         'proof_file',
@@ -29,6 +30,11 @@ class FinanceExpense extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function financeAccount(): BelongsTo
+    {
+        return $this->belongsTo(DonationAccount::class, 'finance_account_id');
     }
 
     public static function expenseCategories(): array

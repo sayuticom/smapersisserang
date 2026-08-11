@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
 use App\Models\FinanceIncome;
 use App\Models\Permission;
@@ -26,6 +27,7 @@ class FinanceIncomeManageTest extends TestCase
             'donation_outflow_status_histories',
             'finance_incomes',
             'donation_outflows',
+            'donation_accounts',
             'permission_role',
             'permissions',
             'role_user',
@@ -174,6 +176,170 @@ class FinanceIncomeManageTest extends TestCase
             ->assertDontSee('>Hapus<', false);
     }
 
+    // ============ AKUN KEUANGAN (finance_account_id) ============
+
+    public function test_create_page_only_lists_active_finance_accounts(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        $this->financeAccount(['name' => 'Tunai Keuangan', 'type' => 'cash']);
+        $this->financeAccount(['name' => 'Rekening Keuangan', 'type' => 'bank_transfer']);
+        DonationAccount::create([
+            'name' => 'Tunai Donasi',
+            'category' => 'donation',
+            'type' => 'cash',
+            'is_active' => true,
+        ]);
+        $this->financeAccount(['name' => 'Kas Nonaktif', 'is_active' => false]);
+
+        $this->actingAs($staf)
+            ->get(route('admin.finance.incomes.create'))
+            ->assertOk()
+            ->assertSee('Tunai Keuangan')
+            ->assertSee('Rekening Keuangan')
+            ->assertSee('Masuk ke Akun Keuangan')
+            ->assertDontSee('Tunai Donasi')
+            ->assertDontSee('Kas Nonaktif');
+    }
+
+    public function test_store_requires_finance_account_id(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+
+        $this->actingAs($staf)
+            ->post(route('admin.finance.incomes.store'), $this->incomePayload(['finance_account_id' => null]))
+            ->assertSessionHasErrors('finance_account_id');
+
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_store_rejects_donation_account_as_finance_account(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        $donation = DonationAccount::create([
+            'name' => 'Tunai Donasi',
+            'category' => 'donation',
+            'type' => 'cash',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staf)
+            ->post(route('admin.finance.incomes.store'), $this->incomePayload(['finance_account_id' => $donation->id]))
+            ->assertSessionHasErrors('finance_account_id');
+
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_store_rejects_inactive_finance_account(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        $inactive = $this->financeAccount(['is_active' => false]);
+
+        $this->actingAs($staf)
+            ->post(route('admin.finance.incomes.store'), $this->incomePayload(['finance_account_id' => $inactive->id]))
+            ->assertSessionHasErrors('finance_account_id');
+
+        $this->assertDatabaseCount('finance_incomes', 0);
+    }
+
+    public function test_store_saves_income_to_selected_finance_account(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        $account = $this->financeAccount(['name' => 'Rekening Keuangan', 'type' => 'bank_transfer']);
+
+        $this->actingAs($staf)
+            ->post(route('admin.finance.incomes.store'), $this->incomePayload([
+                'finance_account_id' => $account->id,
+                'amount' => 300000,
+            ]))
+            ->assertRedirect(route('admin.finance.incomes.index'));
+
+        $this->assertDatabaseHas('finance_incomes', [
+            'finance_account_id' => $account->id,
+            'payment_method' => 'Transfer Bank',
+            'amount' => 300000,
+            'created_by' => $staf->id,
+        ]);
+    }
+
+    public function test_payment_method_is_derived_from_account_type(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+
+        $cases = [
+            'cash' => 'Tunai',
+            'bank_transfer' => 'Transfer Bank',
+            'qris' => 'QRIS',
+            'other' => 'Lainnya',
+        ];
+
+        foreach ($cases as $type => $expectedLabel) {
+            $account = $this->financeAccount(['type' => $type]);
+
+            $this->actingAs($staf)
+                ->post(route('admin.finance.incomes.store'), $this->incomePayload([
+                    'finance_account_id' => $account->id,
+                    'payment_method' => 'Nilai Ilegal',
+                ]))
+                ->assertRedirect();
+
+            $this->assertDatabaseHas('finance_incomes', [
+                'finance_account_id' => $account->id,
+                'payment_method' => $expectedLabel,
+            ]);
+        }
+    }
+
+    public function test_manual_income_update_can_change_finance_account(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        $cash = $this->financeAccount(['name' => 'Tunai Keuangan', 'type' => 'cash']);
+        $income = FinanceIncome::create([
+            'date' => '2026-07-31',
+            'income_type' => 'Dana Operasional',
+            'amount' => 500000,
+            'finance_account_id' => $cash->id,
+            'payment_method' => 'Tunai',
+            'source_name' => 'Kas Sekolah',
+            'description' => 'Pemasukan manual',
+            'created_by' => $staf->id,
+        ]);
+        $rekening = $this->financeAccount(['name' => 'Rekening Keuangan', 'type' => 'bank_transfer']);
+
+        $this->actingAs($staf)
+            ->put(route('admin.finance.incomes.update', $income), $this->incomePayload([
+                'finance_account_id' => $rekening->id,
+                'amount' => 600000,
+            ]))
+            ->assertRedirect(route('admin.finance.incomes.index'));
+
+        $this->assertDatabaseHas('finance_incomes', [
+            'id' => $income->id,
+            'finance_account_id' => $rekening->id,
+            'payment_method' => 'Transfer Bank',
+            'amount' => 600000,
+        ]);
+    }
+
+    public function test_legacy_income_with_null_finance_account_is_still_readable(): void
+    {
+        $staf = $this->userWithRoleFinanceDefaults('staf_keuangan');
+        FinanceIncome::create([
+            'date' => '2026-07-01',
+            'income_type' => 'Bantuan Sekolah',
+            'amount' => 250000,
+            'payment_method' => 'Tunai',
+            'source_name' => 'Data lama',
+            'description' => 'Pemasukan lama tanpa akun',
+            'created_by' => $staf->id,
+        ]);
+
+        $this->actingAs($staf)
+            ->get(route('admin.finance.incomes.index'))
+            ->assertOk()
+            ->assertSee('Tunai')
+            ->assertSee('Data lama');
+    }
+
     private function userWithRoleFinanceDefaults(string $roleName): User
     {
         $role = Role::firstOrCreate([
@@ -211,8 +377,10 @@ class FinanceIncomeManageTest extends TestCase
     private function createManualIncome(): FinanceIncome
     {
         $creator = User::factory()->create(['role' => 'admin']);
+        $account = $this->financeAccount();
 
-        return FinanceIncome::create(array_merge($this->incomePayload(), [
+        return FinanceIncome::create(array_merge($this->incomePayload(['finance_account_id' => $account->id]), [
+            'payment_method' => $account->financePaymentMethodLabel(),
             'created_by' => $creator->id,
         ]));
     }
@@ -234,6 +402,8 @@ class FinanceIncomeManageTest extends TestCase
 
         return FinanceIncome::create(array_merge($this->incomePayload(), [
             'donation_outflow_id' => $outflow->id,
+            'finance_account_id' => null,
+            'payment_method' => 'Transfer Bank',
             'created_by' => $creator->id,
         ]));
     }
@@ -244,10 +414,20 @@ class FinanceIncomeManageTest extends TestCase
             'date' => '2026-07-31',
             'income_type' => 'Dana Operasional',
             'amount' => 500000,
-            'payment_method' => 'Tunai',
+            'finance_account_id' => $this->financeAccount()->id,
             'source_name' => 'Kas Sekolah',
             'description' => 'Pemasukan manual',
         ], $overrides);
+    }
+
+    private function financeAccount(array $overrides = []): DonationAccount
+    {
+        return DonationAccount::create(array_merge([
+            'name' => 'Tunai Keuangan '.strtoupper(uniqid()),
+            'category' => 'finance',
+            'type' => 'cash',
+            'is_active' => true,
+        ], $overrides));
     }
 
     private function createTables(): void
@@ -304,6 +484,15 @@ class FinanceIncomeManageTest extends TestCase
             $table->timestamps();
             $table->unique(['permission_id', 'role_id']);
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
         Schema::create('donation_outflows', function ($table) {
             $table->id();
             $table->string('transaction_number')->unique();
@@ -337,6 +526,7 @@ class FinanceIncomeManageTest extends TestCase
         Schema::create('finance_incomes', function ($table) {
             $table->id();
             $table->foreignId('donation_outflow_id')->nullable()->unique()->constrained()->restrictOnDelete();
+            $table->foreignId('finance_account_id')->nullable()->constrained('donation_accounts')->restrictOnDelete();
             $table->date('date');
             $table->string('income_type');
             $table->decimal('amount', 15, 2);

@@ -3,7 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Http\Controllers\Admin\FinanceController;
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
+use App\Models\DonationTransfer;
 use App\Models\FinanceIncome;
 use App\Models\Permission;
 use App\Models\Role;
@@ -34,6 +36,8 @@ class DonationOutflowTest extends TestCase
             'finance_incomes',
             'finance_expenses',
             'donation_outflows',
+            'donation_transfers',
+            'donation_accounts',
             'donation_transactions',
             'permission_role',
             'permissions',
@@ -587,20 +591,20 @@ class DonationOutflowTest extends TestCase
 
     public function test_dashboard_pending_notification_only_counts_pending_transactions(): void
     {
-        $this->createOutflow();
-        $this->createOutflow([
-            'transaction_number' => 'DK-20260731-AP01',
+        $this->createTransfer();
+        $this->createTransfer([
+            'transfer_number' => 'MD-20260731-AP01',
             'status' => 'approved',
         ]);
-        $this->createOutflow([
-            'transaction_number' => 'DK-20260731-RJ01',
+        $this->createTransfer([
+            'transfer_number' => 'MD-20260731-RJ01',
             'status' => 'rejected',
         ]);
 
         $view = app(FinanceController::class)->dashboard();
 
-        $this->assertSame(1, $view->getData()['pendingDonationOutflowCount']);
-        $this->assertEquals(1250000, $view->getData()['pendingDonationOutflowTotal']);
+        $this->assertSame(1, $view->getData()['pendingTransferCount']);
+        $this->assertEquals(100000, $view->getData()['pendingTransferTotal']);
     }
 
     public function test_report_only_reads_finance_income_created_from_approval(): void
@@ -707,16 +711,18 @@ class DonationOutflowTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_dashboard_pending_card_links_to_outflow_index(): void
+    public function test_dashboard_pending_card_links_to_transfers_index(): void
     {
         $staf = $this->userWithRoleOutflowDefaults('staf_keuangan');
-        $this->createOutflow();
+        $transfer = $this->createTransfer();
 
         $this->actingAs($staf)
             ->get(route('admin.finance.dashboard'))
             ->assertOk()
-            ->assertSee('Dana Donasi Menunggu Verifikasi')
-            ->assertSee(route('admin.donation-outflows.index'));
+            ->assertSee('Mutasi Dana Menunggu Verifikasi')
+            ->assertSee($transfer->transfer_number)
+            ->assertSee(route('admin.donation-transfers.show', $transfer))
+            ->assertSee(route('admin.donation-transfers.index'));
     }
 
     public function test_creator_can_open_own_detail_but_does_not_see_verify_buttons(): void
@@ -1053,6 +1059,35 @@ class DonationOutflowTest extends TestCase
         return $user;
     }
 
+    private function createTransfer(array $overrides = []): DonationTransfer
+    {
+        $requester = User::factory()->create(['role' => 'admin']);
+
+        $data = array_merge([
+            'transfer_number' => 'MD-'.now()->format('Ymd').'-'.strtoupper(uniqid()),
+            'transfer_date' => now()->toDateString(),
+            'amount' => 100000,
+            'status' => DonationTransfer::STATUS_PENDING,
+            'requested_by' => $requester->id,
+        ], $overrides);
+
+        if (! isset($data['from_account_id'])) {
+            $data['from_account_id'] = DonationAccount::create([
+                'name' => 'Tunai Donasi',
+                'category' => DonationAccount::CATEGORY_DONATION,
+            ])->id;
+        }
+
+        if (! isset($data['to_account_id'])) {
+            $data['to_account_id'] = DonationAccount::create([
+                'name' => 'Kas Keuangan',
+                'category' => DonationAccount::CATEGORY_FINANCE,
+            ])->id;
+        }
+
+        return DonationTransfer::create($data);
+    }
+
     private function createOutflow(array $overrides = []): DonationOutflow
     {
         $creator = User::factory()->create(['role' => 'admin']);
@@ -1225,9 +1260,37 @@ class DonationOutflowTest extends TestCase
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+        Schema::create('donation_transfers', function ($table) {
+            $table->id();
+            $table->string('transfer_number')->unique();
+            $table->date('transfer_date')->nullable();
+            $table->foreignId('from_account_id')->constrained('donation_accounts')->restrictOnDelete();
+            $table->foreignId('to_account_id')->constrained('donation_accounts')->restrictOnDelete();
+            $table->decimal('amount', 15, 2);
+            $table->string('status')->default('pending');
+            $table->foreignId('requested_by')->constrained('users');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('rejected_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('rejected_at')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->string('proof_file')->nullable();
+            $table->text('note')->nullable();
+            $table->timestamps();
+        });
         Schema::create('finance_incomes', function ($table) {
             $table->id();
             $table->foreignId('donation_outflow_id')->nullable()->unique()->constrained()->restrictOnDelete();
+            $table->unsignedBigInteger('finance_account_id')->nullable();
             $table->date('date');
             $table->string('income_type');
             $table->decimal('amount', 15, 2);
@@ -1244,6 +1307,7 @@ class DonationOutflowTest extends TestCase
             $table->string('expense_category');
             $table->decimal('amount', 15, 2);
             $table->string('paid_to')->nullable();
+            $table->unsignedBigInteger('finance_account_id')->nullable();
             $table->string('payment_method');
             $table->text('description')->nullable();
             $table->string('proof_file')->nullable();

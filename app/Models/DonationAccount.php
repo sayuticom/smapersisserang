@@ -83,7 +83,17 @@ class DonationAccount extends Model
      */
     public function financePaymentMethodLabel(): string
     {
-        $label = DonationPaymentMethod::labelOf($this->type);
+        return self::paymentMethodLabelForType($this->type);
+    }
+
+    /**
+     * Mapping type akun -> label payment_method untuk FinanceIncome.
+     * compatibility: cash -> Tunai, bank_transfer -> Transfer Bank,
+     * qris -> QRIS, other -> Lainnya; type null -> Lainnya.
+     */
+    public static function paymentMethodLabelForType(?string $type): string
+    {
+        $label = DonationPaymentMethod::labelOf($type);
 
         return $label === 'Belum Ditentukan' ? 'Lainnya' : $label;
     }

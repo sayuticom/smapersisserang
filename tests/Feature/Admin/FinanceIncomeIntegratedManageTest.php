@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\DonationAccount;
 use App\Models\DonationOutflow;
 use App\Models\DonationOutflowStatusHistory;
 use App\Models\DonationTransaction;
@@ -31,6 +32,7 @@ class FinanceIncomeIntegratedManageTest extends TestCase
             'finance_expenses',
             'donation_outflows',
             'donation_transactions',
+            'donation_accounts',
             'permission_role',
             'permissions',
             'role_user',
@@ -515,11 +517,19 @@ class FinanceIncomeIntegratedManageTest extends TestCase
 
     private function createManualIncome(int $amount, ?string $proofFile = null): FinanceIncome
     {
+        $account = DonationAccount::create([
+            'name' => 'Tunai Keuangan '.strtoupper(uniqid()),
+            'category' => 'finance',
+            'type' => 'cash',
+            'is_active' => true,
+        ]);
+
         return FinanceIncome::create([
             'date' => now()->toDateString(),
             'income_type' => 'Dana Operasional',
             'amount' => $amount,
-            'payment_method' => 'Tunai',
+            'finance_account_id' => $account->id,
+            'payment_method' => $account->financePaymentMethodLabel(),
             'source_name' => 'Kas Sekolah',
             'description' => 'Pemasukan manual',
             'proof_file' => $proofFile,
@@ -544,7 +554,12 @@ class FinanceIncomeIntegratedManageTest extends TestCase
             'date' => '2026-08-01',
             'income_type' => 'Dana Operasional',
             'amount' => 100000,
-            'payment_method' => 'Tunai',
+            'finance_account_id' => DonationAccount::create([
+                'name' => 'Tunai Keuangan '.strtoupper(uniqid()),
+                'category' => 'finance',
+                'type' => 'cash',
+                'is_active' => true,
+            ])->id,
             'source_name' => 'Kas Sekolah',
             'description' => 'Pemasukan manual',
         ], $overrides);
@@ -604,6 +619,15 @@ class FinanceIncomeIntegratedManageTest extends TestCase
             $table->timestamps();
             $table->unique(['permission_id', 'role_id']);
         });
+        Schema::create('donation_accounts', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category');
+            $table->string('type')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
         Schema::create('donation_transactions', function ($table) {
             $table->id();
             $table->string('order_id')->unique();
@@ -650,6 +674,7 @@ class FinanceIncomeIntegratedManageTest extends TestCase
         Schema::create('finance_incomes', function ($table) {
             $table->id();
             $table->foreignId('donation_outflow_id')->nullable()->unique()->constrained()->restrictOnDelete();
+            $table->foreignId('finance_account_id')->nullable()->constrained('donation_accounts')->restrictOnDelete();
             $table->date('date');
             $table->string('income_type');
             $table->decimal('amount', 15, 2);
@@ -666,6 +691,7 @@ class FinanceIncomeIntegratedManageTest extends TestCase
             $table->string('expense_category');
             $table->decimal('amount', 15, 2);
             $table->string('paid_to')->nullable();
+            $table->foreignId('finance_account_id')->nullable()->constrained('donation_accounts')->restrictOnDelete();
             $table->string('payment_method');
             $table->text('description')->nullable();
             $table->string('proof_file')->nullable();

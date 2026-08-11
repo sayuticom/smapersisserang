@@ -27,21 +27,82 @@
             </div>
         </div>
 
-        @if(auth()->user()->hasPermissionTo('donation.outflows.view') && $pendingDonationOutflowCount > 0)
-            <div class="flex w-full min-w-0 flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div class="min-w-0">
-                    <h3 class="font-semibold text-amber-900">Dana Donasi Menunggu Verifikasi</h3>
-                    <p class="mt-1 text-sm text-amber-800">
-                        {{ $pendingDonationOutflowCount }} transaksi · Rp {{ number_format($pendingDonationOutflowTotal, 0, ',', '.') }}
-                    </p>
-                    <p class="mt-1 text-xs text-amber-700">Dana belum dicatat sebagai Pemasukan sebelum disetujui.</p>
-                    <p class="mt-1 text-xs font-medium text-amber-800">Buka transaksi untuk memeriksa dan menyetujui penyerahan dana.</p>
+        @if($accountSummaries)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Saldo per Akun Keuangan</h3>
                 </div>
-                <a href="{{ route('admin.donation-outflows.index') }}" class="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 sm:w-auto">
-                    Lihat Transaksi
-                </a>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-left">
+                            <tr>
+                                <th class="px-5 py-2.5 text-gray-500 font-medium">Akun</th>
+                                <th class="px-5 py-2.5 text-gray-500 font-medium text-right">Masuk</th>
+                                <th class="px-5 py-2.5 text-gray-500 font-medium text-right">Keluar</th>
+                                <th class="px-5 py-2.5 text-gray-500 font-medium text-right">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($accountSummaries as $summary)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-5 py-2.5 font-medium text-gray-900">{{ $summary['account']->name }}</td>
+                                <td class="px-5 py-2.5 text-blue-600 font-medium text-right whitespace-nowrap">Rp {{ number_format($summary['income'], 0, ',', '.') }}</td>
+                                <td class="px-5 py-2.5 text-red-600 font-medium text-right whitespace-nowrap">Rp {{ number_format($summary['expense'], 0, ',', '.') }}</td>
+                                <td class="px-5 py-2.5 text-emerald-600 font-bold text-right whitespace-nowrap">Rp {{ number_format($summary['balance'], 0, ',', '.') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Mutasi Dana Menunggu Verifikasi</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ $pendingTransferCount }} transaksi · Rp {{ number_format($pendingTransferTotal, 0, ',', '.') }}</p>
+                </div>
+                <a href="{{ route('admin.donation-transfers.index') }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-800">Lihat Semua</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-left">
+                        <tr>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium">Nomor Mutasi</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium">Tanggal</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium">Dari Akun Donasi</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium">Ke Akun Keuangan</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium text-right">Nominal</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium">Pengaju</th>
+                            <th class="px-5 py-2.5 text-gray-500 font-medium text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($pendingTransfers as $transfer)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-5 py-2.5 font-mono text-xs text-gray-700">{{ $transfer->transfer_number }}</td>
+                            <td class="px-5 py-2.5 text-gray-600 whitespace-nowrap">{{ $transfer->transfer_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td class="px-5 py-2.5 text-gray-700">{{ $transfer->fromAccount?->name ?? '-' }}</td>
+                            <td class="px-5 py-2.5 text-gray-700">{{ $transfer->toAccount?->name ?? '-' }}</td>
+                            <td class="px-5 py-2.5 font-semibold text-gray-900 text-right whitespace-nowrap">Rp {{ number_format($transfer->amount, 0, ',', '.') }}</td>
+                            <td class="px-5 py-2.5 text-gray-600">{{ $transfer->requester?->name ?? '-' }}</td>
+                            <td class="px-5 py-2.5 text-right whitespace-nowrap">
+                                <a href="{{ route('admin.donation-transfers.show', $transfer) }}"
+                                   class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">Periksa</a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500">
+                                Tidak ada mutasi dana yang menunggu verifikasi.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Akses Cepat</h3>
