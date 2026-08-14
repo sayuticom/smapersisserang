@@ -335,6 +335,20 @@ class PermissionFoundationTest extends TestCase
         );
     }
 
+    public function test_staf_tata_usaha_has_donation_transactions_permissions_by_default(): void
+    {
+        $tu = Role::where('name', 'staf_tata_usaha')->first();
+        $this->assertNotNull($tu);
+        $this->assertTrue(
+            $tu->permissions->contains('name', 'donation.transactions.view'),
+            'staf_tata_usaha should have donation.transactions.view by default'
+        );
+        $this->assertTrue(
+            $tu->permissions->contains('name', 'donation.transactions.manage'),
+            'staf_tata_usaha should have donation.transactions.manage by default'
+        );
+    }
+
     public function test_system_permissions_manage_is_reserved(): void
     {
         $perm = Permission::where('name', 'system.permissions.manage')->first();

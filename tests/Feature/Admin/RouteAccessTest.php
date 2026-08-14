@@ -174,11 +174,11 @@ class RouteAccessTest extends TestCase
 
             // ── Donation Transactions ──
             'donasi-transactions.read' => [
-                'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah', 'staf_tata_usaha'],
                 'routes' => [['get', ''], ['get', '/{id}']],
             ],
             'donasi-transactions.write' => [
-                'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                'roles' => ['superadmin', 'admin', 'staf_keuangan', 'staf_tata_usaha'],
                 'routes' => [['get', '/buat-bukti-penerimaan'], ['post', '/buat-bukti-penerimaan/parse'], ['post', '/buat-bukti-penerimaan'], ['patch', '/{id}/mark-paid'], ['patch', '/{id}/mark-cancelled']],
             ],
 

@@ -417,7 +417,7 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
         ->name('website.donasi-pendidikan.update');
 
     Route::name('donasi-transactions.')->prefix('donasi-transactions')
-        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->middleware('permission:donation.transactions.manage,superadmin,admin,staf_keuangan,staf_tata_usaha')
         ->group(function () {
             Route::get('/buat-bukti-penerimaan', [DonationTransactionController::class, 'createReceipt'])->name('create-receipt');
             Route::post('/buat-bukti-penerimaan/parse', [DonationTransactionController::class, 'parseReceipt'])->name('parse-receipt');
@@ -496,20 +496,21 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     });
 
     Route::name('donasi-transactions.')->prefix('donasi-transactions')
-        ->middleware('role:superadmin,admin,staf_keuangan,kepala_sekolah')
+        ->middleware('permission:donation.transactions.view,superadmin,admin,staf_keuangan,kepala_sekolah,staf_tata_usaha')
         ->group(function () {
             Route::get('/', [DonationTransactionController::class, 'index'])->name('index');
             Route::get('/{transaction}', [DonationTransactionController::class, 'show'])->name('show');
         });
 
-    Route::middleware('role:superadmin,admin,staf_keuangan')->group(function () {
-        Route::delete('/donasi-transactions/{transaction}', [DonationTransactionController::class, 'destroy'])
-            ->middleware('superadmin')
-            ->name('donasi-transactions.destroy');
-        Route::delete('/donation-outflows/{donationOutflow}', [DonationOutflowController::class, 'destroy'])
-            ->middleware('superadmin')
-            ->name('donation-outflows.destroy');
-    });
+    Route::delete('/donasi-transactions/{transaction}', [DonationTransactionController::class, 'destroy'])
+        ->middleware('permission:donation.transactions.manage,superadmin,admin,staf_keuangan,staf_tata_usaha')
+        ->middleware('superadmin')
+        ->name('donasi-transactions.destroy');
+
+    Route::delete('/donation-outflows/{donationOutflow}', [DonationOutflowController::class, 'destroy'])
+        ->middleware('role:superadmin,admin,staf_keuangan')
+        ->middleware('superadmin')
+        ->name('donation-outflows.destroy');
 
     Route::middleware('role:superadmin,admin,staf_keuangan')->group(function () {
         Route::resource('infaq-barang', DonationItemReceiptController::class)

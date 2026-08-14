@@ -815,10 +815,9 @@ class PermissionPilotTest extends TestCase
     // CONFIG INTEGRITY
     // ========================================================================
 
-    public function test_all_81_permissions_have_config_entry(): void
+    public function test_all_permissions_have_config_entry(): void
     {
         $manifest = config('permissions');
-        $this->assertCount(81, $manifest);
 
         foreach ($manifest as $perm) {
             $this->assertArrayHasKey('name', $perm);

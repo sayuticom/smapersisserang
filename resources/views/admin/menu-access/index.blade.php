@@ -25,18 +25,26 @@
         @csrf
         @method('PUT')
 
-        <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-slate-200">
-            <table class="w-full text-sm min-w-[700px]">
+        <style>
+            .menu-access-table thead th {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 20 !important;
+                background: #f8fafc !important;
+            }
+        </style>
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+            <table class="menu-access-table w-full text-sm min-w-[700px]">
                 <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200">
-                        <th class="text-left py-3 px-4 font-semibold text-slate-700 w-48">Menu</th>
-                        <th class="text-left py-3 px-4 font-semibold text-slate-700 w-28">Section</th>
+                    <tr class="bg-slate-50">
+                        <th class="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-left py-3 px-4 font-semibold text-slate-700 w-40">Menu</th>
+                        <th class="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-left py-3 px-4 font-semibold text-slate-700 w-24">Section</th>
                         @foreach ($displayRoles as $role)
-                            <th class="text-center py-3 px-2 font-semibold text-slate-700 whitespace-nowrap text-xs">
+                            <th class="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-center py-3 px-2 font-semibold text-slate-700 text-xs">
                                 {{ $role->display_name ?? $role->name }}
                             </th>
                         @endforeach
-                        <th class="text-center py-3 px-3 font-semibold text-slate-700 text-xs w-32">Aksi</th>
+                        <th class="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 text-center py-3 px-3 font-semibold text-slate-700 text-xs w-28">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>

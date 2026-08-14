@@ -214,11 +214,14 @@ class MenuAccessTest extends TestCase
         $this->assertStringContainsString('academic.calendar.view', $html);
     }
 
-    public function test_horizontal_scroll_wrapper_exists(): void
+    public function test_sticky_header_sticks_to_page_scroll_without_inner_scroll_wrapper(): void
     {
         $user = $this->makeSuperadmin();
-        $response = $this->actingAs($user)->get(route('admin.menu-access.index'));
-        $response->assertSee('overflow-x-auto');
+        $html = $this->actingAs($user)->get(route('admin.menu-access.index'))->getContent();
+
+        $this->assertStringContainsString('.menu-access-table thead th', $html);
+        $this->assertStringContainsString('position: sticky', $html);
+        $this->assertStringNotContainsString('overflow-x-auto', $html);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -340,6 +340,7 @@ class MenuVisibilityTest extends TestCase
                 'staf_tata_usaha',
                 array_merge($always, [
                     'Dashboard SPMB', 'Data Pendaftaran',
+                    'Donasi Masuk',
                     'Surat Keluar', 'Surat Masuk', 'Template Surat', 'Penandatangan', 'Jenis Surat', 'Pengaturan Surat',
                     'Pengaturan Website', 'Konten Boarding', 'Galeri Sekolah', 'Kategori Galeri', 'Konten Halaman', 'Menu Navigasi', 'Struktur Organisasi', 'Nilai Utama', 'Tokoh & Pembina',
                     'Profil Guru', 'Mata Pelajaran', 'Kalender Pendidikan', 'Jadwal Pelajaran', 'Tahun Pelajaran', 'Kelas / Rombel', 'Jam Pelajaran',
@@ -348,7 +349,7 @@ class MenuVisibilityTest extends TestCase
                 [
                     'Pengaturan SPMB',
                     'Dashboard Keuangan', 'Pemasukan', 'Pengeluaran', 'Laporan',
-                    'Dashboard Donasi', 'Donasi Masuk', 'Mutasi Dana', 'Pengingat Donasi', 'Donasi Barang', 'Pengaturan Halaman Donasi', 'Template Share WA',
+                    'Dashboard Donasi', 'Mutasi Dana', 'Pengingat Donasi', 'Donasi Barang', 'Pengaturan Halaman Donasi', 'Template Share WA',
                     'Pengajuan OTA',
                     'Pengaturan Wakaf', 'Wakaf Masuk', 'Buat Bukti Penerimaan',
                     'Dashboard Sarpras', 'Data Aset', 'Data Ruangan', 'Kebutuhan Sarpras', 'Perbaikan', 'Pengadaan Barang', 'Laporan Sarpras',
@@ -440,7 +441,7 @@ class MenuVisibilityTest extends TestCase
         $this->assertStringNotContainsString('Kelola User', $html);
         $this->assertStringNotContainsString('Pemasukan', $html);
         $this->assertStringNotContainsString('Dashboard Keuangan', $html);
-        $this->assertStringNotContainsString('Donasi Masuk', $html);
+        $this->assertStringContainsString('Donasi Masuk', $html);
         $this->assertStringNotContainsString('Dashboard Sarpras', $html);
         $this->assertStringNotContainsString('Data Aset', $html);
     }

@@ -164,7 +164,7 @@ return [
                     'route' => 'admin.donasi-transactions.index',
                     'route_active' => 'admin.donasi-transactions.index',
                     'icon' => 'checkmark',
-                    'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah'],
+                    'roles' => ['superadmin', 'admin', 'staf_keuangan', 'kepala_sekolah', 'staf_tata_usaha'],
                     'permission' => 'donation.transactions.view',
                 ],
                 [
