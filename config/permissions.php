@@ -1082,6 +1082,23 @@ return [
         'sort_order'    => 78,
     ],
     [
+        'name'          => 'donation.reminders.manage',
+        'module'        => 'donation',
+        'action'        => 'manage',
+        'display_name'  => 'Kelola Pengingat Donatur',
+        'description'   => 'Mengatur jadwal pengingat WhatsApp dan menandai donatur sudah diingatkan',
+        'group_name'    => 'DONASI',
+        'routes'        => [
+            'admin.donor-reminders.index',
+            'admin.donor-reminders.update',
+            'admin.donor-reminders.mark-reminded',
+        ],
+        'default_roles' => ['admin', 'staf_keuangan'],
+        'menu_key'      => 'donation.reminders',
+        'is_system'     => false,
+        'sort_order'    => 79,
+    ],
+    [
         'name'          => 'donation.transfers.view',
         'module'        => 'donation',
         'action'        => 'view',
@@ -1095,7 +1112,7 @@ return [
         'default_roles' => ['admin', 'staf_keuangan'],
         'menu_key'      => 'donation.transfers',
         'is_system'     => false,
-        'sort_order'    => 79,
+        'sort_order'    => 80,
     ],
     [
         'name'          => 'donation.transfers.create',
@@ -1111,7 +1128,7 @@ return [
         'default_roles' => ['admin'],
         'menu_key'      => null,
         'is_system'     => false,
-        'sort_order'    => 80,
+        'sort_order'    => 81,
     ],
     [
         'name'          => 'donation.transfers.approve',
@@ -1124,7 +1141,7 @@ return [
         'default_roles' => ['staf_keuangan'],
         'menu_key'      => null,
         'is_system'     => false,
-        'sort_order'    => 81,
+        'sort_order'    => 82,
     ],
     [
         'name'          => 'donation.transfers.reject',
@@ -1137,7 +1154,7 @@ return [
         'default_roles' => ['staf_keuangan'],
         'menu_key'      => null,
         'is_system'     => false,
-        'sort_order'    => 82,
+        'sort_order'    => 83,
     ],
 
     // ========================================================================

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\DonationTransactionController;
 use App\Http\Controllers\Admin\DonationOutflowController;
 use App\Http\Controllers\Admin\DonationTransferController;
 use App\Http\Controllers\Admin\DonationDashboardController;
+use App\Http\Controllers\Admin\DonorReminderController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LetterIncomingController;
 use App\Http\Controllers\Admin\LetterSettingController;
@@ -464,6 +465,14 @@ Route::middleware('auth')->name('admin.')->prefix('admin')->group(function () {
     Route::get('/donasi/dashboard', [DonationDashboardController::class, 'dashboard'])
         ->middleware('permission:donation.balance.view,superadmin,admin,staf_keuangan')
         ->name('donation.dashboard');
+
+    Route::name('donor-reminders.')->prefix('donor-reminders')
+        ->middleware('permission:donation.reminders.manage,superadmin,admin,staf_keuangan')
+        ->group(function () {
+            Route::get('/', [DonorReminderController::class, 'index'])->name('index');
+            Route::patch('/{donor}', [DonorReminderController::class, 'update'])->name('update');
+            Route::post('/{donor}/mark-reminded', [DonorReminderController::class, 'markReminded'])->name('mark-reminded');
+        });
 
     Route::name('donation-transfers.')->prefix('donation-transfers')->group(function () {
         Route::get('/', [DonationTransferController::class, 'index'])

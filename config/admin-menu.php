@@ -177,6 +177,15 @@ return [
                     'permission' => 'donation.transfers.view',
                 ],
                 [
+                    'key' => 'donation.reminders',
+                    'label' => 'Pengingat Donasi',
+                    'route' => 'admin.donor-reminders.index',
+                    'route_active' => 'admin.donor-reminders.*',
+                    'icon' => 'calendar',
+                    'roles' => ['superadmin', 'admin', 'staf_keuangan'],
+                    'permission' => 'donation.reminders.manage',
+                ],
+                [
                     'key' => 'donation.infaq-wa',
                     'label' => 'Donasi Barang',
                     'route' => 'admin.infaq-barang-wa.index',

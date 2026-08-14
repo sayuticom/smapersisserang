@@ -111,15 +111,15 @@ class PermissionFoundationTest extends TestCase
         }
     }
 
-    public function test_config_has_81_permissions(): void
+    public function test_config_has_82_permissions(): void
     {
         $manifest = config('permissions');
-        $this->assertCount(81, $manifest);
+        $this->assertCount(82, $manifest);
     }
 
-    public function test_database_has_81_permissions_after_seeding(): void
+    public function test_database_has_82_permissions_after_seeding(): void
     {
-        $this->assertEquals(81, Permission::count());
+        $this->assertEquals(82, Permission::count());
     }
 
     public function test_permission_names_are_unique(): void
