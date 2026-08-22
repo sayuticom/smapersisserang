@@ -28,25 +28,60 @@
 
     <div class="summary">
         <div class="summary-item">
-            <div class="label">Total Pemasukan</div>
+            <div class="label">Kas Masuk Keuangan</div>
             <div class="value text-blue">Rp {{ number_format($totalIncome, 0, ',', '.') }}</div>
+            <div style="font-size:9px;color:#6b7280;margin-top:2px;">Eksternal: Rp {{ number_format($externalIncomesTotal, 0, ',', '.') }} · Mutasi: Rp {{ number_format($internalTransferIncomesTotal, 0, ',', '.') }}</div>
         </div>
         <div class="summary-item">
             <div class="label">Total Pengeluaran</div>
             <div class="value text-red">Rp {{ number_format($totalExpense, 0, ',', '.') }}</div>
         </div>
         <div class="summary-item">
-            <div class="label">Saldo Periode</div>
+            <div class="label">Saldo Kas Periode</div>
             <div class="value {{ $balance >= 0 ? 'text-emerald' : 'text-red' }}">Rp {{ number_format($balance, 0, ',', '.') }}</div>
         </div>
     </div>
 
-    <h3 style="margin-bottom:6px;">Rincian Pemasukan</h3>
+    {{-- KONSOLIDASI ORGANISASI --}}
+    <h3 style="margin-bottom:6px;color:#4c1d95;">Laporan Konsolidasi Pendapatan Organisasi (Non-Double Counting)</h3>
+    <table style="margin-bottom:15px;background:#fdf4ff;">
+        <thead>
+            <tr style="background:#f5d0fe;">
+                <th>Komponen</th>
+                <th>Keterangan</th>
+                <th class="text-right">Nominal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. Donasi Masuk Valid</strong></td>
+                <td>Pendapatan eksternal donasi ({{ $consolidated['donations_count'] }} transaksi)</td>
+                <td class="text-right">Rp {{ number_format($consolidated['total_donation'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td><strong>2. Pemasukan Eksternal Keuangan</strong></td>
+                <td>Pendapatan eksternal non-donasi ({{ $consolidated['external_incomes_count'] }} transaksi)</td>
+                <td class="text-right">Rp {{ number_format($consolidated['total_external_income'], 0, ',', '.') }}</td>
+            </tr>
+            <tr style="background:#fae8ff;font-weight:bold;">
+                <td>TOTAL PENDAPATAN MURNI ORGANISASI (1 + 2)</td>
+                <td>Pendapatan riil baru organisasi (Tanpa double-count)</td>
+                <td class="text-right text-emerald">Rp {{ number_format($consolidated['total_organization_revenue'], 0, ',', '.') }}</td>
+            </tr>
+            <tr style="color:#4b5563;font-style:italic;">
+                <td><em>Transfer Internal (Donasi &rarr; Keuangan)</em></td>
+                <td><em>Perpindahan saldo kas internal (Bukan pendapatan baru)</em></td>
+                <td class="text-right"><em>Rp {{ number_format($consolidated['total_internal_transfer'], 0, ',', '.') }}</em></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 style="margin-bottom:6px;">Rincian Pemasukan Keuangan</h3>
     <table>
         <thead>
             <tr>
                 <th>Tanggal</th>
-                <th>Jenis</th>
+                <th>Jenis / Tipe</th>
                 <th>Sumber</th>
                 <th>Metode</th>
                 <th class="text-right">Nominal</th>
@@ -56,7 +91,12 @@
             @forelse($incomes as $income)
             <tr>
                 <td>{{ $income->date->format('d/m/Y') }}</td>
-                <td>{{ $income->income_type }}</td>
+                <td>
+                    {{ $income->income_type }}
+                    @if($income->isInternalTransfer())
+                        <span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:3px;">[Transfer Internal]</span>
+                    @endif
+                </td>
                 <td>{{ $income->source_name ?: '-' }}</td>
                 <td>{{ $income->payment_method }}</td>
                 <td class="text-right text-blue">Rp {{ number_format($income->amount, 0, ',', '.') }}</td>

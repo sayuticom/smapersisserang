@@ -7,24 +7,93 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saldo Saat Ini</p>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saldo Kas & Bank Keuangan</p>
                 <p class="text-xl sm:text-2xl font-bold text-emerald-600 mt-2 break-words">Rp {{ number_format($balance, 0, ',', '.') }}</p>
+                <p class="text-xs text-gray-400 mt-1">Total kas masuk - pengeluaran</p>
             </div>
             <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pemasukan Bulan Ini</p>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Kas Masuk Bulan Ini</p>
                 <p class="text-xl sm:text-2xl font-bold text-blue-600 mt-2 break-words">Rp {{ number_format($monthIncome, 0, ',', '.') }}</p>
+                <p class="text-xs text-gray-400 mt-1">Eksternal: Rp {{ number_format($monthExternalIncome, 0, ',', '.') }} · Mutasi: Rp {{ number_format($monthInternalTransfer, 0, ',', '.') }}</p>
             </div>
             <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengeluaran Bulan Ini</p>
                 <p class="text-xl sm:text-2xl font-bold text-red-600 mt-2 break-words">Rp {{ number_format($monthExpense, 0, ',', '.') }}</p>
             </div>
             <div class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengeluaran Terbesar</p>
-                <p class="text-lg font-bold text-gray-900 mt-2 break-words">{{ $topExpense?->expense_category ?? '-' }}</p>
-                @if($topExpense)
-                <p class="text-sm text-red-600 font-medium break-words">Rp {{ number_format($topExpense->total, 0, ',', '.') }}</p>
-                @endif
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Pendapatan Konsolidasi</p>
+                <p class="text-xl sm:text-2xl font-bold text-purple-700 mt-2 break-words">Rp {{ number_format($reconciliation['organization_total_revenue'], 0, ',', '.') }}</p>
+                <p class="text-xs text-purple-600 mt-1 font-medium">Non-Double Counting</p>
             </div>
+        </div>
+
+        {{-- KARTU REKONSILIASI DONASI <-> KEUANGAN --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap bg-slate-50">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Rekonsiliasi Donasi &harr; Keuangan (Transfer Internal)
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Memastikan mutasi dari donasi ke keuangan sinkron tanpa pencatatan ganda pada pendapatan organisasi</p>
+                </div>
+                <div>
+                    @if($reconciliation['is_synchronized'])
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                            SINKRON (Selisih Rp 0)
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
+                            <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                            BERMASALAH (Selisih Rp {{ number_format(abs($reconciliation['difference']), 0, ',', '.') }})
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-xs">
+                <div class="bg-gray-50 p-3.5 rounded-lg border border-gray-100">
+                    <span class="text-gray-500 font-medium block">Total Donasi Masuk</span>
+                    <span class="text-sm font-bold text-gray-900 mt-1 block">Rp {{ number_format($reconciliation['total_incoming_donation'], 0, ',', '.') }}</span>
+                </div>
+                <div class="bg-gray-50 p-3.5 rounded-lg border border-gray-100">
+                    <span class="text-gray-500 font-medium block">Saldo Donasi</span>
+                    <span class="text-sm font-bold text-indigo-700 mt-1 block">Rp {{ number_format($reconciliation['donation_recorded_balance'], 0, ',', '.') }}</span>
+                </div>
+                <div class="bg-blue-50 p-3.5 rounded-lg border border-blue-100">
+                    <span class="text-blue-700 font-medium block">Mutasi Approved</span>
+                    <span class="text-sm font-bold text-blue-900 mt-1 block">Rp {{ number_format($reconciliation['approved_transfers_total'], 0, ',', '.') }}</span>
+                </div>
+                <div class="bg-blue-50 p-3.5 rounded-lg border border-blue-100">
+                    <span class="text-blue-700 font-medium block">Penerimaan dari Donasi</span>
+                    <span class="text-sm font-bold text-blue-900 mt-1 block">Rp {{ number_format($reconciliation['finance_donation_income_total'], 0, ',', '.') }}</span>
+                </div>
+                <div class="bg-emerald-50 p-3.5 rounded-lg border border-emerald-100">
+                    <span class="text-emerald-700 font-medium block">Pemasukan Non-Donasi</span>
+                    <span class="text-sm font-bold text-emerald-900 mt-1 block">Rp {{ number_format($reconciliation['finance_external_income_total'], 0, ',', '.') }}</span>
+                </div>
+                <div class="bg-purple-50 p-3.5 rounded-lg border border-purple-100">
+                    <span class="text-purple-700 font-medium block">Pendapatan Organisasi</span>
+                    <span class="text-sm font-bold text-purple-900 mt-1 block">Rp {{ number_format($reconciliation['organization_total_revenue'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+
+            @if($reconciliation['anomalies_count'] > 0)
+                <div class="px-5 pb-5">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-xs text-red-800">
+                        <p class="font-bold flex items-center gap-1.5 mb-2 text-red-900">
+                            <svg class="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            Ditemukan {{ $reconciliation['anomalies_count'] }} Anomali Transaksi Rekonsiliasi:
+                        </p>
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach($reconciliation['anomalies'] as $anomaly)
+                                <li>{{ $anomaly['description'] }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
         </div>
 
         @if($accountSummaries)

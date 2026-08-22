@@ -9,6 +9,7 @@ use App\Models\DonationTransfer;
 use App\Models\FinanceExpense;
 use App\Models\FinanceIncome;
 use App\Services\DonationBalanceService;
+use App\Services\DonationFinanceReconciliationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,16 +46,26 @@ class FinanceController extends Controller
 
     const PAYMENT_METHODS = ['Tunai', 'Transfer Bank', 'QRIS', 'Lainnya'];
 
-    public function dashboard(): View
+    public function dashboard(?DonationFinanceReconciliationService $reconciliationService = null): View
     {
+        $reconciliationService = $reconciliationService ?? app(DonationFinanceReconciliationService::class);
         $now = now();
         $monthStart = $now->copy()->startOfMonth();
+
+        $reconciliation = $reconciliationService->reconciliationSummary();
 
         $totalIncome = FinanceIncome::sum('amount');
         $totalExpense = FinanceExpense::sum('amount');
         $balance = $totalIncome - $totalExpense;
 
         $monthIncome = FinanceIncome::where('date', '>=', $monthStart)->sum('amount');
+        $monthExternalIncome = FinanceIncome::where('date', '>=', $monthStart)
+            ->whereNull('donation_transfer_id')
+            ->whereNull('donation_outflow_id')
+            ->sum('amount');
+        $monthInternalTransfer = FinanceIncome::where('date', '>=', $monthStart)
+            ->where(fn ($q) => $q->whereNotNull('donation_transfer_id')->orWhereNotNull('donation_outflow_id'))
+            ->sum('amount');
         $monthExpense = FinanceExpense::where('date', '>=', $monthStart)->sum('amount');
 
         $topExpense = FinanceExpense::where('date', '>=', $monthStart)
@@ -96,12 +107,15 @@ class FinanceController extends Controller
         return view('admin.finance.dashboard', compact(
             'balance',
             'monthIncome',
+            'monthExternalIncome',
+            'monthInternalTransfer',
             'monthExpense',
             'topExpense',
             'pendingTransfers',
             'pendingTransferCount',
             'pendingTransferTotal',
-            'accountSummaries'
+            'accountSummaries',
+            'reconciliation'
         ));
     }
 
@@ -521,19 +535,27 @@ class FinanceController extends Controller
     // LAPORAN
     // ==========================================
 
-    public function report(Request $request): View
+    public function report(Request $request, ?DonationFinanceReconciliationService $reconciliationService = null): View
     {
+        $reconciliationService = $reconciliationService ?? app(DonationFinanceReconciliationService::class);
         $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->input('end_date', now()->format('Y-m-d'));
 
-        $incomes = FinanceIncome::whereBetween('date', [$startDate, $endDate])
+        $incomes = FinanceIncome::with(['financeAccount', 'donationTransfer', 'donationOutflow'])
+            ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date')->get();
-        $expenses = FinanceExpense::whereBetween('date', [$startDate, $endDate])
+        $expenses = FinanceExpense::with(['financeAccount'])
+            ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date')->get();
 
-        $totalIncome = $incomes->sum('amount');
-        $totalExpense = $expenses->sum('amount');
+        $totalIncome = (int) $incomes->sum('amount');
+        $totalExpense = (int) $expenses->sum('amount');
         $balance = $totalIncome - $totalExpense;
+
+        $externalIncomesTotal = (int) $incomes->filter(fn ($i) => $i->isExternal())->sum('amount');
+        $internalTransferIncomesTotal = (int) $incomes->filter(fn ($i) => $i->isInternalTransfer())->sum('amount');
+
+        $consolidated = $reconciliationService->consolidatedReport($startDate, $endDate);
 
         $expenseByCategory = $expenses->groupBy('expense_category')
             ->map(fn ($items) => $items->sum('amount'));
@@ -543,13 +565,15 @@ class FinanceController extends Controller
         if ($isPrint) {
             return view('admin.finance.report-print', compact(
                 'startDate', 'endDate', 'incomes', 'expenses',
-                'totalIncome', 'totalExpense', 'balance', 'expenseByCategory'
+                'totalIncome', 'totalExpense', 'balance', 'expenseByCategory',
+                'externalIncomesTotal', 'internalTransferIncomesTotal', 'consolidated'
             ));
         }
 
         return view('admin.finance.report', compact(
             'startDate', 'endDate', 'incomes', 'expenses',
-            'totalIncome', 'totalExpense', 'balance', 'expenseByCategory'
+            'totalIncome', 'totalExpense', 'balance', 'expenseByCategory',
+            'externalIncomesTotal', 'internalTransferIncomesTotal', 'consolidated'
         ));
     }
 

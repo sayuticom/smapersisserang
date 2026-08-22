@@ -73,6 +73,16 @@ class FinanceIncome extends Model
         return ! $this->isIntegrated();
     }
 
+    public function isInternalTransfer(): bool
+    {
+        return $this->isIntegrated() || $this->income_type === 'Transfer dari Donasi';
+    }
+
+    public function isExternal(): bool
+    {
+        return ! $this->isInternalTransfer();
+    }
+
     public static function incomeTypes(): array
     {
         return [

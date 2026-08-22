@@ -50,13 +50,28 @@
 
         @if($donationTransfer->status === 'approved')
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm">
-                <h3 class="font-semibold text-emerald-800">Informasi Persetujuan</h3>
-                <p class="mt-2 text-emerald-700">Disetujui oleh {{ $donationTransfer->approver?->name ?? '-' }} pada {{ $donationTransfer->approved_at?->format('d/m/Y H:i') }}.</p>
+                <h3 class="font-semibold text-emerald-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Informasi Persetujuan & Penelusuran (Traceability)
+                </h3>
+                <p class="mt-2 text-emerald-800">
+                    Disetujui oleh <strong class="font-semibold">{{ $donationTransfer->approver?->name ?? '-' }}</strong> pada <span class="font-mono">{{ $donationTransfer->approved_at?->format('d/m/Y H:i') }}</span>.
+                </p>
                 @if($donationTransfer->financeIncome)
-                    <p class="mt-2 text-emerald-700">
-                        Dana telah tercatat sebagai Pemasukan Keuangan.
-                        <a href="{{ route('admin.finance.incomes.index') }}" class="font-semibold text-emerald-800 underline">Lihat Pemasukan</a>
-                    </p>
+                    <div class="mt-4 rounded-lg bg-white p-4 border border-emerald-200 text-xs text-gray-700">
+                        <div class="font-bold text-gray-900 text-sm mb-2">Catatan Penerimaan Keuangan Terkait:</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div><span class="text-gray-500">ID Penerimaan:</span> <strong class="font-mono text-gray-900">#{{ $donationTransfer->financeIncome->id }}</strong></div>
+                            <div><span class="text-gray-500">Tanggal Penerimaan:</span> <span class="font-medium text-gray-900">{{ $donationTransfer->financeIncome->date?->format('d/m/Y') }}</span></div>
+                            <div><span class="text-gray-500">Akun Keuangan:</span> <span class="font-medium text-gray-900">{{ $donationTransfer->financeIncome->financeAccount?->name ?? $donationTransfer->toAccount?->name }}</span></div>
+                            <div><span class="text-gray-500">Nominal Dicatat:</span> <strong class="font-bold text-emerald-700">Rp {{ number_format($donationTransfer->financeIncome->amount, 0, ',', '.') }}</strong></div>
+                            <div><span class="text-gray-500">Kategori / Sifat:</span> <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">Transfer Internal (Non-Revenue)</span></div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-gray-500">Status Integritas: <strong class="text-emerald-700">Tersinkronisasi & Terkunci (Read-Only)</strong></span>
+                            <a href="{{ route('admin.finance.incomes.index') }}" class="font-semibold text-blue-600 hover:text-blue-800 hover:underline">Lihat di Daftar Pemasukan &rarr;</a>
+                        </div>
+                    </div>
                 @endif
             </div>
         @elseif($donationTransfer->status === 'rejected')
