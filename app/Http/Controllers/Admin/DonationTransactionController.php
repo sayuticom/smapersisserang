@@ -58,19 +58,39 @@ class DonationTransactionController extends Controller
 
         $totalTransactions = (clone $summaryQuery)->count();
 
-        $balanceService = app(DonationBalanceService::class);
-        $incomingSummary = [
-            'total_incoming' => $balanceService->totalIncoming(),
-            'by_payment_method' => collect($balanceService->summaryByPaymentMethod())
-                ->map(fn (array $row) => [
-                    'key' => $row['key'],
-                    'label' => $row['label'],
-                    'incoming' => $row['incoming'],
-                ])
-                ->all(),
-        ];
+        $incomingSummary = $this->filteredIncomingSummary($summaryQuery, $request->input('payment_method'));
 
         return view('admin.donasi-transactions.index', compact('transactions', 'totalTransactions', 'incomingSummary'));
+    }
+
+    private function filteredIncomingSummary($query, ?string $paymentMethodFilter): array
+    {
+        $validIncomingQuery = (clone $query)
+            ->whereIn('status', DonationBalanceService::INCOME_STATUSES);
+
+        $rows = (clone $validIncomingQuery)
+            ->selectRaw('COALESCE(payment_method, ?) as method, SUM(amount) as incoming', [DonationBalanceService::UNCLASSIFIED])
+            ->groupBy('method')
+            ->get()
+            ->keyBy('method');
+
+        $methods = $paymentMethodFilter
+            ? [$paymentMethodFilter]
+            : [...DonationPaymentMethod::values(), DonationBalanceService::UNCLASSIFIED];
+
+        return [
+            'total_incoming' => (int) (clone $validIncomingQuery)->sum('amount'),
+            'by_payment_method' => collect($methods)
+                ->map(fn (string $method) => [
+                    'key' => $method,
+                    'label' => $method === DonationBalanceService::UNCLASSIFIED
+                        ? 'Belum Ditentukan'
+                        : DonationPaymentMethod::labelOf($method),
+                    'incoming' => (int) ($rows[$method]->incoming ?? 0),
+                ])
+                ->values()
+                ->all(),
+        ];
     }
 
     public function createReceipt()

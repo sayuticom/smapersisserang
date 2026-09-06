@@ -864,6 +864,48 @@ class DonationBalanceTest extends TestCase
         $this->assertStringNotContainsString($qris->donor_name, $response->getContent());
     }
 
+    public function test_transactions_index_summary_follows_date_filter(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $filtered = $this->createDonationTransaction(['amount' => 500000, 'payment_method' => 'cash']);
+        $outsideFilter = $this->createDonationTransaction(['amount' => 700000, 'payment_method' => 'cash']);
+
+        $filtered->forceFill(['created_at' => '2026-09-06 10:00:00'])->save();
+        $outsideFilter->forceFill(['created_at' => '2026-09-05 10:00:00'])->save();
+
+        $this->actingAs($user)
+            ->get(route('admin.donasi-transactions.index', [
+                'date' => '2026-09-06',
+                'filter_type' => 'date',
+            ]))
+            ->assertOk()
+            ->assertViewHas('incomingSummary', function (array $summary) {
+                $row = collect($summary['by_payment_method'])->firstWhere('key', 'cash');
+
+                return $summary['total_incoming'] === 500000
+                    && $row['incoming'] === 500000;
+            });
+    }
+
+    public function test_transactions_index_summary_follows_payment_method_filter(): void
+    {
+        $user = $this->userWithPermissions(['donation.balance.view']);
+        $this->createDonationTransaction(['amount' => 500000, 'payment_method' => 'cash']);
+        $this->createDonationTransaction(['amount' => 700000, 'payment_method' => 'qris']);
+
+        $this->actingAs($user)
+            ->get(route('admin.donasi-transactions.index', ['payment_method' => 'qris']))
+            ->assertOk()
+            ->assertViewHas('incomingSummary', function (array $summary) {
+                $rows = collect($summary['by_payment_method']);
+
+                return $summary['total_incoming'] === 700000
+                    && $rows->count() === 1
+                    && $rows->first()['key'] === 'qris'
+                    && $rows->first()['incoming'] === 700000;
+            });
+    }
+
     // ========================================================================
     // HELPERS
     // ========================================================================
